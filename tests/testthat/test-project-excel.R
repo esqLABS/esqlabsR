@@ -671,7 +671,7 @@ test_that("exporting a JSON-authored project declares its data and PI workbooks"
     outputDir = withr::local_tempdir(),
     silent = TRUE
   ))
-  expect_length(reimported$definitions$observedData, 1L)
+  expect_length(reimported$definitions$observedDataSources, 1L)
   # The declaration is back, so the PI task's output mappings resolve against a
   # data set that exists instead of dangling.
   expect_identical(
@@ -1656,11 +1656,11 @@ test_that(".parseExcelObservedData keeps a subfolder path rather than truncating
     switch(name, dataFile = "Sub/Values.xlsx", dataFolder = "Data", NULL)
   }
   result <- .parseExcelObservedData(list(), prop, work)
-  entry <- result$observedData[[1]]
+  entry <- result$observedDataSources[[1]]
   expect_identical(entry$file, "Sub/Values.xlsx")
   # The declaration states its own canonicalized id, so the section is keyed and
   # the definition file is `values.json` rather than `Values.xlsx.json`.
-  expect_identical(names(result$observedData), "values")
+  expect_identical(names(result$observedDataSources), "values")
   expect_identical(entry$id, "values")
 })
 
@@ -1677,8 +1677,8 @@ test_that("the Excel import reifies the configured data file as observed data", 
   ))
   project <- suppressWarnings(loadProject(jsonPath))
 
-  expect_length(project$definitions$observedData, 1L)
-  entry <- .unwrapDefinitionList(project$definitions$observedData)[[1]]
+  expect_length(project$definitions$observedDataSources, 1L)
+  entry <- .unwrapDefinitionList(project$definitions$observedDataSources)[[1]]
   expect_identical(entry$type, "excel")
   expect_identical(entry$file, "TestProject_TimeValuesData.xlsx")
   expect_identical(
@@ -1703,7 +1703,7 @@ test_that(".parseExcelObservedData warns and skips when the data file is absent"
     ),
     "was not found"
   )
-  expect_null(result$observedData)
+  expect_null(result$observedDataSources)
 })
 
 # An absolute `dataFolder` pointing at a synced drive is common in real 5.x
@@ -1726,7 +1726,7 @@ test_that(".parseExcelObservedData warns and skips an out-of-project dataFolder"
       result <- .parseExcelObservedData(list(), prop, work),
       "points outside the project folder"
     )
-    expect_null(result$observedData)
+    expect_null(result$observedDataSources)
   }
 
   # The path is absolute by definition here, so echoing it would put the user's
@@ -1762,8 +1762,8 @@ test_that(".parseExcelObservedData expands a ${VAR} dataFolder", {
     )
   }
   expect_silent(result <- .parseExcelObservedData(list(), prop, work))
-  expect_named(result$observedData, "values")
-  expect_identical(result$observedData[[1]]$sheets, list("Sheet1"))
+  expect_named(result$observedDataSources, "values")
+  expect_identical(result$observedDataSources[[1]]$sheets, list("Sheet1"))
 })
 
 # A `dataFile` that climbs out of its `dataFolder` is the same situation one
@@ -1782,7 +1782,7 @@ test_that(".parseExcelObservedData warns and skips a dataFile outside dataFolder
     ),
     "dataFile.+points outside.+dataFolder"
   )
-  expect_null(result$observedData)
+  expect_null(result$observedDataSources)
 
   warning <- tryCatch(
     .parseExcelObservedData(
@@ -1819,7 +1819,7 @@ test_that("an absolute dataFolder no longer blocks the import", {
   ))
   project <- suppressWarnings(loadProject(jsonPath))
 
-  expect_length(project$definitions$observedData, 0L)
+  expect_length(project$definitions$observedDataSources, 0L)
   expect_identical(
     jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)$filePaths$dataFolder,
     shared
@@ -2988,7 +2988,7 @@ test_that("projectStatus() does not report false section drift after a dirty sav
   # emptied on-disk container no longer blinds the comparison into flagging
   # untouched sections.
   definitionSections <- c(
-    "observedData",
+    "observedDataSources",
     "outputPaths",
     "scenarios",
     "parameterSets",
@@ -3359,7 +3359,7 @@ test_that(".parseExcelObservedData anchors a relative ${VAR} at the project file
   expect_silent(
     result <- .parseExcelObservedData(list(), prop, source, project)
   )
-  expect_named(result$observedData, "values")
+  expect_named(result$observedDataSources, "values")
 })
 
 # A `ParameterSets` / `Individual Parameter Sets` cell names sheets of its own
@@ -3889,17 +3889,21 @@ test_that("a legacy parameter-identification Units cell is carried through", {
 # authoring API could not have produced.
 test_that("the imported observed-data declaration carries a canonicalized id", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
-  entry <- imported$project$definitions$observedData[[1]]
+  entry <- imported$project$definitions$observedDataSources[[1]]
 
   expect_identical(entry$id, "testproject_timevaluesdata")
   expect_identical(
-    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    list.files(file.path(
+      imported$outputDir,
+      "definitions",
+      "observed-data-sources"
+    )),
     "testproject_timevaluesdata.json"
   )
   # And the section is keyed by that id, the handle `removeObservedDataSource()`
   # matches on.
   expect_identical(
-    names(imported$project$definitions$observedData),
+    names(imported$project$definitions$observedDataSources),
     "testproject_timevaluesdata"
   )
 })
@@ -3921,17 +3925,21 @@ test_that("a data file whose name is not filename-safe still yields a canonical 
   imported <- importLegacyExcelProject(projectDir)
 
   expect_identical(
-    imported$project$definitions$observedData[[1]]$id,
+    imported$project$definitions$observedDataSources[[1]]$id,
     "my_data__v2"
   )
   expect_identical(
-    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    list.files(file.path(
+      imported$outputDir,
+      "definitions",
+      "observed-data-sources"
+    )),
     "my_data__v2.json"
   )
   # The stored `file` is untouched: it is a path the loader resolves under the
   # data folder, not an id.
   expect_identical(
-    imported$project$definitions$observedData[[1]]$file,
+    imported$project$definitions$observedDataSources[[1]]$file,
     "My Data, v2.xlsx"
   )
 })

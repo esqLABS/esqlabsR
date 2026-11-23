@@ -205,7 +205,7 @@ The project's own options are stored in `Project.xlsx`, the top-level file next 
 | `simulationsFolder`, `populationsFolder`, `dataFolder`, `outputFolder` | The working folders for models, population files, observed data, and results. | `project$paths$simulationsFolder`, and so on |
 | `configurationsFolder` | The folder that holds the other Excel files. | |
 | `modelParamsFile`, `individualsFile`, `populationsFile`, `scenariosFile`, `applicationsFile`, `plotsFile`, `parameterIdentificationFile`, `initialConditionsFile` | The file name of each Excel file in `configurationsFolder`. | |
-| `dataFile`, `dataImporterConfigurationFile` | The observed-data workbook and the importer configuration that reads it, both in `dataFolder`. | `project$definitions$observedData` |
+| `dataFile`, `dataImporterConfigurationFile` | The observed-data workbook and the importer configuration that reads it, both in `dataFolder`. | `project$definitions$observedDataSources` |
 | `schemaVersion`, `esqlabsRVersion` | Written by the export for information. Leave them as they are. | |
 
 Folder paths are relative to the project folder. A folder outside the project folder needs an environment variable in its path, such as `${SHARED_DATA}`; "Name the project and choose its folders" above shows how to set one.

@@ -4,7 +4,7 @@
       loadObservedData(project)
     Condition
       Error in `loadObservedData()`:
-      x Invalid type "invalid_type" in `observedData` entry.
+      x Invalid type "invalid_type" in an observed-data source.
       i Must be one of: "excel", "pkml", "script", and "programmatic".
 
 # loadObservedData errors when excel entry is missing required fields
@@ -13,7 +13,7 @@
       loadObservedData(project)
     Condition
       Error in `loadObservedData()`:
-      ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
+      ! Observed-data source 1 (type "excel") is missing required fields importerConfiguration and sheets.
 
 # loadObservedData errors when dataFolder is not declared
 
@@ -29,7 +29,7 @@
       addObservedDataSource(project, list(type = "excel", file = "x.xlsx"))
     Condition
       Error in `addObservedDataSource()`:
-      ! `observedData` entry 2 (type "excel") is missing required fields importerConfiguration and sheets.
+      ! Observed-data source 2 (type "excel") is missing required fields importerConfiguration and sheets.
 
 ---
 
@@ -37,7 +37,7 @@
       addObservedDataSource(project, list(type = "excel"))
     Condition
       Error in `addObservedDataSource()`:
-      ! `observedData` entry 2 (type "excel") is missing required fields file, importerConfiguration, and sheets.
+      ! Observed-data source 2 (type "excel") is missing required fields file, importerConfiguration, and sheets.
 
 # addObservedDataSource rejects a duplicate config entry file
 
@@ -47,7 +47,7 @@
           "Laskin 1982.Group A")))
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with id "Aciclovir_TimeValuesData.xlsx" already exists.
+      ! Observed-data source with id "Aciclovir_TimeValuesData.xlsx" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # addObservedDataSource aborts on a duplicate DataSet name, replaces with overwrite
@@ -56,7 +56,7 @@
       addObservedDataSource(project, ds2)
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "prog_ds" already exists.
+      ! Observed-data source with name "prog_ds" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # addObservedDataSource with a DataSet runs no script source
@@ -81,7 +81,7 @@
       addObservedDataSource(project, ospsuite::DataSet$new(name = "Digitized plasma"))
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Digitized plasma" already exists.
+      ! Observed-data source with name "Digitized plasma" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # addObservedDataSource aborts on the name of a DataSet added in this session
@@ -90,7 +90,7 @@
       addObservedDataSource(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Scratch measurement" already exists.
+      ! Observed-data source with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # addObservedDataSource refuses a DataSet saved earlier under its name
@@ -99,13 +99,13 @@
       addObservedDataSource(project, scratch)
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Scratch measurement" already exists.
+      ! Observed-data source with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
     Code
       addObservedDataSource(project, scratch, overwrite = TRUE)
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Scratch measurement" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
+      ! Observed-data source with name "Scratch measurement" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
       i Remove it first with `removeObservedDataSource()` by its id, then add the <DataSet>.
 
 # addObservedDataSource refuses a DataSet whose PKML file another source reads
@@ -114,14 +114,14 @@
       addObservedDataSource(project, ospsuite::DataSet$new(name = "Cohort B"))
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Cohort B" already exists.
+      ! Observed-data source with name "Cohort B" already exists.
       i Pass `overwrite = TRUE` to replace it.
     Code
       addObservedDataSource(project, ospsuite::DataSet$new(name = "Cohort B"),
       overwrite = TRUE)
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Cohort B" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
+      ! Observed-data source with name "Cohort B" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
       i Remove it first with `removeObservedDataSource()` by its id, then add the <DataSet>.
 
 # a DataSet name inside a script source not loaded yet aborts the next load
@@ -180,7 +180,7 @@
       i Re-add them with `addObservedDataSource()` in this session, or declare them as a `script` or `pkml` source to persist across a reload.
       This warning is displayed once per session.
 
-# observedData declarations sharing a basename fail saveProject()
+# observed-data sources sharing a basename fail saveProject()
 
     Code
       saveProject(project)
@@ -235,7 +235,7 @@
       addObservedDataSource(project, list(id = "obs", type = "pkml", file = "b.pkml"))
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with id "obs" already exists.
+      ! Observed-data source with id "obs" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # a config entry cannot overwrite a live programmatic source
@@ -245,7 +245,7 @@
       overwrite = TRUE)
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
+      ! Observed-data source with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
       i Remove it first with `removeObservedDataSource()`, then add the configuration entry.
 
 # a DataSet clashes with the id of another source
@@ -254,13 +254,13 @@
       addObservedDataSource(project, ospsuite::DataSet$new(name = "cohort_b"))
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "cohort_b" already exists.
+      ! Observed-data source with name "cohort_b" already exists.
       i Pass `overwrite = TRUE` to replace it.
     Code
       addObservedDataSource(project, ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx"))
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Aciclovir_TimeValuesData.xlsx" already exists.
+      ! Observed-data source with name "Aciclovir_TimeValuesData.xlsx" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # removeObservedDataSource mutates memory only; a surviving collision aborts saveProject()
@@ -276,10 +276,10 @@
 # every observed-data source stores its id first and the section is keyed by it
 
     Code
-      project$definitions$observedData[["Cohort B.pkml"]]$file <- "other.pkml"
+      project$definitions$observedDataSources[["Cohort B.pkml"]]$file <- "other.pkml"
     Condition
       Error in `[[<-`:
-      ! observedData is read-only and cannot be assigned into.
+      ! observedDataSources is read-only and cannot be assigned into.
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
       i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
 
@@ -289,7 +289,7 @@
       addObservedDataSource(project, scratch)
     Condition
       Error in `addObservedDataSource()`:
-      ! observedData entry with name "Scratch measurement" already exists.
+      ! Observed-data source with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # addObservedDataSource refuses an id that differs from another only in case
@@ -337,7 +337,7 @@
 # print.ObservedDataSource renders the source declaration
 
     Code
-      print(project$definitions$observedData[[1]])
+      print(project$definitions$observedDataSources[[1]])
     Output
       <ObservedDataSource>
         * Id: Aciclovir_TimeValuesData.xlsx
@@ -346,13 +346,13 @@
         * Importer Configuration: esqlabs_dataImporter_configuration.xml
         * Sheets: Laskin 1982.Group A
 
-# printing the observedData section lists the declaration ids
+# printing the observedDataSources section lists the declaration ids
 
     Code
-      print(project$definitions$observedData)
+      print(project$definitions$observedDataSources)
     Output
       <DefinitionList>
-      observedData (2 definitions):
+      observedDataSources (2 definitions):
         * Aciclovir_TimeValuesData.xlsx
         * simulated_plasma
 

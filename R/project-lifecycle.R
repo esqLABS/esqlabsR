@@ -253,7 +253,7 @@ loadProject <- function(path = ".") {
     individuals = loadSection("individuals"),
     populations = loadSection("populations"),
     applications = loadSection("applications"),
-    observedData = loadSection("observedData"),
+    observedDataSources = loadSection("observedDataSources"),
     # The plots concern is three independent top-level sections, each its own
     # keyed kind: `dataCombined` (`definitions/data-combined/`), `plots`
     # (`definitions/plots/`, the plot list), and `plotGrids`
@@ -337,7 +337,7 @@ saveProject <- function(project) {
 
   # Persist any session-added programmatic DataSet to a PKML file next to the
   # project and rewrite its entry to a `pkml` source, so it survives a reload.
-  # This mutates the in-memory `observedData` section before the tree writer
+  # This mutates the in-memory `observedDataSources` section before the tree writer
   # serializes it below, and returns the names it persisted; those stay in the
   # runtime store until the whole save commits (below), so a tree write that
   # aborts leaves the DataSet recoverable rather than lost.

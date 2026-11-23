@@ -741,7 +741,7 @@ importProjectFromExcel <- function(
   # then the mapping's data set is not in the project at all.
   .warnUnimportedPIObservedDataSheets(
     importState$declaredObservedSheets,
-    jsonData$observedData
+    jsonData$observedDataSources
   )
 
   # Canonicalize every id (and every reference to one) so the imported project
@@ -1095,7 +1095,9 @@ exportProjectToExcel <- function(
   )
   blank <- function(name) .isBlankCell(pathProps[[name]]$value)
 
-  observed <- .unwrapDefinitionList(project$definitions$observedData) %||%
+  observed <- .unwrapDefinitionList(
+    project$definitions$observedDataSources
+  ) %||%
     list()
   excelSources <- Filter(
     function(entry) identical(entry$type, "excel") && !.isBlankCell(entry$file),
@@ -1235,7 +1237,7 @@ exportProjectToExcel <- function(
   currentJsonObj <- .sortJsonKeys(currentJsonObj)
 
   # And in the same spirit for the sections held as arrays (`scenarios`,
-  # `individuals`, `populations`, `observedData`): which definition comes first
+  # `individuals`, `populations`, `observedDataSources`): which definition comes first
   # carries no meaning either. A tree project holds one file per definition, so
   # its order is the order the filesystem lists them in, while a workbook's is
   # the order its rows were typed. Only these top-level sections are reordered;
@@ -2801,7 +2803,7 @@ projectStatus <- function(project, silent = FALSE) {
 #'
 #' The project configuration records a single `dataFile` under `dataFolder`
 #' (optionally with a `dataImporterConfigurationFile`). This builds one `excel`
-#' observed-data entry from it, keyed by the data-file basename and listing the
+#' observed-data source from it, keyed by the data-file basename and listing the
 #' workbook's sheets, so a plot or PI mapping that references observed data has
 #' something to resolve against. `file` and `importerConfiguration` are stored as
 #' basenames; the loader resolves them under `dataFolder`. A no-op when no
@@ -2819,7 +2821,7 @@ projectStatus <- function(project, silent = FALSE) {
 #'   expands to one is anchored here rather than at the Excel source, matching
 #'   how the loader (`Project$.resolveWorkingFolder()`) will resolve the very
 #'   same stored value.
-#' @returns `jsonData` with an `observedData` section added when applicable.
+#' @returns `jsonData` with an `observedDataSources` section added when applicable.
 #' @keywords internal
 #' @noRd
 .parseExcelObservedData <- function(jsonData, prop, pcDir, projectDir = pcDir) {
@@ -2896,7 +2898,7 @@ projectStatus <- function(project, silent = FALSE) {
   ) {
     entry$importerConfiguration <- importerConfig
   }
-  jsonData$observedData <- stats::setNames(list(entry), id)
+  jsonData$observedDataSources <- stats::setNames(list(entry), id)
   jsonData
 }
 
@@ -3635,7 +3637,7 @@ projectStatus <- function(project, silent = FALSE) {
 # nothing new.
 #
 # @param declared The sheets the `ObservedDataSheet` column names.
-# @param observedData The imported `observedData` section.
+# @param observedData The imported `observedDataSources` section.
 # @returns Nothing, called for its warning.
 # @keywords internal
 # @noRd

@@ -441,12 +441,16 @@ test_that("a scenario file whose id disagrees with its filename aborts", {
   )
 })
 
-# observedData is keyed like every other section, except its id may be derived
+# observedDataSources is keyed like every other section, except its id may be derived
 # rather than stored. Both forms must still agree with the filename, or the next
 # save files the declaration elsewhere and reconciles the loaded file away.
-test_that("an observedData file whose id disagrees with its filename aborts", {
+test_that("an observed-data source file whose id disagrees with its filename aborts", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   f <- file.path(dir, "mismatch.json")
   jsonlite::write_json(
     list(type = "pkml", file = "obs.pkml", id = "elsewhere"),
@@ -463,9 +467,13 @@ test_that("an observedData file whose id disagrees with its filename aborts", {
 
 # A hand-edited id of the wrong type would otherwise reach `basename()` and a
 # `character(1)` vapply as a number, failing far from the file that caused it.
-test_that("an observedData file whose id is not a string aborts", {
+test_that("an observed-data source file whose id is not a string aborts", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   f <- file.path(dir, "obs.pkml.json")
   jsonlite::write_json(
     list(type = "pkml", file = "obs.pkml", id = 2024),
@@ -480,9 +488,13 @@ test_that("an observedData file whose id is not a string aborts", {
   )
 })
 
-test_that("an observedData file whose declared id matches its filename loads", {
+test_that("an observed-data source file whose declared id matches its filename loads", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   jsonlite::write_json(
     list(type = "pkml", file = "sub/obs.pkml", id = "named"),
     file.path(dir, "named.json"),
@@ -491,7 +503,7 @@ test_that("an observedData file whose declared id matches its filename loads", {
 
   reloaded <- loadProject(project$info$projectFilePath)
   ids <- vapply(
-    reloaded$definitions$observedData,
+    reloaded$definitions$observedDataSources,
     function(e) e[["id"]] %||% NA_character_,
     character(1)
   )
@@ -618,7 +630,7 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
 })
 
 # Ids that differ only in case are one definition file on Windows and macOS.
-test_that("observedData declarations whose ids differ only in case cannot be saved", {
+test_that("observed-data sources whose ids differ only in case cannot be saved", {
   entries <- list(
     list(type = "pkml", file = "Laskin 1982.pkml"),
     list(type = "pkml", file = "sub/laskin 1982.pkml")
@@ -632,7 +644,7 @@ test_that("observedData declarations whose ids differ only in case cannot be sav
 # The observed-data id becomes a filename, and a programmatic source's id (its
 # DataSet name) reaches it verbatim. An id carrying a path separator (or `..`)
 # must be rejected so it cannot escape the observed-data definition directory.
-test_that("a programmatic observedData id that escapes its directory aborts", {
+test_that("a programmatic observed-data source id that escapes its directory aborts", {
   entries <- list(
     list(id = "../escape", type = "programmatic")
   )
@@ -688,7 +700,11 @@ test_that(".definitionTreeFilePlan does not rename onto a file that exists", {
 
 test_that("saveProject files an observed-data id that changes only in case under the new spelling", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   addObservedDataSource(project, list(type = "pkml", file = "Laskin 1982.pkml"))
   saveProject(project)
   removeObservedDataSource(project, "Laskin 1982.pkml")
@@ -771,7 +787,11 @@ test_that("saveProject aborts when a definition file cannot be renamed to its id
   )
 
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   addObservedDataSource(project, list(type = "pkml", file = "Laskin 1982.pkml"))
   saveProject(project)
   removeObservedDataSource(project, "Laskin 1982.pkml")

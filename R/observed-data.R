@@ -1,9 +1,9 @@
 # Observed data: project-driven loader dispatch + section CRUD.
 #
-# Owns Project$observedData end-to-end. Called by:
+# Owns project$definitions$observedDataSources end-to-end. Called by:
 #   - users via loadObservedData(project) — the public dispatcher.
 #   - createDataCombined() internally to resolve observed sources.
-#   - validateProject() via .observedDataValidatorAdapter()
+#   - validateProject() via .observedDataSourcesValidatorAdapter()
 #   - users via the public addObservedDataSource / removeObservedDataSource
 #     functions.
 #
@@ -44,9 +44,9 @@ print.ObservedDataSource <- function(x, ...) {
 
 #' @keywords internal
 #' @noRd
-.observedDataValidatorAdapter <- function(project) {
+.observedDataSourcesValidatorAdapter <- function(project) {
   .validateObservedData(
-    project$definitions$observedData,
+    project$definitions$observedDataSources,
     project$paths$dataFolder
   )
 }
@@ -87,14 +87,14 @@ print.ObservedDataSource <- function(x, ...) {
   is.null(val) || length(val) == 0L
 }
 
-#' Validate the `observedData` section of a Project
+#' Validate the `observedDataSources` section of a Project
 #'
 #' Per-entry checks: `type` is set and is one of `excel`, `pkml`,
 #' `script`, `programmatic`; per-type required fields are present;
 #' referenced files exist on disk (warnings only — missing files do
 #' not block parsing).
 #'
-#' @param observedData List from `observedData` definitions.
+#' @param observedData List from `observedDataSources` definitions.
 #' @param dataFolder Resolved absolute path to the project's data
 #'   folder, or `NULL` when unset.
 #' @return validationResult.
@@ -104,7 +104,7 @@ print.ObservedDataSource <- function(x, ...) {
   result <- validationResult$new()
 
   if (is.null(observedData) || length(observedData) == 0) {
-    result$addWarning("Data", "No observedData defined")
+    result$addWarning("Data", "No observed-data sources defined")
     return(result)
   }
 
@@ -112,7 +112,7 @@ print.ObservedDataSource <- function(x, ...) {
 
   for (i in seq_along(observedData)) {
     entry <- observedData[[i]]
-    entryLabel <- paste0("observedData entry ", i)
+    entryLabel <- paste0("observed-data source ", i)
 
     if (is.null(entry$type)) {
       result$addCriticalError(
@@ -207,7 +207,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' Load observed data declared in a Project
 #'
 #' @description
-#' Reads the `observedData` declarations from a [Project][loadProject()]
+#' Reads the observed-data sources from a [Project][loadProject()]
 #' and returns the corresponding [`ospsuite::DataSet`] objects. Source
 #' types: `excel` (via importer configuration), `pkml`, `script`, and
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
@@ -229,8 +229,8 @@ print.ObservedDataSource <- function(x, ...) {
 #' @returns A named list of [`ospsuite::DataSet`] objects: those of the
 #'   `excel`, `pkml` and `script` sources in the order the project declares
 #'   them, followed by the `DataSet`s added in this session with
-#'   [addObservedDataSource()]. Empty list when `observedData` definitions is empty
-#'   or `NULL`.
+#'   [addObservedDataSource()]. Empty list when the project has no observed-data
+#'   sources.
 #'
 #' @section Security:
 #'   A `script` observed-data source runs the R file it names, with
@@ -266,7 +266,7 @@ loadObservedData <- function(project, sources = NULL) {
   if (!is.null(sources)) {
     .assertIdVector(sources, arg = "sources", allowEmpty = TRUE)
   }
-  observedData <- private$.getSection("observedData") %||% list()
+  observedData <- private$.getSection("observedDataSources") %||% list()
   sectionIds <- names(observedData) %||% character()
   selected <- seq_along(observedData)
   programmaticDataSets <- private$.programmaticDataSets
@@ -430,7 +430,7 @@ getObservedDataNames <- function(project) {
   private$.observedDataNamesCache %||% character(0)
 }
 
-# Public CRUD: observedData ----
+# Public CRUD: observedDataSources ----
 
 #' Add an observed-data source to a Project
 #'
@@ -457,14 +457,14 @@ getObservedDataNames <- function(project) {
 #' [loadObservedData()]).
 #'
 #' `id` names the declaration itself: it becomes the declaration's file under
-#' the project's definitions folder (`definitions/observed-data/<id>.json` in
+#' the project's definitions folder (`definitions/observed-data-sources/<id>.json` in
 #' the default layout) and is the id [removeObservedDataSource()] matches on. It is
 #' canonicalized like every other definition id (lowercased and made a safe
 #' filename segment), and you are told when that changes it, unless it is
 #' already the id of a source in the project or equal to the `file` basename.
 #' Left out, the `file` basename serves as both, kept exactly as the source
 #' spells it. Either way the id is stored in the declaration, so
-#' `project$definitions$observedData[[id]]` reads it back and its `id` field
+#' `project$definitions$observedDataSources[[id]]` reads it back and its `id` field
 #' shows it. A file-based declaration (`excel`, `pkml`, `script`) read that way
 #' can be passed back with `overwrite = TRUE` and keeps its id; a `DataSet`
 #' source is replaced by passing the `DataSet` itself with `overwrite = TRUE`.
@@ -554,7 +554,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     # collides with the id of another source, whose definition file it would
     # share; a config entry can carry an id without resolving a data set of that
     # name.
-    sources <- self$definitions$observedData
+    sources <- self$definitions$observedDataSources
     sectionIds <- names(sources) %||% character()
     isProgrammatic <- vapply(
       sources %||% list(),
@@ -578,7 +578,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     .abortObservedDataIdCaseClash(name, sectionIds[sameId], overwrite)
     if (clashes && !overwrite) {
       cli::cli_abort(c(
-        "observedData entry with name {.val {name}} already exists.",
+        "Observed-data source with name {.val {name}} already exists.",
         "i" = "Pass {.code overwrite = TRUE} to replace it."
       ))
     }
@@ -587,7 +587,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     # explicit-save `.setSection()` does not touch disk, so both are pure
     # in-memory mutations. Any on-disk id/basename collision is surfaced later,
     # by the serializer, when `saveProject()` reconciles the tree.
-    observedData <- private$.getSection("observedData")
+    observedData <- private$.getSection("observedDataSources")
     # On overwrite, replace the existing programmatic sentinel with this id in
     # place. Only a programmatic sentinel can be replaced by a DataSet.
     replaceIdx <- if (overwrite) {
@@ -628,7 +628,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
       # clash with a name inside a source not read yet is appended and reported
       # by the next load.
       cli::cli_abort(c(
-        "observedData entry with name {.val {name}} is a file-based source, \\
+        "Observed-data source with name {.val {name}} is a file-based source, \\
         not a programmatic one, so it cannot be overwritten with a {.cls DataSet}.",
         "i" = "Remove it first with {.code removeObservedDataSource()} by its \\
         {.field id}, then add the {.cls DataSet}."
@@ -636,9 +636,9 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     } else {
       observedData <- c(observedData, list(sentinel))
     }
-    private$.setSection("observedData", observedData)
+    private$.setSection("observedDataSources", observedData)
     private$.programmaticDataSets[[name]] <- entry
-    # The observedData setter resets the names cache, so restore it after the
+    # The observedDataSources setter resets the names cache, so restore it after the
     # write when it was filled. A replaced programmatic source resolved to its
     # id, which may be spelled in another case than `name`, so that name leaves
     # the cache; `union()` keeps `name` once when the spelling is the same. An
@@ -658,12 +658,14 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
 
   if (is.list(entry)) {
     if (is.null(entry$type)) {
-      cli::cli_abort("observedData entry must include a {.field type} field")
+      cli::cli_abort(
+        "An observed-data source must include a {.field type} field"
+      )
     }
     validTypes <- c("excel", "pkml", "script")
     if (!(entry$type %in% validTypes)) {
       cli::cli_abort(c(
-        "Invalid observedData entry type {.val {entry$type}}.",
+        "Invalid observed-data source type {.val {entry$type}}.",
         "i" = "Must be one of: {.val {validTypes}}."
       ))
     }
@@ -671,7 +673,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     # type, so an under-specified config entry is rejected at add time.
     .validateObservedDataEntry(
       entry,
-      length(self$definitions$observedData) + 1L,
+      length(self$definitions$observedDataSources) + 1L,
       call = .call
     )
     # A declared `id` names the entry everywhere (its definition file, and the
@@ -681,7 +683,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
       !is.null(entry[["id"]]) && is.null(.usableObservedDataId(entry[["id"]]))
     ) {
       cli::cli_abort(
-        "An observedData entry's {.field id} must be a single non-empty string."
+        "An observed-data source's {.field id} must be a single non-empty string."
       )
     }
     # A declared id names a definition file, so it runs through the same
@@ -693,7 +695,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     # that is exactly the id of an existing source (a declaration read from the
     # project and passed back) or equal to the derived one is not one the user
     # typed, and is kept as is.
-    existingIds <- names(self$definitions$observedData) %||% character()
+    existingIds <- names(self$definitions$observedDataSources) %||% character()
     derivedId <- .observedDataEntryIdOrNA(entry[names(entry) != "id"])
     typedId <- !is.null(entry[["id"]]) &&
       !(entry[["id"]] %in% c(existingIds, derivedId))
@@ -711,7 +713,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     .abortObservedDataIdCaseClash(entryId, existingIds[sameId], overwrite)
     if (any(sameId) && !overwrite) {
       cli::cli_abort(c(
-        "observedData entry with id {.val {entryId}} already exists.",
+        "Observed-data source with id {.val {entryId}} already exists.",
         "i" = "Pass {.code overwrite = TRUE} to replace it."
       ))
     }
@@ -719,7 +721,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     # neither the names it adds nor those of a source it replaces can be patched
     # into the cache: leave it unset, and the next lookup reads every source.
     private$.observedDataNamesCache <- NULL
-    observedData <- private$.getSection("observedData")
+    observedData <- private$.getSection("observedDataSources")
     # On overwrite, replace the existing entry carrying this id in place;
     # otherwise append (a non-overwrite id clash aborted above).
     replaceIdx <- if (overwrite) which(sameId) else integer()
@@ -732,7 +734,7 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
       # that it vanished. Refuse, as the mirror case (a `DataSet` overwriting a
       # file-based source) already does.
       cli::cli_abort(c(
-        "observedData entry with id {.val {entryId}} is a programmatic source \\
+        "Observed-data source with id {.val {entryId}} is a programmatic source \\
         holding a {.cls DataSet} in this session, so it cannot be overwritten \\
         with a configuration entry.",
         "i" = "Remove it first with {.code removeObservedDataSource()}, then add the \\
@@ -744,19 +746,19 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
     } else {
       observedData <- c(observedData, list(entry))
     }
-    private$.setSection("observedData", observedData)
+    private$.setSection("observedDataSources", observedData)
     return(invisible(self))
   }
 
   cli::cli_abort(
-    "observedData entry must be a {.cls DataSet} or a configuration list"
+    "An observed-data source must be a {.cls DataSet} or a configuration list"
   )
 }
 
 #' Remove one or more observed-data sources from a Project
 #'
 #' Removes by the source's id, the `id` field of each entry in
-#' `project$definitions$observedData` (also the names of that list). Accepts a
+#' `project$definitions$observedDataSources` (also the names of that list). Accepts a
 #' vector of ids and removes them all at once; [saveProject()] then deletes
 #' their definition files. Warns and skips any id with no matching entry.
 #'
@@ -792,7 +794,7 @@ removeObservedDataSource <- function(project, id) {
 .removeObservedDataSource_impl <- function(self, private, id, .call) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
-  observedData <- private$.getSection("observedData")
+  observedData <- private$.getSection("observedDataSources")
 
   # Resolve every id to the section index it removes (a programmatic sentinel or
   # a file-based entry) before touching anything, so the whole batch is
@@ -812,7 +814,7 @@ removeObservedDataSource <- function(project, id) {
   }
 
   if (length(missingIds) > 0L) {
-    cli::cli_warn("observedData entry {.val {missingIds}} not found; no-op.")
+    cli::cli_warn("observed-data source {.val {missingIds}} not found; no-op.")
   }
   # Warn once per removed id that is still referenced, then drop everything in a
   # single in-memory update. A not-found id contributes nothing to the update.
@@ -834,7 +836,7 @@ removeObservedDataSource <- function(project, id) {
   # Update the in-memory section and the runtime store together (both pure
   # in-memory mutations under explicit-save; nothing touches disk until
   # `saveProject()`).
-  private$.setSection("observedData", observedData[-dropIdx])
+  private$.setSection("observedDataSources", observedData[-dropIdx])
   for (name in programmaticNames) {
     private$.programmaticDataSets[[name]] <- NULL
   }
@@ -842,7 +844,7 @@ removeObservedDataSource <- function(project, id) {
   invisible(self)
 }
 
-# Warn when a removed observedData name is still referenced as a
+# Warn when a removed observed-data source name is still referenced as a
 # `dataSet` by any `dataCombined` observed entry. Removal proceeds
 # anyway, leaving the dangling reference for the next validateProject()
 # call to surface, matching the .warnIfReferenced() convention used by
@@ -867,7 +869,7 @@ removeObservedDataSource <- function(project, id) {
   }
   if (length(holders) > 0) {
     cli::cli_warn(c(
-      "Removed observedData {.val {name}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
+      "Removed observed-data source {.val {name}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
       "*" = "{holders}",
       "i" = "These dataCombined entries now have a dangling reference. Update or remove them."
     ))
@@ -886,13 +888,13 @@ removeObservedDataSource <- function(project, id) {
 # source is the same kind of filesystem access the section validators already do,
 # but a `script` source is arbitrary R and validating a project must never run
 # it: a section holding one returns `NULL`, and so does a load that fails, since
-# an unreadable source is the observedData section's own finding rather than a
+# an unreadable source is the observedDataSources section's own finding rather than a
 # dangling reference. `NULL` therefore means "unresolved", not "nothing defined".
 #
 # @keywords internal
 # @noRd
 .observedDataNamesForCrossReference <- function(project) {
-  declarations <- project$definitions$observedData %||% list()
+  declarations <- project$definitions$observedDataSources %||% list()
   if (length(declarations) == 0L) {
     return(character(0))
   }
@@ -1135,7 +1137,7 @@ removeObservedDataSource <- function(project, id) {
 # @noRd
 .persistProgrammaticObservedData <- function(self, private, .call = NULL) {
   rlang::local_error_call(.call)
-  observedData <- private$.getSection("observedData")
+  observedData <- private$.getSection("observedDataSources")
   sectionIds <- names(observedData) %||% character()
   # A hand-authored `programmatic` sentinel may carry no id; it has no backing
   # DataSet, so it is left untouched, matching this function's orphan-sentinel
@@ -1208,8 +1210,8 @@ removeObservedDataSource <- function(project, id) {
     )
   }
 
-  private$.setSection("observedData", observedData)
-  # `.setSection("observedData", ...)` already reset the names cache; the entries
+  private$.setSection("observedDataSources", observedData)
+  # `.setSection("observedDataSources", ...)` already reset the names cache; the entries
   # still resolve to the same DataSet names (now from PKML), so a rebuild on the
   # next read is correct. The runtime-store entries stay until the whole save
   # commits (dropped by the caller after the tree write succeeds), so a save that

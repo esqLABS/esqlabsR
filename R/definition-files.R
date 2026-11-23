@@ -28,14 +28,14 @@
 #   initialConditions        -> initial-conditions/       one file per set
 #   applications             -> applications/             one file per application
 #   outputPaths              -> output-paths/             one file per path
-#   observedData             -> observed-data/            one file per declaration
+#   observedDataSources      -> observed-data-sources/    one file per source
 #   dataCombined             -> data-combined/            one file per entry
 #   plots                    -> plots/                    one file per plot
 #   plotGrids                -> plot-grids/               one file per grid
 #   parameterIdentification  -> parameter-identification/ one file per task
 #
 # A section keyed by an id is one file per id (the id is the filename),
-# `observedData` included: every declaration stores its id, either the one the
+# `observedDataSources` included: every source stores its id, either the one the
 # user gave or the one derived from its source (file basename, or the
 # programmatic DataSet name).
 #
@@ -242,13 +242,13 @@
         .mapSectionToRecords(jsonData$outputPaths, .outputPathMapToRecords)
       }
     ),
-    observedData = list(
-      kind = "observed-data",
+    observedDataSources = list(
+      kind = "observed-data-sources",
       serialize = function(section, project) {
         .serializeObservedDataSet(section)
       },
       parse = function(records, project) .parseObservedDataTree(records),
-      inline = function(jsonData) jsonData$observedData
+      inline = function(jsonData) jsonData$observedDataSources
     ),
     # The plots concern is three independent top-level keyed sections, each its
     # own `definitions/<kind>/` tree: `dataCombined` (folder `data-combined`),
@@ -893,7 +893,7 @@
   })
 }
 
-# observedData: one file per declaration, keyed by its id, which every file
+# observedDataSources: one file per source, keyed by its id, which every file
 # stores as its first field. `call` is the call an abort names: the save, when
 # the save runs these checks before writing any PKML file.
 #
@@ -937,7 +937,7 @@
   .observedDataSectionById(records)
 }
 
-# The in-memory shape of the `observedData` section: every declaration stores
+# The in-memory shape of the `observedDataSources` section: every declaration stores
 # its id (`.observedDataEntryIdOrNA()`) as its first field and the list is named
 # by those ids, like every other section. A declaration with nothing to take an
 # id from stores none and is named `""`; `validateProject()` reports the fields
@@ -978,7 +978,7 @@
   c(list(id = id), entry[names(entry) != "id"])
 }
 
-# The load-side counterpart of `.keyedTreeRecordId()` for observedData, whose
+# The load-side counterpart of `.keyedTreeRecordId()` for observedDataSources, whose
 # file may store no id, and then takes it from its source. Either way the id
 # must agree with the filename,
 # or the next `saveProject()` files the declaration under a different name and
@@ -999,7 +999,7 @@
   stored <- record[["id"]]
   if (!is.null(stored) && is.null(.usableObservedDataId(stored))) {
     cli::cli_abort(c(
-      "An observedData definition file has an unusable {.field id}.",
+      "An observed-data source definition file has an unusable {.field id}.",
       "x" = "{.field id} must be a single non-empty string (it names the \\
       declaration and its file).",
       "i" = "Check {.file {file}}."
@@ -1009,7 +1009,7 @@
   stem <- tools::file_path_sans_ext(basename(file))
   if (!is.na(id) && !identical(id, stem)) {
     cli::cli_abort(c(
-      "An observedData definition file has an id that disagrees with its \\
+      "An observed-data source definition file has an id that disagrees with its \\
       filename.",
       "x" = "The declaration's id is {.val {id}} but the file is \\
       {.val {stem}}.json.",
@@ -1045,7 +1045,7 @@
   if (is.na(id)) {
     cli::cli_abort(
       c(
-        "An observedData declaration has no id to name its definition file.",
+        "An observed-data source has no id to name its definition file.",
         "i" = "Give it an {.field id}, or a {.field file} to take the id from."
       ),
       call = call
@@ -1109,7 +1109,7 @@
   if (grepl("[/\\]", id) || id %in% c(".", "..") || basename(id) != id) {
     cli::cli_abort(
       c(
-        "observedData id {.val {id}} is not a single safe filename segment.",
+        "Observed-data source id {.val {id}} is not a single safe filename segment.",
         "x" = "It must not contain a path separator or be {.val .} / {.val ..}, \\
         so it cannot escape the observed-data definition directory.",
         "i" = "Give the declaration an {.field id} that is a single safe \\

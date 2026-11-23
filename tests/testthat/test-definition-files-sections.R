@@ -257,7 +257,11 @@ test_that("removing a plot definition deletes only its file on save, leaving sib
 
 test_that("saveProject() writes an observed-data (config) definition file", {
   project <- exampleProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
 
   addObservedDataSource(
     project,
@@ -268,7 +272,7 @@ test_that("saveProject() writes an observed-data (config) definition file", {
 
   reloaded <- loadProject(project$info$projectFilePath)
   files <- vapply(
-    reloaded$definitions$observedData,
+    reloaded$definitions$observedDataSources,
     function(e) basename(e[["file"]] %||% ""),
     character(1)
   )

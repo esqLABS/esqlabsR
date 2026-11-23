@@ -25,7 +25,7 @@ test_that(".loadProjectTree() returns a plain list, not a Project, with every se
       "individuals",
       "populations",
       "applications",
-      "observedData",
+      "observedDataSources",
       "dataCombined",
       "plots",
       "plotGrids",
@@ -124,7 +124,7 @@ test_that("loadProject() warns on a dangling cross-reference", {
       schemaVersion = "2.0",
       esqlabsRVersion = "6.0.0",
       filePaths = structure(list(), names = character(0)),
-      observedData = list(),
+      observedDataSources = list(),
       outputPaths = list(O1 = "Organism|A|Concentration in container"),
       scenarios = list(list(
         id = "S",

@@ -750,7 +750,7 @@ test_that(".validateApplications warns on empty section but emits no critical er
   expect_length(result$warnings, 1)
 })
 
-# Section adapter: observedData ----
+# Section adapter: observedDataSources ----
 
 test_that(".validateObservedData flags unknown type and missing required fields", {
   observedData <- list(

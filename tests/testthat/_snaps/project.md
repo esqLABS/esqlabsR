@@ -25,7 +25,7 @@
         * Initial Conditions: 1
         * Applications: 1
         * Output Paths: 2
-        * Observed Data: 1
+        * Observed Data Sources: 1
         * Data Combined: 1
         * Plots: 1
         * Plot Grids: 1
@@ -174,7 +174,7 @@
         * Initial Conditions: 1
         * Applications: 1
         * Output Paths: 3
-        * Observed Data: 1
+        * Observed Data Sources: 1
         * Parameter Identification: 1
       
       -- Excel -----------------------------------------------------------------------
@@ -212,7 +212,7 @@
         * Initial Conditions: 1
         * Applications: 1
         * Output Paths: 2
-        * Observed Data: 1
+        * Observed Data Sources: 1
         * Parameter Identification: 1
       
       -- Excel -----------------------------------------------------------------------
@@ -250,7 +250,7 @@
         * Initial Conditions: 1
         * Applications: 1
         * Output Paths: 3
-        * Observed Data: 1
+        * Observed Data Sources: 1
         * Parameter Identification: 1
       
       -- Excel -----------------------------------------------------------------------

@@ -1190,7 +1190,7 @@ runPI <- function(
       "parameterIdentification",
       "scenarios",
       "outputPaths",
-      "observedData",
+      "observedDataSources",
       "crossReferences"
     ),
     opName = "runPI"

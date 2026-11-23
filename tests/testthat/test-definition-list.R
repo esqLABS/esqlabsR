@@ -115,14 +115,14 @@ test_that(".definitionListIds takes a keyed section's ids from its names", {
   expect_equal(.definitionListIds(wrapped), c("one", "two"))
 })
 
-test_that(".definitionListIds takes the observedData ids from the names the section is keyed by", {
+test_that(".definitionListIds takes the observed-data source ids from the names the section is keyed by", {
   section <- .asDefinitionList(
     .observedDataSectionById(list(
       list(type = "excel", file = "Laskin_1982.xlsx"),
       list(type = "pkml", file = "aciclovir_plasma.pkml"),
       list(id = "simulated_plasma", type = "programmatic")
     )),
-    "observedData"
+    "observedDataSources"
   )
 
   expect_equal(
@@ -131,31 +131,31 @@ test_that(".definitionListIds takes the observedData ids from the names the sect
   )
 })
 
-test_that(".definitionListIds labels an observedData declaration with no derivable id", {
+test_that(".definitionListIds labels an observed-data source with no derivable id", {
   section <- .asDefinitionList(
     .observedDataSectionById(list(list(type = "pkml"))),
-    "observedData"
+    "observedDataSources"
   )
 
   expect_equal(.definitionListIds(section), "(no id)")
 })
 
-test_that(".definitionListIds returns no ids for an empty observedData section", {
+test_that(".definitionListIds returns no ids for an empty observedDataSources section", {
   expect_equal(
     .definitionListIds(
-      .asDefinitionList(.observedDataSectionById(list()), "observedData")
+      .asDefinitionList(.observedDataSectionById(list()), "observedDataSources")
     ),
     character(0)
   )
 })
 
-test_that("printing the observedData section shows its ids", {
+test_that("printing the observedDataSources section shows its ids", {
   section <- .asDefinitionList(
     .observedDataSectionById(list(
       list(type = "excel", file = "Laskin_1982.xlsx"),
       list(id = "simulated_plasma", type = "programmatic")
     )),
-    "observedData"
+    "observedDataSources"
   )
 
   expect_snapshot(print(section))

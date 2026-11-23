@@ -343,11 +343,11 @@ test_that("loadProject() preserves applications as a named list keyed by protoco
   expect_identical(app$parameterSets, "aciclovir_iv_250mg_default")
 })
 
-test_that("loadProject() preserves the observedData section", {
+test_that("loadProject() preserves the observedDataSources section", {
   project <- exampleProject()
 
-  expect_length(project$definitions$observedData, 1L)
-  source <- project$definitions$observedData[[1L]]
+  expect_length(project$definitions$observedDataSources, 1L)
+  source <- project$definitions$observedDataSources[[1L]]
   expect_identical(source$type, "excel")
   expect_identical(source$file, "Aciclovir_TimeValuesData.xlsx")
   expect_identical(source$sheets, list("Laskin 1982.Group A"))
@@ -469,7 +469,7 @@ test_that("loadProject() defaults missing optional sections to empty lists", {
     structure(list(), names = character(0L))
   )
   expect_identical(
-    .unwrapDefinitionList(project$definitions$observedData),
+    .unwrapDefinitionList(project$definitions$observedDataSources),
     list()
   )
   expect_identical(
@@ -830,7 +830,7 @@ test_that("saveProject() writes an empty-sections container yet the tree restore
     "parameterSets",
     "applications",
     "outputPaths",
-    "observedData",
+    "observedDataSources",
     "dataCombined",
     "plots",
     "plotGrids",
@@ -1100,7 +1100,7 @@ test_that("the read-only block applies to every section accessor", {
     "individuals",
     "populations",
     "applications",
-    "observedData",
+    "observedDataSources",
     "dataCombined",
     "plots",
     "plotGrids",
@@ -1127,7 +1127,7 @@ test_that("sub-element and negative-index assignment are rejected on every secti
     "individuals",
     "populations",
     "applications",
-    "observedData",
+    "observedDataSources",
     "dataCombined",
     "plots",
     "plotGrids",

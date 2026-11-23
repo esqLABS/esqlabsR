@@ -23,7 +23,7 @@ Comparing a simulation against measured data is what turns a model run into a di
 
 It assumes you already know what a Project is and how to load one (see `vignette("how-to-set-up-a-project")`). To pair observed data with simulated curves in a figure, see `vignette("how-to-plot-results")`.
 
-A project stores a **source definition**, not the numbers: a small record under `definitions/observed-data/<id>.json` saying where the data comes from and how to read it. The data itself is loaded on demand, so it always reflects the current source file. `vignette("about-the-plotting-model")` explains why, and `vignette("reference-definition-fields")` lists the required fields per source type.
+A project stores a **source definition**, not the numbers: a small record under `definitions/observed-data-sources/<id>.json` saying where the data comes from and how to read it. The data itself is loaded on demand, so it always reflects the current source file. `vignette("about-the-plotting-model")` explains why, and `vignette("reference-definition-fields")` lists the required fields per source type.
 
 The four types differ only in where the data comes from: `excel` reads sheets of a workbook through an OSPS data-importer configuration, `pkml` reads a saved `DataSet`, `script` runs an R script that returns one, and `programmatic` takes a `DataSet` you built in the session.
 
@@ -38,7 +38,7 @@ project <- loadProject(file.path(project_dir, "Project.json"))
 The example already ships with one observed-data source, an Excel source. You can see it as a definition on the project, read by its id:
 
 ```{r}
-project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
+project$definitions$observedDataSources[["Aciclovir_TimeValuesData.xlsx"]]
 ```
 
 ## Choose the name a source is known by
@@ -47,7 +47,7 @@ Two strings attach to every source, and they are not interchangeable. The **sour
 
 The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read, load or remove a source.
 
-Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
+Every source carries its id in its `id` field, and `project$definitions$observedDataSources` is keyed by it. Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data-sources/laskin_iv.json` rather than under the data file's name:
 
 ```{r, eval = FALSE}
 addObservedDataSource(
@@ -128,7 +128,7 @@ addObservedDataSource(project, list(type = "pkml", file = "extra_cohort.pkml"))
 getObservedDataNames(project)
 ```
 
-The source id is the file basename, `extra_cohort.pkml`, so the source definition is written to `definitions/observed-data/extra_cohort.pkml.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
+The source id is the file basename, `extra_cohort.pkml`, so the source definition is written to `definitions/observed-data-sources/extra_cohort.pkml.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
 
 ## Source type 3: Script
 

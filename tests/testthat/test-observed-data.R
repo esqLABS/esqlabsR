@@ -7,7 +7,7 @@ test_that("loadObservedData errors on non-Project input", {
   )
 })
 
-test_that("loadObservedData returns empty list when observedData is NULL", {
+test_that("loadObservedData returns empty list when observedDataSources is NULL", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(
@@ -24,7 +24,7 @@ test_that("loadObservedData returns empty list when observedData is NULL", {
   expect_identical(loadObservedData(project), list())
 })
 
-test_that("loadObservedData returns empty list when observedData is empty array", {
+test_that("loadObservedData returns empty list when observedDataSources is empty array", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(
@@ -32,7 +32,7 @@ test_that("loadObservedData returns empty list when observedData is empty array"
       filePaths = structure(list(), names = character(0)),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list()
+      observedDataSources = list()
     ),
     tmp,
     auto_unbox = TRUE,
@@ -58,7 +58,7 @@ test_that("loadObservedData errors when an entry has invalid type", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "invalid_type", file = "x"))
+      observedDataSources = list(list(type = "invalid_type", file = "x"))
     ),
     tmp,
     auto_unbox = TRUE,
@@ -76,7 +76,7 @@ test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "programmatic", name = "x"))
+      observedDataSources = list(list(type = "programmatic", name = "x"))
     ),
     tmp,
     auto_unbox = TRUE,
@@ -102,7 +102,7 @@ test_that("loadObservedData errors when excel entry is missing required fields",
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "excel", file = "x.xlsx"))
+      observedDataSources = list(list(type = "excel", file = "x.xlsx"))
     ),
     tmp,
     auto_unbox = TRUE,
@@ -120,7 +120,10 @@ test_that("loadObservedData errors when source file is missing", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "pkml", file = "no-such-file.pkml"))
+      observedDataSources = list(list(
+        type = "pkml",
+        file = "no-such-file.pkml"
+      ))
     ),
     tmp,
     auto_unbox = TRUE,
@@ -141,7 +144,7 @@ test_that("loadObservedData rejects an observed-data file that escapes the data 
       filePaths = list(dataFolder = "Data"),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(
+      observedDataSources = list(
         list(type = "pkml", file = "../../../../etc/passwd")
       )
     ),
@@ -172,7 +175,7 @@ test_that("loadObservedData loads pkml observed data", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "pkml", file = "Aciclovir.pkml"))
+      observedDataSources = list(list(type = "pkml", file = "Aciclovir.pkml"))
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -202,7 +205,7 @@ test_that("loadObservedData sources script entries", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "script", file = "make_dataset.R"))
+      observedDataSources = list(list(type = "script", file = "make_dataset.R"))
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -247,7 +250,7 @@ test_that("loadObservedData re-keys a script's list of DataSets by each name", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "script", file = "make_list.R"))
+      observedDataSources = list(list(type = "script", file = "make_list.R"))
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -285,7 +288,7 @@ test_that("loadObservedData aborts on a name collision across sources", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(
+      observedDataSources = list(
         list(type = "script", file = "one.R"),
         list(type = "script", file = "two.R")
       )
@@ -312,7 +315,7 @@ test_that("loadObservedData errors when script returns wrong type", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "script", file = "bad.R"))
+      observedDataSources = list(list(type = "script", file = "bad.R"))
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -334,7 +337,7 @@ test_that("loadObservedData errors when dataFolder is not declared", {
       filePaths = structure(list(), names = character(0)),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "pkml", file = "x.pkml"))
+      observedDataSources = list(list(type = "pkml", file = "x.pkml"))
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -346,10 +349,10 @@ test_that("loadObservedData errors when dataFolder is not declared", {
 
 test_that("addObservedDataSource appends a valid config entry", {
   project <- testProject()
-  before <- length(project$definitions$observedData)
+  before <- length(project$definitions$observedDataSources)
   addObservedDataSource(project, list(type = "pkml", file = "extra.pkml"))
-  expect_length(project$definitions$observedData, before + 1L)
-  added <- project$definitions$observedData[[before + 1L]]
+  expect_length(project$definitions$observedDataSources, before + 1L)
+  added <- project$definitions$observedDataSources[[before + 1L]]
   # The entry is classed as an ObservedDataSource (a transparent list wrapper
   # for printing); compare the fields, not the class.
   expect_s3_class(added, "ObservedDataSource")
@@ -371,7 +374,7 @@ test_that("addObservedDataSource rejects an under-specified config entry, naming
     error = TRUE,
     addObservedDataSource(project, list(type = "excel"))
   )
-  expect_length(project$definitions$observedData, 1L)
+  expect_length(project$definitions$observedDataSources, 1L)
 })
 
 test_that("addObservedDataSource rejects a duplicate config entry file", {
@@ -388,7 +391,7 @@ test_that("addObservedDataSource rejects a duplicate config entry file", {
       )
     )
   )
-  expect_length(project$definitions$observedData, 1L)
+  expect_length(project$definitions$observedDataSources, 1L)
 })
 
 test_that("addObservedDataSource aborts on a duplicate DataSet name, replaces with overwrite", {
@@ -397,11 +400,11 @@ test_that("addObservedDataSource aborts on a duplicate DataSet name, replaces wi
   ds2 <- ospsuite::DataSet$new(name = "prog_ds")
   suppressMessages(addObservedDataSource(project, ds1))
   expect_snapshot(error = TRUE, addObservedDataSource(project, ds2))
-  before <- length(project$definitions$observedData)
+  before <- length(project$definitions$observedDataSources)
   suppressMessages(addObservedDataSource(project, ds2, overwrite = TRUE))
   # The section length is unchanged (replaced in place) and the runtime store
   # now holds the second DataSet under that name.
-  expect_length(project$definitions$observedData, before)
+  expect_length(project$definitions$observedDataSources, before)
   expect_identical(loadObservedData(project)[["prog_ds"]], ds2)
 })
 
@@ -902,7 +905,7 @@ test_that("a warning about selected sources leaves the warning of a full load", 
 test_that("addObservedDataSource overwrite = TRUE replaces a config entry in place", {
   project <- testProject()
   addObservedDataSource(project, list(type = "pkml", file = "sub1/obs.pkml"))
-  before <- length(project$definitions$observedData)
+  before <- length(project$definitions$observedDataSources)
   # A second entry with the same basename replaces the first (same on-disk id),
   # keeping the section length unchanged and taking the new directory.
   addObservedDataSource(
@@ -910,9 +913,9 @@ test_that("addObservedDataSource overwrite = TRUE replaces a config entry in pla
     list(type = "pkml", file = "sub2/obs.pkml"),
     overwrite = TRUE
   )
-  expect_length(project$definitions$observedData, before)
+  expect_length(project$definitions$observedDataSources, before)
   files <- vapply(
-    project$definitions$observedData,
+    project$definitions$observedDataSources,
     function(e) if (is.null(e[["file"]])) NA_character_ else e[["file"]],
     character(1)
   )
@@ -925,17 +928,21 @@ test_that("addObservedDataSource overwrite = TRUE replaces a config entry in pla
 # lost on reload). Under explicit-save the section is accepted in memory, but
 # the serializer that `saveProject()` drives must fail fast naming the
 # collision, leaving disk unchanged.
-test_that("observedData declarations sharing a basename fail saveProject()", {
+test_that("observed-data sources sharing a basename fail saveProject()", {
   project <- testProject()
   saveProject(project)
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   before <- if (dir.exists(dir)) list.files(dir) else character()
 
   colliding <- list(
     list(type = "pkml", file = "dirA/obs.pkml"),
     list(type = "pkml", file = "dirB/obs.pkml")
   )
-  .setSection(project, "observedData", colliding)
+  .setSection(project, "observedDataSources", colliding)
   expect_snapshot(
     saveProject(project),
     error = TRUE
@@ -975,8 +982,8 @@ test_that("saveProject persists a programmatic DataSet to PKML and it round-trip
 
   # The entry is now a pkml source pointing at the written file; the runtime
   # store no longer holds it (it is file-backed).
-  entry <- project$definitions$observedData[[
-    length(project$definitions$observedData)
+  entry <- project$definitions$observedDataSources[[
+    length(project$definitions$observedDataSources)
   ]]
   expect_identical(entry$type, "pkml")
   expect_identical(entry$file, "RoundTripSet.pkml")
@@ -1095,7 +1102,7 @@ test_that("saveProject aborts persisting a programmatic DataSet with no dataFold
       filePaths = structure(list(), names = character(0)),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list()
+      observedDataSources = list()
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -1126,9 +1133,9 @@ test_that("addObservedDataSource rejects a DataSet name that is not a safe filen
 # `subscript out of bounds`.
 test_that("saveProject rejects an id-less programmatic sentinel with a clear error", {
   project <- testProject()
-  observedData <- .getSection(project, "observedData")
+  observedData <- .getSection(project, "observedDataSources")
   observedData <- c(observedData, list(list(type = "programmatic")))
-  .setSection(project, "observedData", observedData)
+  .setSection(project, "observedDataSources", observedData)
 
   expect_error(saveProject(project), "no id to name its definition file")
 })
@@ -1170,7 +1177,7 @@ test_that("removeObservedDataSource drops the DataSet of a source a failed save 
   suppressMessages(addObservedDataSource(project, ds))
   .persistProgrammaticObservedData(project, state)
   expect_identical(
-    project$definitions$observedData[["RecoverableSet"]]$type,
+    project$definitions$observedDataSources[["RecoverableSet"]]$type,
     "pkml"
   )
 
@@ -1191,9 +1198,9 @@ test_that("saveProject refuses a DataSet that shares its id with another source 
   suppressMessages(addObservedDataSource(project, cohort))
   .setSection(
     project,
-    "observedData",
+    "observedDataSources",
     c(
-      .getSection(project, "observedData"),
+      .getSection(project, "observedDataSources"),
       list(list(type = "script", file = "scripts/Cohort B"))
     )
   )
@@ -1208,7 +1215,11 @@ test_that("saveProject refuses a DataSet that shares its id with another source 
 
 test_that("removeObservedDataSource deletes the definition file on save", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   # The fixture declares one Excel source, filed under its basename.
   id <- "Aciclovir_TimeValuesData.xlsx"
   expect_true(file.exists(file.path(dir, paste0(id, ".json"))))
@@ -1218,7 +1229,7 @@ test_that("removeObservedDataSource deletes the definition file on save", {
   # In memory the declaration is gone; the definition file is deleted on save
   # and a fresh load no longer sees it.
   expect_false(any(vapply(
-    project$definitions$observedData,
+    project$definitions$observedDataSources,
     function(e) identical(basename(e[["file"]] %||% ""), id),
     logical(1)
   )))
@@ -1230,28 +1241,32 @@ test_that("removeObservedDataSource deletes the definition file on save", {
     reloaded <- loadProject(project$info$projectFilePath),
     "unresolved cross-reference"
   )
-  expect_length(reloaded$definitions$observedData, 0L)
+  expect_length(reloaded$definitions$observedDataSources, 0L)
 })
 
 test_that("removeObservedDataSource removes a vector of ids in one pass", {
   project <- testProject()
   addObservedDataSource(project, list(type = "pkml", file = "one.pkml"))
   addObservedDataSource(project, list(type = "pkml", file = "two.pkml"))
-  before <- length(project$definitions$observedData)
+  before <- length(project$definitions$observedDataSources)
 
   removeObservedDataSource(project, c("one.pkml", "two.pkml"))
-  expect_length(project$definitions$observedData, before - 2L)
+  expect_length(project$definitions$observedDataSources, before - 2L)
   files <- vapply(
-    project$definitions$observedData,
+    project$definitions$observedDataSources,
     function(e) basename(e[["file"]] %||% NA_character_),
     character(1)
   )
   expect_false(any(c("one.pkml", "two.pkml") %in% files))
 })
 
-test_that("an observedData entry is filed and matched by its declared id", {
+test_that("an observed-data source is filed and matched by its declared id", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
 
   addObservedDataSource(
     project,
@@ -1265,7 +1280,7 @@ test_that("an observedData entry is filed and matched by its declared id", {
   expect_false(file.exists(file.path(dir, "demo.pkml.json")))
   reloaded <- loadProject(project$info$projectFilePath)
   ids <- vapply(
-    reloaded$definitions$observedData,
+    reloaded$definitions$observedDataSources,
     function(e) e[["id"]] %||% NA_character_,
     character(1)
   )
@@ -1299,7 +1314,7 @@ test_that("addObservedDataSource rejects a duplicate declared id", {
   )
   entry <- Filter(
     function(e) identical(e[["id"]], "obs"),
-    project$definitions$observedData
+    project$definitions$observedDataSources
   )
   expect_length(entry, 1L)
   expect_identical(entry[[1]][["file"]], "b.pkml")
@@ -1312,7 +1327,11 @@ test_that("addObservedDataSource canonicalizes a declared id", {
   # would otherwise be two declarations mapping to one file on a
   # case-insensitive filesystem.
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
 
   expect_warning(
     addObservedDataSource(
@@ -1327,7 +1346,7 @@ test_that("addObservedDataSource canonicalizes a declared id", {
   )
   expect_true(
     "testproject_timevaluesdata" %in%
-      names(project$definitions$observedData)
+      names(project$definitions$observedDataSources)
   )
 
   saveProject(project)
@@ -1354,7 +1373,7 @@ test_that("addObservedDataSource leaves a derived id and a DataSet name as they 
   addObservedDataSource(project, list(type = "pkml", file = "sub/MyObs.pkml"))
 
   expect_setequal(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "MyObs.pkml", "MyProgSet")
   )
 })
@@ -1385,14 +1404,14 @@ test_that("removeObservedDataSource finds every id kind by the spelling it was a
   # canonical one that spelling was rewritten to.
   removeObservedDataSource(project, "MyDeclared")
   expect_false(
-    "mydeclared" %in% names(project$definitions$observedData)
+    "mydeclared" %in% names(project$definitions$observedDataSources)
   )
 
   # A derived id and a programmatic `DataSet` name are matched verbatim, so
   # canonicalizing the search key unconditionally would strand both.
   removeObservedDataSource(project, c("MyObs.pkml", "MyProgSet"))
   expect_setequal(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     "Aciclovir_TimeValuesData.xlsx"
   )
   expect_false("MyProgSet" %in% getObservedDataNames(project))
@@ -1458,12 +1477,12 @@ test_that("a DataSet clashes with the id of another source", {
 test_that("removeObservedDataSource warns and skips a not-found id in the batch", {
   project <- testProject()
   addObservedDataSource(project, list(type = "pkml", file = "one.pkml"))
-  before <- length(project$definitions$observedData)
+  before <- length(project$definitions$observedDataSources)
   expect_warning(
     removeObservedDataSource(project, c("one.pkml", "ghost.pkml")),
     "ghost.pkml"
   )
-  expect_length(project$definitions$observedData, before - 1L)
+  expect_length(project$definitions$observedDataSources, before - 1L)
 })
 
 # The remove path writes through to disk BEFORE clearing the runtime store, so a
@@ -1482,7 +1501,7 @@ test_that("removeObservedDataSource mutates memory only; a surviving collision a
   addObservedDataSource(project, ds)
 
   # Seed a colliding pair of surviving entries directly into the backing field.
-  state$.observedData <- .observedDataSectionById(list(
+  state$.observedDataSources <- .observedDataSectionById(list(
     list(id = "myProgSet", type = "programmatic"),
     list(type = "pkml", file = "dirA/obs.pkml"),
     list(type = "pkml", file = "dirB/obs.pkml")
@@ -1509,7 +1528,10 @@ test_that("every observed-data source stores its id first and the section is key
   ))
 
   expect_identical(
-    lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
+    lapply(
+      .unwrapDefinitionList(project$definitions$observedDataSources),
+      unclass
+    ),
     list(
       "Aciclovir_TimeValuesData.xlsx" = list(
         id = "Aciclovir_TimeValuesData.xlsx",
@@ -1530,19 +1552,25 @@ test_that("every observed-data source stores its id first and the section is key
     )
   )
   expect_s3_class(
-    project$definitions$observedData[["Cohort B.pkml"]],
+    project$definitions$observedDataSources[["Cohort B.pkml"]],
     "ObservedDataSource"
   )
   # Keyed by id, the section is still read-only.
   expect_snapshot(
     error = TRUE,
-    project$definitions$observedData[["Cohort B.pkml"]]$file <- "other.pkml"
+    project$definitions$observedDataSources[[
+      "Cohort B.pkml"
+    ]]$file <- "other.pkml"
   )
 })
 
 test_that("saveProject writes the id first into every definition file and a DataSet keeps its name as id", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   addObservedDataSource(
     project,
     list(type = "pkml", file = "sub/Cohort B.pkml")
@@ -1586,7 +1614,7 @@ test_that("saveProject writes the id first into every definition file and a Data
   for (p in list(project, reloaded)) {
     removeObservedDataSource(p, "Scratch measurement")
     expect_identical(
-      names(p$definitions$observedData),
+      names(p$definitions$observedDataSources),
       c("Aciclovir_TimeValuesData.xlsx", "Cohort B.pkml")
     )
   }
@@ -1597,7 +1625,11 @@ test_that("saveProject writes the id first into every definition file and a Data
 test_that("a definition file that stores no id, or a programmatic name, still loads", {
   # Written by hand, or saved before every file stored its id.
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   jsonlite::write_json(
     list(type = "pkml", file = "Cohort B.pkml"),
     file.path(dir, "Cohort B.pkml.json"),
@@ -1610,7 +1642,7 @@ test_that("a definition file that stores no id, or a programmatic name, still lo
   )
 
   reloaded <- loadProject(project$info$projectFilePath)
-  sources <- .unwrapDefinitionList(reloaded$definitions$observedData)
+  sources <- .unwrapDefinitionList(reloaded$definitions$observedDataSources)
   expect_identical(
     lapply(sources[c("Cohort B.pkml", "Scratch measurement")], unclass),
     list(
@@ -1647,7 +1679,7 @@ test_that("a programmatic name in a project snapshot loads as its id", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(
+      observedDataSources = list(
         list(type = "programmatic", name = "Scratch measurement")
       )
     ),
@@ -1659,7 +1691,10 @@ test_that("a programmatic name in a project snapshot loads as its id", {
   project <- loadProject(tmp)
 
   expect_identical(
-    lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
+    lapply(
+      .unwrapDefinitionList(project$definitions$observedDataSources),
+      unclass
+    ),
     list(
       "Scratch measurement" = list(
         id = "Scratch measurement",
@@ -1681,7 +1716,7 @@ test_that("snapshotProject writes observed data as an array of records with ids"
 
   # An array: no names, each record carrying its own `id`.
   expect_identical(
-    written$observedData,
+    written$observedDataSources,
     list(
       list(
         id = "Aciclovir_TimeValuesData.xlsx",
@@ -1700,7 +1735,11 @@ test_that("a source passed back keeps the id it is stored under", {
   # user typed: it is kept as is even when it is not the spelling a typed id
   # would be canonicalized to, or no longer the basename of its file.
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   jsonlite::write_json(
     list(id = "Laskin IV", type = "pkml", file = "laskin_1982_iv.pkml"),
     file.path(dir, "Laskin IV.json"),
@@ -1712,7 +1751,7 @@ test_that("a source passed back keeps the id it is stored under", {
   suppressMessages(addObservedDataSource(project, scratch))
   saveProject(project)
 
-  sources <- project$definitions$observedData
+  sources <- project$definitions$observedDataSources
   aciclovir <- sources[["Aciclovir_TimeValuesData.xlsx"]]
   aciclovir$file <- "Aciclovir_TimeValuesData_v2.xlsx"
   expect_no_warning({
@@ -1726,11 +1765,13 @@ test_that("a source passed back keeps the id it is stored under", {
   })
 
   expect_identical(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "Laskin IV", "Scratch measurement")
   )
   expect_identical(
-    project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]$file,
+    project$definitions$observedDataSources[[
+      "Aciclovir_TimeValuesData.xlsx"
+    ]]$file,
     "Aciclovir_TimeValuesData_v2.xlsx"
   )
   expect_no_error(saveProject(project))
@@ -1747,7 +1788,11 @@ test_that("a source passed back keeps the id it is stored under", {
 test_that("a DataSet replaces a programmatic source with no data only with overwrite", {
   # A source with no data, as a snapshot taken before saving leaves it.
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   jsonlite::write_json(
     list(id = "Scratch measurement", type = "programmatic"),
     file.path(dir, "Scratch measurement.json"),
@@ -1761,7 +1806,7 @@ test_that("a DataSet replaces a programmatic source with no data only with overw
 
   suppressMessages(addObservedDataSource(project, scratch, overwrite = TRUE))
   expect_identical(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "Scratch measurement")
   )
   saveProject(project)
@@ -1835,7 +1880,7 @@ test_that("addObservedDataSource refuses an id that differs from another only in
     addObservedDataSource(project, ospsuite::DataSet$new(name = "cohort b"))
   })
   expect_identical(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "Laskin 1982.pkml", "cohort", "Cohort B")
   )
 })
@@ -1844,7 +1889,11 @@ test_that("addObservedDataSource refuses an id that differs from another only in
 # source's data-set name from the names the project knows, not only its entry.
 test_that("overwriting a DataSet source spelled in another case replaces its data-set name", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   state <- .projectSeam(project)
   upper <- ospsuite::DataSet$new(name = "Cohort B")
   upper$setValues(xValues = c(0, 1), yValues = c(1, 2))
@@ -1856,7 +1905,7 @@ test_that("overwriting a DataSet source spelled in another case replaces its dat
   suppressMessages(addObservedDataSource(project, lower, overwrite = TRUE))
 
   expect_identical(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "cohort b")
   )
   expect_identical(names(state$.programmaticDataSets), "cohort b")
@@ -1873,7 +1922,11 @@ test_that("overwriting a DataSet source spelled in another case replaces its dat
 
 test_that("overwriting a file source spelled in another case replaces its data-set name", {
   project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "observed-data-sources"
+  )
   dataFolder <- project$paths$dataFolder
   for (name in c("Cohort", "COHORT")) {
     ds <- ospsuite::DataSet$new(name = name)
@@ -1893,7 +1946,7 @@ test_that("overwriting a file source spelled in another case replaces its data-s
   )
 
   expect_identical(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "COHORT.pkml")
   )
   expect_identical(
@@ -1935,7 +1988,7 @@ test_that("a DataSet overwrite is refused when another source provides its name"
     addObservedDataSource(project, lower, overwrite = TRUE)
   )
   expect_identical(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "Cohort B", "cohort_b_export.pkml")
   )
   expect_identical(names(state$.programmaticDataSets), "Cohort B")
@@ -1959,7 +2012,7 @@ test_that("a DataSet overwrite is refused when another source reads its PKML fil
     addObservedDataSource(project, lower, overwrite = TRUE)
   )
   expect_identical(
-    names(project$definitions$observedData),
+    names(project$definitions$observedDataSources),
     c("Aciclovir_TimeValuesData.xlsx", "Cohort B", "cohort_b_lab")
   )
   expect_identical(names(state$.programmaticDataSets), "Cohort B")
@@ -1971,13 +2024,13 @@ test_that("print.ObservedDataSource renders the source declaration", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$definitions$observedData[[1]]))
+  expect_snapshot(print(project$definitions$observedDataSources[[1]]))
 })
 
 # The section is stored as an unnamed list, so printing it showed the count with
 # no ids underneath (#1281). It lists the same ids the authoring functions take.
 
-test_that("printing the observedData section lists the declaration ids", {
+test_that("printing the observedDataSources section lists the declaration ids", {
   project <- testProject()
   suppressMessages(addObservedDataSource(
     project,
@@ -1985,5 +2038,5 @@ test_that("printing the observedData section lists the declaration ids", {
   ))
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$definitions$observedData))
+  expect_snapshot(print(project$definitions$observedDataSources))
 })

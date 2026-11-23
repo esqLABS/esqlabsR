@@ -217,12 +217,12 @@ Project <- R6::R6Class(
     #' @field definitions The project's definition sections, as a read-only
     #'   field group. Each section is one field: `outputPaths`, `scenarios`,
     #'   `parameterSets`, `initialConditions`, `individuals`, `populations`,
-    #'   `applications`, `observedData`, `dataCombined`, `plots`, `plotGrids`,
+    #'   `applications`, `observedDataSources`, `dataCombined`, `plots`, `plotGrids`,
     #'   `parameterIdentification`. Read a section with
     #'   `project$definitions$scenarios` (returned as a printable, read-only
     #'   named list keyed by id). An observed-data source is read by its id
     #'   like any other definition
-    #'   (`project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]`),
+    #'   (`project$definitions$observedDataSources[["Aciclovir_TimeValuesData.xlsx"]]`),
     #'   the id [removeObservedDataSource()] takes.
     #'   The group is read-only from the handle: every assignment form aborts.
     #'   The only sanctioned way to change a section is
@@ -783,7 +783,7 @@ Project <- R6::R6Class(
     .individuals = NULL,
     .populations = NULL,
     .applications = NULL,
-    .observedData = NULL,
+    .observedDataSources = NULL,
     .dataCombined = NULL,
     .plots = NULL,
     .plotGrids = NULL,
@@ -1148,7 +1148,7 @@ Project <- R6::R6Class(
         "Initial Conditions" = length(private$.initialConditions),
         "Applications" = length(private$.applications),
         "Output Paths" = length(private$.outputPaths),
-        "Observed Data" = length(private$.observedData),
+        "Observed Data Sources" = length(private$.observedDataSources),
         "Data Combined" = length(private$.dataCombined),
         "Plots" = length(private$.plots),
         "Plot Grids" = length(private$.plotGrids),
@@ -1263,13 +1263,13 @@ Project <- R6::R6Class(
         value <- .storeScenarioOutputPathIds(value)
       }
       # Observed-data declarations are stored with their id and named by it.
-      if (identical(kind, "observedData")) {
+      if (identical(kind, "observedDataSources")) {
         value <- .observedDataSectionById(value)
       }
       private[[field]] <- value
       # Writing observed data invalidates the cached observed-data names, as the
       # active-binding setter did.
-      if (identical(kind, "observedData")) {
+      if (identical(kind, "observedDataSources")) {
         private$.observedDataNamesCache <- NULL
       }
       private$.modified <- TRUE

@@ -2141,7 +2141,7 @@ messages$runningPITask <- function(piTaskName) {
 # Observed data (Chapter 5) ####
 messages$observedDataInvalidEntryType <- function(badType, validTypes) {
   cliBullets(
-    "x" = "Invalid {.field type} {.val {badType}} in {.code observedData} entry.",
+    "x" = "Invalid {.field type} {.val {badType}} in an observed-data source.",
     "i" = "Must be one of: {.val {validTypes}}."
   )
 }
@@ -2151,7 +2151,7 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
 # to fix as it had gaps.
 messages$observedDataMissingFields <- function(entryIndex, type, fields) {
   ospsuite.utils::cliFormat(
-    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing \\
+    "Observed-data source {entryIndex} (type {.val {type}}) is missing \\
     {cli::qty(length(fields))}required field{?s} {.field {fields}}."
   )
 }

@@ -8,7 +8,7 @@
     "dataFolder": "Data/",
     "outputFolder": "Results/"
   },
-  "observedData": [],
+  "observedDataSources": [],
   "outputPaths": {},
   "scenarios": [],
   "parameterSets": {},
