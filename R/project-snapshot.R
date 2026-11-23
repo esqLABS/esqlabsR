@@ -202,6 +202,8 @@ restoreProject <- function(
     ))
   }
 
+  .abortOnEarlierObservedDataLayout(jsonData, fs::path_file(snapshot))
+
   # A legacy or hand-authored snapshot may carry non-canonical ids (e.g.
   # `Sim_A`, `Aciclovir_PVB`), but the definition tree keys files by canonical id,
   # so the tree writer requires them. Canonicalize every id and every reference

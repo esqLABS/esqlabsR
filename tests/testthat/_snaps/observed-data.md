@@ -356,3 +356,33 @@
         * Aciclovir_TimeValuesData.xlsx
         * simulated_plasma
 
+# loading a project that keeps its sources in the earlier folder aborts
+
+    Code
+      loadProject(file.path(dir, "Project.json"))
+    Condition
+      Error:
+      ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
+      x The project's 'definitions' folder keeps them in the subfolder 'observed-data'.
+      i Rename the subfolder to 'observed-data-sources'.
+
+# loading a Project.json with the earlier observed-data key aborts
+
+    Code
+      loadProject(path)
+    Condition
+      Error:
+      ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
+      x The file lists them under the key observedData.
+      i Rename the key to observedDataSources.
+
+# restoring a snapshot with the earlier observed-data key aborts
+
+    Code
+      restoreProject(snapshot, dir)
+    Condition
+      Error in `restoreProject()`:
+      ! 'aciclovir.esqlabsR' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
+      x The file lists them under the key observedData.
+      i Rename the key to observedDataSources.
+

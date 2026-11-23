@@ -172,6 +172,11 @@ loadProject <- function(path = ".") {
   rlang::local_error_call(NULL)
   .validateDefinitionsFolder(jsonData$definitionsFolder)
   definitionsFolder <- jsonData$definitionsFolder %||% "definitions"
+  .abortOnEarlierObservedDataLayout(
+    jsonData,
+    fs::path_file(jsonPath),
+    file.path(projectDirPath, definitionsFolder)
+  )
 
   # The container separates two concerns: the live working folders
   # (the `filePaths` block) the runtime reads, and the Excel-bridge

@@ -2040,3 +2040,50 @@ test_that("printing the observedDataSources section lists the declaration ids", 
   local_reproducible_output()
   expect_snapshot(print(project$definitions$observedDataSources))
 })
+
+# Projects saved with the earlier section names ----
+
+# A project saved by an earlier development version of esqlabsR stored its
+# observed-data sources under the key `observedData` and in the folder
+# `observed-data`. Read under the current names it would show no sources at all,
+# so the load stops and names what to rename. The earlier names are held in
+# variables so the rename script that produced the current names leaves them
+# alone.
+earlierKey <- "observedData"
+earlierFolder <- "observed-data"
+
+test_that("loading a project that keeps its sources in the earlier folder aborts", {
+  dir <- .copyTestProjectDir()
+  definitionsDir <- file.path(dir, "definitions")
+  file.rename(
+    file.path(definitionsDir, "observed-data-sources"),
+    file.path(definitionsDir, earlierFolder)
+  )
+
+  expect_snapshot(loadProject(file.path(dir, "Project.json")), error = TRUE)
+})
+
+test_that("loading a Project.json with the earlier observed-data key aborts", {
+  dir <- .copyTestProjectDir()
+  path <- file.path(dir, "Project.json")
+  container <- jsonlite::read_json(path)
+  names(container)[names(container) == "observedDataSources"] <- earlierKey
+  jsonlite::write_json(container, path, auto_unbox = TRUE, null = "null")
+
+  expect_snapshot(loadProject(path), error = TRUE)
+})
+
+test_that("restoring a snapshot with the earlier observed-data key aborts", {
+  snapshot <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "aciclovir"
+  )
+  json <- jsonlite::read_json(snapshot)
+  names(json)[names(json) == "observedDataSources"] <- earlierKey
+  jsonlite::write_json(json, snapshot, auto_unbox = TRUE, null = "null")
+  dir <- withr::local_tempdir()
+
+  expect_snapshot(restoreProject(snapshot, dir), error = TRUE)
+  expect_length(list.files(dir), 0L)
+})

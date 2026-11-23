@@ -2311,6 +2311,32 @@ messages$duplicateSimulationsFolderKey <- function() {
   )
 }
 
+# `definitionsFolder` is the folder name when it holds the earlier subfolder,
+# else `NULL`.
+messages$observedDataEarlierLayout <- function(
+  container,
+  hasEarlierKey,
+  definitionsFolder
+) {
+  cliBullets(
+    "{.file {container}} was saved by an earlier development version of \\
+    esqlabsR, which used other names for observed-data sources.",
+    if (hasEarlierKey) {
+      c(
+        "x" = "The file lists them under the key {.field observedData}.",
+        "i" = "Rename the key to {.field observedDataSources}."
+      )
+    },
+    if (!is.null(definitionsFolder)) {
+      c(
+        "x" = "The project's {.file {definitionsFolder}} folder keeps them in the \\
+        subfolder {.file observed-data}.",
+        "i" = "Rename the subfolder to {.file observed-data-sources}."
+      )
+    }
+  )
+}
+
 messages$observedDataUnknownSources <- function(unknown, available) {
   if (length(available) == 0L) {
     return(cliBullets(

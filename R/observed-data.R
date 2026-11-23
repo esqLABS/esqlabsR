@@ -40,6 +40,39 @@ print.ObservedDataSource <- function(x, ...) {
   invisible(x)
 }
 
+# Earlier section names ----
+
+# Abort on a project saved by an earlier 6.0.0 development version, which kept
+# its observed-data sources under the key `observedData` and in the folder
+# `<definitions>/observed-data`. Read under the current names such a project
+# would show no sources at all and lose them on the next save, so the load
+# stops and names what to rename instead. `definitionsDir` is `NULL` for a
+# snapshot, which has no folder.
+#
+# @keywords internal
+# @noRd
+.abortOnEarlierObservedDataLayout <- function(
+  jsonData,
+  container,
+  definitionsDir = NULL,
+  call = rlang::caller_env()
+) {
+  hasEarlierKey <- "observedData" %in% names(jsonData)
+  hasEarlierFolder <- !is.null(definitionsDir) &&
+    dir.exists(file.path(definitionsDir, "observed-data"))
+  if (!hasEarlierKey && !hasEarlierFolder) {
+    return(invisible(NULL))
+  }
+  cli::cli_abort(
+    messages$observedDataEarlierLayout(
+      container,
+      hasEarlierKey,
+      if (hasEarlierFolder) basename(definitionsDir)
+    ),
+    call = call
+  )
+}
+
 # Section validation adapter ----
 
 #' @keywords internal

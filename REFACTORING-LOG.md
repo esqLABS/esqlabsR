@@ -374,3 +374,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 18:13: The help pages of loadObservedData(), getObservedDataNames() and Project are regenerated for the sources argument. (#1370)
 - 2026-11-23 18:20: addObservedData() and removeObservedData() are renamed addObservedDataSource() and removeObservedDataSource(), with the matching Project methods. (#1369)
 - 2026-11-23 18:31: The observed-data section is renamed observedDataSources, in the project, in Project.json and snapshots, and as the definitions/observed-data-sources folder, and its messages say observed-data source. (#1369)
+- 2026-11-23 18:33: Loading or restoring a project saved with the earlier observedData key or observed-data folder stops and says what to rename. (#1369)
