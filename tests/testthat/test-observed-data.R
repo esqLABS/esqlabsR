@@ -1392,24 +1392,47 @@ test_that("snapshotProject writes observed data as an array of records with ids"
   )
 })
 
-test_that("a source read from the project and passed back keeps its id", {
-  # The stored id equals the one taken from the file basename, so it is not
-  # treated as an id the user typed and canonicalized.
+test_that("a source passed back keeps the id it is stored under", {
+  # The id names an existing source, so it is that source's id, not one the
+  # user typed: it is kept as is even when it is not the spelling a typed id
+  # would be canonicalized to, or no longer the basename of its file.
   project <- testProject()
-  source <- project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
-  source$sheets <- list("Laskin 1982.Group A", "Laskin 1982.Group B")
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(id = "Laskin IV", type = "pkml", file = "laskin_1982_iv.pkml"),
+    file.path(dir, "Laskin IV.json"),
+    auto_unbox = TRUE
+  )
+  project <- loadProject(project$info$projectFilePath)
+  scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
+  scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+  suppressMessages(addObservedData(project, scratch))
+  saveProject(project)
 
-  expect_no_warning(addObservedData(project, source, overwrite = TRUE))
+  sources <- project$definitions$observedData
+  aciclovir <- sources[["Aciclovir_TimeValuesData.xlsx"]]
+  aciclovir$file <- "Aciclovir_TimeValuesData_v2.xlsx"
+  expect_no_warning({
+    addObservedData(project, sources[["Laskin IV"]], overwrite = TRUE)
+    addObservedData(project, sources[["Scratch measurement"]], overwrite = TRUE)
+    addObservedData(project, aciclovir, overwrite = TRUE)
+  })
+
   expect_identical(
-    lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
-    list(
-      "Aciclovir_TimeValuesData.xlsx" = list(
-        id = "Aciclovir_TimeValuesData.xlsx",
-        type = "excel",
-        file = "Aciclovir_TimeValuesData.xlsx",
-        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
-        sheets = list("Laskin 1982.Group A", "Laskin 1982.Group B")
-      )
+    names(project$definitions$observedData),
+    c("Aciclovir_TimeValuesData.xlsx", "Laskin IV", "Scratch measurement")
+  )
+  expect_identical(
+    project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]$file,
+    "Aciclovir_TimeValuesData_v2.xlsx"
+  )
+  expect_no_error(saveProject(project))
+  expect_identical(
+    sort(list.files(dir)),
+    c(
+      "Aciclovir_TimeValuesData.xlsx.json",
+      "Laskin IV.json",
+      "Scratch measurement.json"
     )
   )
 })

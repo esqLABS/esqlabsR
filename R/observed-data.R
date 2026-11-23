@@ -415,8 +415,10 @@ getObservedDataNames <- function(project) {
 #' the project's definitions folder (`definitions/observed-data/<id>.json` in
 #' the default layout) and is the id [removeObservedData()] matches on. It is
 #' canonicalized like every other definition id (lowercased and made a safe
-#' filename segment), and you are told when that changes it. Left out, the
-#' `file` basename serves as both, kept exactly as the source spells it. Either
+#' filename segment), and you are told when that changes it, unless it is
+#' already the id of a source in the project or equal to the `file` basename.
+#' Left out, the `file` basename serves as both, kept exactly as the source
+#' spells it. Either
 #' way the id is stored in the declaration, so
 #' `project$definitions$observedData[[id]]` reads it back and its `id` field
 #' shows it. A declaration read that way can be passed back with
@@ -621,10 +623,14 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # file on a case-insensitive filesystem. An id derived from the `file`
     # basename is the source's own string, which `.validateObservedDataId()`
     # rejects rather than reshapes. Every declaration stores its id, so an `id`
-    # equal to the derived one (a declaration read from the project and handed
-    # back) is that derived id, not one the user typed, and is kept as is.
+    # that is exactly the id of an existing source (a declaration read from the
+    # project and passed back) or equal to the derived one is not one the user
+    # typed, and is kept as is.
+    existingIds <- names(self$definitions$observedData) %||% character()
     derivedId <- .observedDataEntryIdOrNA(entry[names(entry) != "id"])
-    if (!is.null(entry[["id"]]) && !identical(entry[["id"]], derivedId)) {
+    typedId <- !is.null(entry[["id"]]) &&
+      !(entry[["id"]] %in% c(existingIds, derivedId))
+    if (typedId) {
       entry[["id"]] <- .canonicalizeId(entry[["id"]])
     }
     # Config entries are keyed by the id `removeObservedData()` matches on: the
@@ -634,7 +640,6 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # unless overwriting.
     entryId <- .observedDataEntryId(entry, call = .call)
     .validateObservedDataId(entryId, call = .call)
-    existingIds <- names(self$definitions$observedData) %||% character()
     sameId <- .observedDataIdMatches(entryId, existingIds)
     .abortObservedDataIdCaseClash(entryId, existingIds[sameId], overwrite)
     if (any(sameId) && !overwrite) {
