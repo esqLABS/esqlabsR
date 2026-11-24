@@ -3,14 +3,14 @@ name: Release PR
 # Manually open a release pull request: runs usethis::use_version(<which>) to
 # set the release Version and rename the NEWS.md development heading, moves
 # the OSP dependencies from `Remotes` to the OSP R-universe, then opens a
-# `release-pr-<version>` PR. The PR is
-# validated by the normal pull request pipeline before merge; tagging and the
-# GitHub Release happen afterwards via a manual dispatch of publish.yaml.
+# `release-pr-<version>` PR. The PR is validated by the normal pull request
+# pipeline before merge; tagging and the GitHub Release happen afterwards via a
+# manual dispatch of publish.yaml.
 #
-# `@*release` resolves each OSP dependency to its latest GitHub release.
-# `Depends:` requires ospsuite 13, but the latest ospsuite release is 12.4.x,
-# so a release PR fails its own dependency resolution until ospsuite 13 is the
-# latest release.
+# A release installs each OSP dependency from the OSP R-universe, which builds
+# its latest GitHub release. `Depends:` requires ospsuite 13, but the latest
+# ospsuite release is 12.4.x, so a release PR fails its own dependency
+# resolution until ospsuite 13 is released.
 
 on:
   workflow_dispatch:
