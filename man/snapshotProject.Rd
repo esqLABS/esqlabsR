@@ -29,17 +29,9 @@ Invisibly, the path of the written snapshot file (always with the
 \code{.esqlabsR} extension).
 }
 \description{
-Write a \code{Project}, exactly as it is in your R session, to a
-single self-contained \code{.esqlabsR} file. Unsaved changes are included, so
-the snapshot captures the project as it is right now — which also makes
-it a good way to set an experiment aside: snapshot it, then go back to
+Write a \code{Project} to a single self-contained \code{.esqlabsR} file. Unsaved changes are included, which makes it a good way to set an experiment aside: snapshot it, then go back to
 the saved state by loading the project again with
-\code{\link[=loadProject]{loadProject()}}. The file content is JSON; the
-\code{.esqlabsR} extension simply marks the file as a portable snapshot, so
-it is not confused with the \code{Project.json} file of a project folder.
-
-Turn a snapshot back into a full project folder with \code{\link[=restoreProject]{restoreProject()}};
-nothing is lost in the round trip.
+\code{\link[=loadProject]{loadProject()}}. The file content is JSON.
 }
 \examples{
 # Create a temporary example project and snapshot it to a single file.

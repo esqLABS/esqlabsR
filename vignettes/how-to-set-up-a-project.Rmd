@@ -238,6 +238,8 @@ If you only want to change an option, you do not need Excel: assign the new valu
 
 The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model files (`.pkml`, exported from PK-Sim or MoBi), observed-data files and importer configurations, scripts, and population CSVs still have to reach the recipient another way, or sit at a path both of you can reach. One way is a folder path that uses an environment variable, such as `${SHARED_DATA}/aciclovir` (see "Name the project and choose its folders" above).
 
+**Save before you take a snapshot if you added data in R.** A `DataSet` you added with `addObservedData()` and a `Population` you added with `addPopulation()` have no file until you save: they exist only in your R session. The snapshot keeps their entries but not their data, so a project restored from it has no data for them. Save the project with `saveProject()` first. Saving writes the `DataSet` to a PKML file in the data folder and the `Population` to a CSV file in the populations folder, and those files then travel like the other data files.
+
 Use a snapshot to share or archive the definitions, or as a save point you can return to. To hand over everything, including the model and data files, copy or zip the whole project folder instead.
 
 ```{r}

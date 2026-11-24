@@ -15,15 +15,7 @@ A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Empty
 }
 \description{
 Reads the \code{observedData} declarations from a \link[=loadProject]{Project}
-and returns the corresponding \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Source
-types: \code{excel} (via importer configuration), \code{pkml}, \code{script}, and
-\code{programmatic}. A \code{programmatic} declaration is a sentinel for a
-\code{DataSet} added at runtime with \code{\link[=addObservedData]{addObservedData()}}; its data lives in
-the session until you save, and \code{\link[=saveProject]{saveProject()}} persists it to a PKML
-file and rewrites the entry as a \code{pkml} source. A \code{programmatic} sentinel
-read from disk with no matching in-session \code{DataSet} (a hand-authored
-declaration, or a project opened before it was ever saved) resolves to
-nothing, and the load warns you by name.
+and returns the corresponding \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects.
 }
 \section{Security}{
 

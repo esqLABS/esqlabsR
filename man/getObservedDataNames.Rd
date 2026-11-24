@@ -14,9 +14,7 @@ A character vector of DataSet names.
 }
 \description{
 Returns the names of all DataSets that would be returned by
-\code{\link[=loadObservedData]{loadObservedData()}}. On first call this loads the data to discover
-names; subsequent calls return cached names until a mutation
-invalidates the cache.
+\code{\link[=loadObservedData]{loadObservedData()}}.
 }
 \seealso{
 Other observedData:

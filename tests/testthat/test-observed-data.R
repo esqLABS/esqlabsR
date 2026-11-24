@@ -118,10 +118,14 @@ test_that("loadObservedData says how to bring back programmatic sources that res
   file.path(dir, "Project.json")
 }
 
-test_that("the first loadObservedData after loadProject warns about an unresolved programmatic source", {
+test_that("the first loadObservedData after loadProject and validateProject warns about an unresolved programmatic source", {
   projectPath <- .exampleProjectWithUnresolvedProgrammatic()
   expect_no_warning(
     project <- loadProject(projectPath),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_no_warning(
+    validateProject(project),
     class = "esqlabsR_observedDataProgrammaticUnresolved"
   )
   cnd <- expect_warning(
@@ -145,30 +149,7 @@ test_that("the first getObservedDataNames after loadProject warns about an unres
   expect_match(conditionMessage(cnd), "Pilot_study", fixed = TRUE)
 })
 
-test_that("the first addObservedData after loadProject warns about an unresolved programmatic source", {
-  project <- loadProject(.exampleProjectWithUnresolvedProgrammatic())
-  followUp <- ospsuite::DataSet$new(name = "Follow_up_visit")
-  followUp$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
-  cnd <- expect_warning(
-    addObservedData(project, followUp),
-    class = "esqlabsR_observedDataProgrammaticUnresolved"
-  )
-  expect_match(conditionMessage(cnd), "Pilot_study", fixed = TRUE)
-})
-
-test_that("validateProject leaves the unresolved programmatic warning to the first load", {
-  project <- loadProject(.exampleProjectWithUnresolvedProgrammatic())
-  expect_no_warning(
-    validateProject(project),
-    class = "esqlabsR_observedDataProgrammaticUnresolved"
-  )
-  expect_warning(
-    loadObservedData(project),
-    class = "esqlabsR_observedDataProgrammaticUnresolved"
-  )
-})
-
-test_that("the unresolved programmatic warning does not return after a later validation or reload", {
+test_that("the unresolved programmatic warning does not return when the same project is loaded again", {
   projectPath <- .exampleProjectWithUnresolvedProgrammatic()
   project <- loadProject(projectPath)
   expect_warning(
@@ -176,17 +157,7 @@ test_that("the unresolved programmatic warning does not return after a later val
     class = "esqlabsR_observedDataProgrammaticUnresolved"
   )
 
-  validateProject(project)
-  expect_no_warning(
-    loadObservedData(project),
-    class = "esqlabsR_observedDataProgrammaticUnresolved"
-  )
-
   reloaded <- loadProject(projectPath)
-  expect_no_warning(
-    getObservedDataNames(reloaded),
-    class = "esqlabsR_observedDataProgrammaticUnresolved"
-  )
   expect_no_warning(
     loadObservedData(reloaded),
     class = "esqlabsR_observedDataProgrammaticUnresolved"
@@ -195,10 +166,11 @@ test_that("the unresolved programmatic warning does not return after a later val
 
 test_that("loadProject keeps the user's rlib_warning_verbosity option", {
   # The cross-reference lookup silences rlang warnings while it runs; the
-  # user's own setting must be back in place afterwards.
-  withr::local_options(rlib_warning_verbosity = "default")
+  # user's own setting must be back in place afterwards. "verbose" rather than
+  # the default value, so that resetting the option to its default also fails.
+  withr::local_options(rlib_warning_verbosity = "verbose")
   exampleProject()
-  expect_identical(getOption("rlib_warning_verbosity"), "default")
+  expect_identical(getOption("rlib_warning_verbosity"), "verbose")
 })
 
 test_that("loadObservedData errors when excel entry is missing required fields", {

@@ -170,13 +170,19 @@
 .calculateCustomPK <- function(simulationResults, customOutputFunctions) {
   # validate customOutputFunctions
   .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
-  ospsuite.utils::validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(
+    customOutputFunctions,
+    "function",
+    nullAllowed = TRUE
+  )
 
   # extract all output paths
   outputPaths <- simulationResults$allQuantityPaths
 
   # extract simulation result values
-  simulationResultsDf <- ospsuite::simulationResultsToDataFrame(simulationResults)
+  simulationResultsDf <- ospsuite::simulationResultsToDataFrame(
+    simulationResults
+  )
 
   userPKValuePathList <- stats::setNames(
     vector("list", length(outputPaths)),
@@ -663,7 +669,10 @@ saveSensitivityCalculation <- function(
   outputDir,
   overwrite = FALSE
 ) {
-  ospsuite.utils::validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  ospsuite.utils::validateIsOfType(
+    sensitivityCalculation,
+    "SensitivityCalculation"
+  )
   ospsuite.utils::validateIsString(outputDir)
   ospsuite.utils::validateIsLogical(overwrite)
 

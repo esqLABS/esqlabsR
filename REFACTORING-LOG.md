@@ -354,3 +354,6 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:29: The observed-data guide says plainly that an unsaved DataSet exists only in the R session, and the guide and the loadObservedData() help say how to bring back a programmatic source with no data. (#1366)
 - 2026-11-20 20:29: Code comments say that a programmatic entry has no data when it was written without its DataSet, instead of that a reload loses it. (#1366)
 - 2026-11-20 22:59: The addObservedData() help and the definition-fields reference say that filling a programmatic entry still needs overwrite when the entry declares an id equal to the DataSet name. (#1366)
+- 2026-11-24 18:53: The README, the project set-up and reference guides, and a warning box in the observed-data guide say to save before taking a snapshot, and the snapshotProject(), loadObservedData() and getObservedDataNames() help are shorter. (#1365)
+- 2026-11-24 18:53: The tests for the unresolved programmatic warning no longer check addObservedData(), check validateProject() inside the loadObservedData() test, check a reload once, and check that a non-default rlib_warning_verbosity survives loadProject(). (#1365)
+- 2026-11-24 18:53: Air formatting of ten R files (messages, populations, scenario execution and results, simulation, sensitivity); the parsed code is unchanged.
