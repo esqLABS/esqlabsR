@@ -1,3 +1,27 @@
+# sensitivityTimeProfiles creates expected default plot
+
+    Code
+      lapply(pb$plot$labels, identity)
+    Output
+      $x
+      [1] "Time [min]"
+      
+      $y
+      [1] "Concentration (molar) [µmol/l]"
+      
+      $colour
+      [1] "Parameter factor"
+      
+      $title
+      NULL
+      
+      $group
+      [1] "ParameterFactor"
+      
+      $alt
+      [1] ""
+      
+
 # sensitivityTimeProfiles applies linear y-axis scaling correctly
 
     Code
