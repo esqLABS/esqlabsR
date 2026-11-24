@@ -436,9 +436,7 @@ getObservedDataNames <- function(project) {
 #'
 #' If a warning says that a `programmatic` entry has no data (for example after
 #' restoring a snapshot taken before saving), pass a `DataSet` with the same
-#' name again: it fills that entry, and [saveProject()] then writes it. Adding
-#' a `DataSet` can itself show that warning the first time in a session, before
-#' it fills the entry.
+#' name again: it fills that entry, and [saveProject()] then writes it.
 #'
 #' @param project A `Project` object.
 #' @param entry An [`ospsuite::DataSet`] object, or a configuration list
