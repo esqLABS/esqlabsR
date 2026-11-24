@@ -351,3 +351,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:21: The removeObservedData() help and the observed-data guide say the warning names the DataCombined and PI tasks, and that an unreadable source is removed without the check. (#1364)
 - 2026-11-20 20:22: The removeObservedData() tests write their PKML fixtures directly and also cover a batch removal and a PI task fitting an unsaved DataSet. (#1364)
 - 2026-11-24 17:30: The remove*() warnings about a definition that is still in use say what to update instead of calling it a dangling reference, and only a DataCombined is offered for removal; the removeObservedData() help and the observed-data guide no longer suggest removing a PI task. (#1364)
+- 2026-11-24 17:33: The remove*() warnings that .warnIfReferenced() raises come from the messages catalog instead of inline text; what they print is unchanged. (#1364)

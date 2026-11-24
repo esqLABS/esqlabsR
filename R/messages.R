@@ -2120,6 +2120,40 @@ messages$removedStillReferencedByPITasks <- function(kind, id, taskIds) {
   )
 }
 
+# Shared by every remove*() whose definition a scenario can reference
+# (`removeIndividual()`, `removePopulation()`, `removeApplication()`,
+# `removeOutputPath()`, `removeInitialConditions()`).
+messages$removedStillReferencedByScenarios <- function(kind, id, scenarioIds) {
+  cliBullets(
+    "Removed {kind} {.val {id}} is still referenced by \\
+    {length(scenarioIds)} scenario{?s}:",
+    "*" = "{scenarioIds}",
+    "i" = "Update {cli::qty(length(scenarioIds))}{?this/these} scenario{?s}."
+  )
+}
+
+# `holders` are already labeled by kind (`scenario 'a'`, `individual 'b'`),
+# since a parameter set can be referenced by scenarios, individuals and
+# applications alike.
+messages$parameterSetRemovedStillReferenced <- function(id, holders) {
+  cliBullets(
+    "Removed parameterSet {.val {id}} is still referenced by \\
+    {length(holders)} definition{?s}:",
+    "*" = "{holders}",
+    "i" = "Update {cli::qty(length(holders))}{?this/these} definition{?s}."
+  )
+}
+
+messages$scenarioRemovedUsedByDataCombined <- function(id, dataCombinedIds) {
+  cliBullets(
+    "Removed scenario {.val {id}} is still referenced by \\
+    {length(dataCombinedIds)} dataCombined definition{?s}:",
+    "*" = "{dataCombinedIds}",
+    "i" = "Update or remove {cli::qty(length(dataCombinedIds))}{?this/these} \\
+    dataCombined definition{?s}."
+  )
+}
+
 messages$buildingPITask <- function(piTaskName) {
   ospsuite.utils::cliFormat("Building PI task: {.val {piTaskName}}")
 }

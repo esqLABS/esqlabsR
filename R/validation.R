@@ -499,11 +499,7 @@ validationSummary <- function(validationResults) {
       }
     }
     if (length(holders) > 0) {
-      cli::cli_warn(c(
-        "Removed parameterSet {.val {id}} is still referenced by {length(holders)} definition{?s}:",
-        "*" = "{holders}",
-        "i" = "Update {cli::qty(length(holders))}{?this/these} definition{?s}."
-      ))
+      cli::cli_warn(messages$parameterSetRemovedStillReferenced(id, holders))
     }
     return(invisible(NULL))
   }
@@ -522,10 +518,10 @@ validationSummary <- function(validationResults) {
       }
     }
     if (length(holders) > 0) {
-      cli::cli_warn(c(
-        "Removed initialConditions {.val {id}} is still referenced by {length(holders)} scenario{?s}:",
-        "*" = "{holders}",
-        "i" = "Update {cli::qty(length(holders))}{?this/these} scenario{?s}."
+      cli::cli_warn(messages$removedStillReferencedByScenarios(
+        "initialConditions",
+        id,
+        holders
       ))
     }
     return(invisible(NULL))
@@ -567,12 +563,7 @@ validationSummary <- function(validationResults) {
     }
     dcHolders <- unique(dcHolders)
     if (length(dcHolders) > 0) {
-      cli::cli_warn(c(
-        "Removed scenario {.val {id}} is still referenced by {length(dcHolders)} dataCombined definition{?s}:",
-        "*" = "{dcHolders}",
-        "i" = "Update or remove \\
-        {cli::qty(length(dcHolders))}{?this/these} dataCombined definition{?s}."
-      ))
+      cli::cli_warn(messages$scenarioRemovedUsedByDataCombined(id, dcHolders))
     }
     return(invisible(NULL))
   }
@@ -603,10 +594,10 @@ validationSummary <- function(validationResults) {
   }
 
   if (length(refs) > 0) {
-    cli::cli_warn(c(
-      "Removed {definitionType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
-      "*" = "{refs}",
-      "i" = "Update {cli::qty(length(refs))}{?this/these} scenario{?s}."
+    cli::cli_warn(messages$removedStillReferencedByScenarios(
+      definitionType,
+      id,
+      refs
     ))
   }
   invisible(NULL)
