@@ -122,7 +122,10 @@ pkml_data <- ospsuite::DataSet$new(name = "Aciclovir extra cohort")
 pkml_data$setValues(xValues = c(0, 1, 2, 4, 8), yValues = c(0, 9, 6, 3, 1))
 pkml_data$xDimension <- ospsuite::ospDimensions$Time
 pkml_data$yDimension <- ospsuite::ospDimensions$`Concentration (molar)`
-ospsuite::saveDataSetToPKML(pkml_data, file.path(data_folder, "extra_cohort.pkml"))
+ospsuite::saveDataSetToPKML(
+  pkml_data,
+  file.path(data_folder, "extra_cohort.pkml")
+)
 
 addObservedData(project, list(type = "pkml", file = "extra_cohort.pkml"))
 getObservedDataNames(project)
@@ -149,7 +152,10 @@ writeLines(
   file.path(script_dir, "literature_curve.R")
 )
 
-addObservedData(project, list(type = "script", file = "scripts/literature_curve.R"))
+addObservedData(
+  project,
+  list(type = "script", file = "scripts/literature_curve.R")
+)
 ```
 
 The id of this source is the file basename, `literature_curve.R`, while the DataSet it produces is named `Digitized literature curve`, which is the name a DataCombined references. Because the script runs each time the data is resolved, anything you can compute in R (digitized points, a transformation of a raw file, a join across several inputs) becomes reproducible observed data.
@@ -171,7 +177,9 @@ addObservedData(project, scratch)
 
 Until you save, that `DataSet` lives on the in-memory project and the entry on disk is a `{type: "programmatic", name}` sentinel. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source. From then on it is an ordinary file-backed source: it survives a reload, and its remove id becomes the PKML file basename rather than the DataSet name.
 
-Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` entry can reach a new session without its `DataSet`: when you take a snapshot with `snapshotProject()` before saving and restore it with `restoreProject()`, or when the declaration was written by hand. It then has no data, and the first time you look at the observed data in the session, with `loadObservedData()`, `getObservedDataNames()` or a function that uses them such as `createDataCombined()`, the package warns you and names the `DataSet`. Save the project before you take a snapshot to avoid this.
+<div class="alert alert-warning">
+**Save before a snapshot.** Always call `saveProject()` before `snapshotProject()`. Otherwise, the `DataSet` defined as `programmatic` will be lost.
+</div>
 
 ## Remove a source
 

@@ -153,14 +153,17 @@ ways:
 - **It holds the configuration only.** Model files, observed data files,
   population CSV files, and scripts are not packed into the snapshot.
   They have to reach the recipient another way, for example alongside
-  the snapshot or on a shared drive that both of you point at.
+  the snapshot or on a shared drive that both of you point at. A
+  `DataSet` you added with `addObservedData()` and a `Population` you
+  added with `addPopulation()` have no file until you save, so the
+  snapshot keeps their entries but not their data. Save the project with
+  `saveProject()` before you take the snapshot.
 
 Copy or zip the whole project folder when you want to hand over
 everything, including the model and data files. Use a snapshot when the
 configuration is what you want to share, archive, or return to.
 `restoreProject()` turns a snapshot back into a normal project folder
-with `Project.json` and `definitions/`, and nothing is lost in the round
-trip. The [How to set up a
+with `Project.json` and `definitions/`. The [How to set up a
 project](https://esqlabs.github.io/esqlabsR/articles/how-to-set-up-a-project.html)
 article shows the workflow step by step.
 

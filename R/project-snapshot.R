@@ -14,17 +14,9 @@
 
 #' Save the whole project to a single shareable snapshot file
 #'
-#' @description Write a `Project`, exactly as it is in your R session, to a
-#'   single self-contained `.esqlabsR` file. Unsaved changes are included, so
-#'   the snapshot captures the project as it is right now — which also makes
-#'   it a good way to set an experiment aside: snapshot it, then go back to
+#' @description Write a `Project` to a single self-contained `.esqlabsR` file. Unsaved changes are included, which makes it a good way to set an experiment aside: snapshot it, then go back to
 #'   the saved state by loading the project again with
-#'   [loadProject()]. The file content is JSON; the
-#'   `.esqlabsR` extension simply marks the file as a portable snapshot, so
-#'   it is not confused with the `Project.json` file of a project folder.
-#'
-#'   Turn a snapshot back into a full project folder with [restoreProject()];
-#'   nothing is lost in the round trip.
+#'   [loadProject()]. The file content is JSON.
 #'
 #' @param project A `Project` object. It does not need a folder on disk; a
 #'   project that exists only in the R session can be snapshotted too.
