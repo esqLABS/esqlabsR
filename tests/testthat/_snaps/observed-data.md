@@ -115,11 +115,11 @@
       Warning:
       Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 dataCombined entry:
       * aciclovir_individual
-      i These dataCombined entries now have a dangling reference. Update or remove them.
+      i Update or remove this dataCombined entry.
       Warning:
       Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
       * aciclovirsimple
-      i These PI tasks now have a dangling reference. Update or remove them.
+      i Update the output mappings of this task.
 
 # removeObservedData warns about a DataCombined using a removed PKML source
 
@@ -129,7 +129,7 @@
       Warning:
       Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
       * aciclovir_plasma
-      i These dataCombined entries now have a dangling reference. Update or remove them.
+      i Update or remove this dataCombined entry.
 
 # removeObservedData warns about a PI task fitting a removed PKML source
 
@@ -139,7 +139,7 @@
       Warning:
       Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 parameter identification task:
       * aciclovirsimple
-      i These PI tasks now have a dangling reference. Update or remove them.
+      i Update the output mappings of this task.
 
 # removeObservedData warns about a PI task fitting an unsaved programmatic DataSet
 
@@ -149,7 +149,7 @@
       Warning:
       Removed observedData "Aciclovir plasma" is still referenced by 1 parameter identification task:
       * aciclovirsimple
-      i These PI tasks now have a dangling reference. Update or remove them.
+      i Update the output mappings of this task.
 
 # removeObservedData does not run a script source to check its use
 
@@ -166,11 +166,11 @@
       Warning:
       Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
       * aciclovir_plasma
-      i These dataCombined entries now have a dangling reference. Update or remove them.
+      i Update or remove this dataCombined entry.
       Warning:
       Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
       * aciclovirsimple
-      i These PI tasks now have a dangling reference. Update or remove them.
+      i Update the output mappings of this task.
     Message
       i Could not check whether the data of script source "make_data.R" is still used, because that would run the script. Check your DataCombined and parameter identification definitions.
 

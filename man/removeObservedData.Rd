@@ -36,6 +36,8 @@ the \code{DataSet} to \verb{<name>.pkml} and rewrites the entry as a \code{pkml}
 after a save you remove it by that file basename (\code{"<name>.pkml"}), not by the
 original \code{DataSet} name.
 
+\code{\link[=createPlots]{createPlots()}} or \code{\link[=runPI]{runPI()}} may fail if a referenced \code{DataSet} is removed.
+
 Unlike the other authoring functions, \code{addObservedData()} is not
 vectorized over ids: its second argument is a \code{DataSet} or a configuration
 list, not an id, so it adds a single source per call. Add several sources

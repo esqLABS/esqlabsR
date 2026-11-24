@@ -2115,7 +2115,8 @@ messages$removedStillReferencedByPITasks <- function(kind, id, taskIds) {
     "Removed {kind} {.val {id}} is still referenced by {length(taskIds)} \\
     parameter identification task{?s}:",
     "*" = "{cli::cli_vec(taskIds, list('vec-trunc' = Inf))}",
-    "i" = "These PI tasks now have a dangling reference. Update or remove them."
+    "i" = "Update the output mappings of \\
+    {cli::qty(length(taskIds))}{?this/these} task{?s}."
   )
 }
 
@@ -2157,8 +2158,8 @@ messages$observedDataRemovedUsedByDataCombined <- function(
     "Removed observedData {.val {id}} is still referenced by \\
     {length(dataCombinedIds)} dataCombined entr{?y/ies}:",
     "*" = "{cli::cli_vec(dataCombinedIds, list('vec-trunc' = Inf))}",
-    "i" = "These dataCombined entries now have a dangling reference. Update or \\
-    remove them."
+    "i" = "Update or remove \\
+    {cli::qty(length(dataCombinedIds))}{?this/these} dataCombined entr{?y/ies}."
   )
 }
 

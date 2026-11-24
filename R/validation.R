@@ -502,7 +502,7 @@ validationSummary <- function(validationResults) {
       cli::cli_warn(c(
         "Removed parameterSet {.val {id}} is still referenced by {length(holders)} definition{?s}:",
         "*" = "{holders}",
-        "i" = "These now have a dangling reference. Update or remove them."
+        "i" = "Update {cli::qty(length(holders))}{?this/these} definition{?s}."
       ))
     }
     return(invisible(NULL))
@@ -525,7 +525,7 @@ validationSummary <- function(validationResults) {
       cli::cli_warn(c(
         "Removed initialConditions {.val {id}} is still referenced by {length(holders)} scenario{?s}:",
         "*" = "{holders}",
-        "i" = "These now have a dangling reference. Update or remove them."
+        "i" = "Update {cli::qty(length(holders))}{?this/these} scenario{?s}."
       ))
     }
     return(invisible(NULL))
@@ -570,7 +570,8 @@ validationSummary <- function(validationResults) {
       cli::cli_warn(c(
         "Removed scenario {.val {id}} is still referenced by {length(dcHolders)} dataCombined definition{?s}:",
         "*" = "{dcHolders}",
-        "i" = "These now have a dangling reference. Update or remove them."
+        "i" = "Update or remove \\
+        {cli::qty(length(dcHolders))}{?this/these} dataCombined definition{?s}."
       ))
     }
     return(invisible(NULL))
@@ -605,7 +606,7 @@ validationSummary <- function(validationResults) {
     cli::cli_warn(c(
       "Removed {definitionType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
       "*" = "{refs}",
-      "i" = "These scenarios now have a dangling reference. Update or remove them."
+      "i" = "Update {cli::qty(length(refs))}{?this/these} scenario{?s}."
     ))
   }
   invisible(NULL)

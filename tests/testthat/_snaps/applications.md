@@ -6,7 +6,7 @@
       Warning:
       Removed application "aciclovir_iv_250mg" is still referenced by 4 scenarios:
       * populationscenario, populationscenariofromcsv, testscenario, and testscenario_steadystate
-      i These scenarios now have a dangling reference. Update or remove them.
+      i Update these scenarios.
 
 # setApplicationParameterSets aborts on an undefined parameter set
 

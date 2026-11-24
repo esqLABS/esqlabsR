@@ -310,7 +310,7 @@
       Warning:
       Removed scenario "testscenario" is still referenced by 1 dataCombined definition:
       * dc_ref
-      i These now have a dangling reference. Update or remove them.
+      i Update or remove this dataCombined definition.
 
 # duplicateScenario errors on a non-existent source id
 
@@ -349,7 +349,7 @@
       Warning:
       Removed scenario "testscenario" is still referenced by 1 dataCombined definition:
       * dc_ref
-      i These now have a dangling reference. Update or remove them.
+      i Update or remove this dataCombined definition.
 
 # addScenario aborts on a mismatched scalar field length
 

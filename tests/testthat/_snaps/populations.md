@@ -420,7 +420,7 @@
       Warning:
       Removed population "testpopulation" is still referenced by 2 scenarios:
       * populationscenario and populationscenariofromcsv
-      i These scenarios now have a dangling reference. Update or remove them.
+      i Update these scenarios.
 
 # print.Population renders the configured fields
 
