@@ -354,3 +354,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-24 17:33: The remove*() warnings that .warnIfReferenced() raises come from the messages catalog instead of inline text; what they print is unchanged. (#1364)
 - 2026-11-24 17:37: The removeObservedData() warnings name the DataSets of the removed source that a DataCombined or PI task still uses, since those reference a DataSet and not the source. (#1364)
 - 2026-11-24 17:38: The removeObservedData() tests drop three that repeated the batch test, guard the two that rely on the test project fitting observed data, and check that a source with several DataSets names only the one in use. (#1364)
+- 2026-11-24 17:38: Two long code lines in the observed-data guide are wrapped to the 80-column width air uses.
