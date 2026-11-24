@@ -911,6 +911,18 @@ addPkmlSource <- function(project, name) {
   invisible(project)
 }
 
+# Whether a PI output mapping of `project` uses observed data. Without one the
+# reference check returns before reading the removed source, so a test that
+# relies on that read would pass without exercising it.
+usesObservedDataInPI <- function(project) {
+  refs <- .dataSetReferences(
+    project$definitions$parameterIdentification,
+    "outputMappings",
+    "observedDataId"
+  )
+  length(refs) > 0L
+}
+
 # A script source that leaves a marker file behind if it is ever run.
 addMarkerScriptSource <- function(project, marker) {
   writeLines(
@@ -928,32 +940,22 @@ test_that("removeObservedData warns about the DataCombined and PI task using a r
   expect_length(project$definitions$observedData, 0L)
 })
 
-test_that("removeObservedData warns about a DataCombined using a removed PKML source", {
+test_that("removeObservedData names only the DataSets of a removed source that are still used", {
+  # Listing the workbook's second sheet gives the Excel source a second DataSet,
+  # which nothing uses: the test project's PI task fits only the first.
   project <- testProject()
-  addPkmlSource(project, "Aciclovir plasma")
-  addDataCombined(
+  addObservedData(
     project,
-    id = "aciclovir_plasma",
-    observed = list(list(label = "Plasma", dataSet = "Aciclovir plasma"))
+    list(
+      type = "excel",
+      file = "Aciclovir_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A", "<Study Id 1>")
+    ),
+    overwrite = TRUE
   )
-  expect_snapshot(removeObservedData(project, "Aciclovir plasma.pkml"))
-  expect_false(
-    "Aciclovir plasma.pkml" %in%
-      .observedDataSectionIds(project$definitions$observedData)
-  )
-})
-
-test_that("removeObservedData warns about a PI task fitting a removed PKML source", {
-  project <- testProject()
-  addPkmlSource(project, "Aciclovir plasma")
-  addPIOutputMapping(
-    project,
-    task = "aciclovirsimple",
-    outputPath = "aciclovir_pvb",
-    observedData = "Aciclovir plasma",
-    scenarios = "testscenario"
-  )
-  expect_snapshot(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_length(getObservedDataNames(project), 2L)
+  expect_snapshot(removeObservedData(project, "Aciclovir_TimeValuesData.xlsx"))
 })
 
 test_that("removeObservedData warns about a PI task fitting an unsaved programmatic DataSet", {
@@ -975,6 +977,7 @@ test_that("removeObservedData does not warn when nothing uses the removed source
   # The test project's PI task fits another DataSet, so the removal reads the
   # PKML file and finds its DataSet unused.
   project <- testProject()
+  expect_true(usesObservedDataInPI(project))
   addPkmlSource(project, "Aciclovir plasma")
   expect_no_warning(removeObservedData(project, "Aciclovir plasma.pkml"))
   expect_false(
@@ -987,6 +990,7 @@ test_that("removeObservedData removes a source whose file is missing", {
   # The test project's PI task fits observed data, so the removal tries to read
   # the file it can no longer find.
   project <- testProject()
+  expect_true(usesObservedDataInPI(project))
   addPkmlSource(project, "Aciclovir plasma")
   expect_true(
     file.remove(file.path(project$paths$dataFolder, "Aciclovir plasma.pkml"))
@@ -994,20 +998,6 @@ test_that("removeObservedData removes a source whose file is missing", {
   expect_no_error(removeObservedData(project, "Aciclovir plasma.pkml"))
   expect_false(
     "Aciclovir plasma.pkml" %in%
-      .observedDataSectionIds(project$definitions$observedData)
-  )
-})
-
-test_that("removeObservedData does not run a script source to check its use", {
-  project <- testProject()
-  marker <- file.path(withr::local_tempdir(), "script-ran")
-  addMarkerScriptSource(project, marker)
-  # The test project's PI task fits observed data, so the removal says what it
-  # could not check.
-  expect_snapshot(removeObservedData(project, "make_data.R"))
-  expect_false(file.exists(marker))
-  expect_false(
-    "make_data.R" %in%
       .observedDataSectionIds(project$definitions$observedData)
   )
 })

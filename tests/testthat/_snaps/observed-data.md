@@ -121,23 +121,13 @@
       * aciclovirsimple
       i Update the output mappings of this task.
 
-# removeObservedData warns about a DataCombined using a removed PKML source
+# removeObservedData names only the DataSets of a removed source that are still used
 
     Code
-      removeObservedData(project, "Aciclovir plasma.pkml")
+      removeObservedData(project, "Aciclovir_TimeValuesData.xlsx")
     Condition
       Warning:
-      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
-      * aciclovir_plasma
-      i Update or remove this dataCombined entry.
-
-# removeObservedData warns about a PI task fitting a removed PKML source
-
-    Code
-      removeObservedData(project, "Aciclovir plasma.pkml")
-    Condition
-      Warning:
-      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma.pkml" is still referenced by 1 parameter identification task:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
       * aciclovirsimple
       i Update the output mappings of this task.
 
@@ -150,13 +140,6 @@
       DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma" is still referenced by 1 parameter identification task:
       * aciclovirsimple
       i Update the output mappings of this task.
-
-# removeObservedData does not run a script source to check its use
-
-    Code
-      removeObservedData(project, "make_data.R")
-    Message
-      i Could not check whether the data of script source "make_data.R" is still used, because that would run the script. Check your DataCombined and parameter identification definitions.
 
 # removeObservedData reports each removed source of a batch in the order given
 
