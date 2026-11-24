@@ -789,19 +789,20 @@ removeObservedData <- function(project, id) {
       project = project
     ))
     # Exact match, as `createPlots()` and `runPI()` look a DataSet up by name.
-    dcHolders <- unique(names(dcRefs)[dcRefs %in% dataSetNames])
-    if (length(dcHolders) > 0L) {
+    dcUsed <- dcRefs %in% dataSetNames
+    if (any(dcUsed)) {
       cli::cli_warn(messages$observedDataRemovedUsedByDataCombined(
         one,
-        dcHolders
+        unique(unname(dcRefs[dcUsed])),
+        unique(names(dcRefs)[dcUsed])
       ))
     }
-    piHolders <- unique(names(piRefs)[piRefs %in% dataSetNames])
-    if (length(piHolders) > 0L) {
-      cli::cli_warn(messages$removedStillReferencedByPITasks(
-        "observedData",
+    piUsed <- piRefs %in% dataSetNames
+    if (any(piUsed)) {
+      cli::cli_warn(messages$observedDataRemovedUsedByPITasks(
         one,
-        piHolders
+        unique(unname(piRefs[piUsed])),
+        unique(names(piRefs)[piUsed])
       ))
     }
   }

@@ -1041,6 +1041,23 @@ test_that("removeObservedData reports each removed source of a batch in the orde
   expect_length(project$definitions$observedData, 0L)
 })
 
+test_that("the removeObservedData warnings agree in number with the DataSets they name", {
+  # Every fixture source provides a single DataSet, so the plural wording is
+  # checked on the catalog entries directly.
+  expect_snapshot({
+    cli::cli_warn(messages$observedDataRemovedUsedByDataCombined(
+      "cohorts.xlsx",
+      c("Cohort A", "Cohort B"),
+      c("dc_a", "dc_b")
+    ))
+    cli::cli_warn(messages$observedDataRemovedUsedByPITasks(
+      "cohorts.xlsx",
+      c("Cohort A", "Cohort B"),
+      c("fit_a", "fit_b")
+    ))
+  })
+})
+
 # The remove path writes through to disk BEFORE clearing the runtime store, so a
 # Under explicit-save, removeObservedData() only mutates memory; a section that
 # still carries a colliding pair of file entries after the removal serializes

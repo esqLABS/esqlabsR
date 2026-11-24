@@ -113,11 +113,11 @@
       removeObservedData(project, "Aciclovir_TimeValuesData.xlsx")
     Condition
       Warning:
-      Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 dataCombined entry:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 dataCombined entry:
       * aciclovir_individual
       i Update or remove this dataCombined entry.
       Warning:
-      Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
       * aciclovirsimple
       i Update the output mappings of this task.
 
@@ -127,7 +127,7 @@
       removeObservedData(project, "Aciclovir plasma.pkml")
     Condition
       Warning:
-      Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
+      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
       * aciclovir_plasma
       i Update or remove this dataCombined entry.
 
@@ -137,7 +137,7 @@
       removeObservedData(project, "Aciclovir plasma.pkml")
     Condition
       Warning:
-      Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 parameter identification task:
+      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma.pkml" is still referenced by 1 parameter identification task:
       * aciclovirsimple
       i Update the output mappings of this task.
 
@@ -147,7 +147,7 @@
       removeObservedData(project, "Aciclovir plasma")
     Condition
       Warning:
-      Removed observedData "Aciclovir plasma" is still referenced by 1 parameter identification task:
+      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma" is still referenced by 1 parameter identification task:
       * aciclovirsimple
       i Update the output mappings of this task.
 
@@ -164,15 +164,34 @@
       removeObservedData(project, ids)
     Condition
       Warning:
-      Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
+      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
       * aciclovir_plasma
       i Update or remove this dataCombined entry.
       Warning:
-      Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
       * aciclovirsimple
       i Update the output mappings of this task.
     Message
       i Could not check whether the data of script source "make_data.R" is still used, because that would run the script. Check your DataCombined and parameter identification definitions.
+
+# the removeObservedData warnings agree in number with the DataSets they name
+
+    Code
+      cli::cli_warn(messages$observedDataRemovedUsedByDataCombined("cohorts.xlsx", c(
+        "Cohort A", "Cohort B"), c("dc_a", "dc_b")))
+    Condition
+      Warning:
+      DataSets "Cohort A" and "Cohort B" of removed observedData "cohorts.xlsx" are still referenced by 2 dataCombined entries:
+      * dc_a and dc_b
+      i Update or remove these dataCombined entries.
+    Code
+      cli::cli_warn(messages$observedDataRemovedUsedByPITasks("cohorts.xlsx", c(
+        "Cohort A", "Cohort B"), c("fit_a", "fit_b")))
+    Condition
+      Warning:
+      DataSets "Cohort A" and "Cohort B" of removed observedData "cohorts.xlsx" are still referenced by 2 parameter identification tasks:
+      * fit_a and fit_b
+      i Update the output mappings of these tasks.
 
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
 

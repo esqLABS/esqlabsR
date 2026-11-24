@@ -2108,8 +2108,10 @@ messages$PITaskNowEmpty <- function(task) {
   ospsuite.utils::cliFormat("PI task {.val {task}} is now empty and has been removed.")
 }
 
-# Shared by every remove*() whose definition a PI task can reference
-# (`removeOutputPath()`, `removeObservedData()`), so the wording cannot drift.
+# Shared by every remove*() whose definition a PI task references by its id
+# (`removeOutputPath()`), so the wording cannot drift. `removeObservedData()`
+# has its own entry, `observedDataRemovedUsedByPITasks`, because a PI task
+# references a DataSet of the source, not the source itself.
 messages$removedStillReferencedByPITasks <- function(kind, id, taskIds) {
   cliBullets(
     "Removed {kind} {.val {id}} is still referenced by {length(taskIds)} \\
@@ -2184,16 +2186,39 @@ messages$observedDataFileNotFound <- function(filePath) {
   ospsuite.utils::cliFormat("Observed-data source file not found: {.path {filePath}}.")
 }
 
+# A DataCombined or a PI output mapping references a DataSet by its name, not
+# the source's id, so both warnings name the DataSets of the removed source
+# that are still in use. The explicit `qty()` before `{?is/are}` is needed
+# because the `{.val {id}}` substitution before it resets the quantity to 1.
 messages$observedDataRemovedUsedByDataCombined <- function(
   id,
+  dataSetNames,
   dataCombinedIds
 ) {
   cliBullets(
-    "Removed observedData {.val {id}} is still referenced by \\
-    {length(dataCombinedIds)} dataCombined entr{?y/ies}:",
+    "{cli::qty(length(dataSetNames))}DataSet{?s} \\
+    {.val {cli::cli_vec(dataSetNames, list('vec-trunc' = Inf))}} of removed \\
+    observedData {.val {id}} {cli::qty(length(dataSetNames))}{?is/are} still \\
+    referenced by {length(dataCombinedIds)} dataCombined entr{?y/ies}:",
     "*" = "{cli::cli_vec(dataCombinedIds, list('vec-trunc' = Inf))}",
     "i" = "Update or remove \\
     {cli::qty(length(dataCombinedIds))}{?this/these} dataCombined entr{?y/ies}."
+  )
+}
+
+messages$observedDataRemovedUsedByPITasks <- function(
+  id,
+  dataSetNames,
+  taskIds
+) {
+  cliBullets(
+    "{cli::qty(length(dataSetNames))}DataSet{?s} \\
+    {.val {cli::cli_vec(dataSetNames, list('vec-trunc' = Inf))}} of removed \\
+    observedData {.val {id}} {cli::qty(length(dataSetNames))}{?is/are} still \\
+    referenced by {length(taskIds)} parameter identification task{?s}:",
+    "*" = "{cli::cli_vec(taskIds, list('vec-trunc' = Inf))}",
+    "i" = "Update the output mappings of \\
+    {cli::qty(length(taskIds))}{?this/these} task{?s}."
   )
 }
 
