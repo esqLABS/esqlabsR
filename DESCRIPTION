@@ -76,5 +76,4 @@ Remotes:
     ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification,
     ospsuite.plots=Open-Systems-Pharmacology/OSPSuite.Plots,
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils
-Additional_repositories: https://open-systems-pharmacology.r-universe.dev
-Config/roxygen2/version: 8.1.1
+Config/roxygen2/version: 8.1.0
