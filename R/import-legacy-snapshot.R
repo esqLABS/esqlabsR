@@ -142,8 +142,7 @@
   # Nothing there is replaced, whatever `overwrite` says, so the copy below only
   # adds what the folder lacks, such as the population csv files the snapshot
   # carries itself.
-  inPlace <- normalizePath(outputDir, mustWork = FALSE) ==
-    normalizePath(snapshotDir, mustWork = FALSE)
+  inPlace <- .samePath(outputDir, snapshotDir)
   assets <- if (copyAssets) {
     .copyExcelProjectAssets(
       imported$filePathProps,
@@ -152,7 +151,7 @@
       overwrite = overwrite && !inPlace
     )
   } else {
-    list(copied = character(), notCopied = character())
+    .noAssetsCopied
   }
 
   # Of the folders the copy left alone, report only those the user has to act

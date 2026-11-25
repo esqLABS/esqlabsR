@@ -356,3 +356,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 18:22: The importProjectFromExcel() help mentions the 5.x JSON in its description and drops two developer phrases from its overwrite and copyAssets arguments. (#1399)
 - 2026-11-25 18:23: NEWS says snapshotProjectConfiguration(), restoreProjectConfiguration() and projectConfigurationStatus() are removed and how to bring their JSON into this version. (#1399)
 - 2026-11-25 18:24: Internal comments call the single-file project form an inline project file instead of a snapshot. (#1399)
+- 2026-11-25 18:27: Path comparisons in the import go through one helper, the empty asset-copy result is shared, and the import messages share their repeated wording. (#1399)

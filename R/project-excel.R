@@ -394,10 +394,7 @@ importProjectFromExcel <- function(
   # replace the only copy of a 5.x configuration with the project made from it.
   # `overwrite` does not lift this, since it consents to replacing an earlier
   # project, not the source.
-  if (
-    file.exists(outputPath) &&
-      normalizePath(outputPath) == normalizePath(projectConfigPath)
-  ) {
+  if (file.exists(outputPath) && .samePath(outputPath, projectConfigPath)) {
     cli::cli_abort(messages$importWouldReplaceSource(projectConfigPath))
   }
 
@@ -447,7 +444,7 @@ importProjectFromExcel <- function(
       overwrite
     )
   } else {
-    list(copied = character(), notCopied = character())
+    .noAssetsCopied
   }
 
   # Report what the import produced. Not gated on an interactive session: an
@@ -544,7 +541,7 @@ importProjectFromExcel <- function(
   sourcePath,
   outputPath,
   conventionWorkbooks = character(),
-  assets = list(copied = character(), notCopied = character())
+  assets = .noAssetsCopied
 ) {
   inputFile <- .readablePath(sourcePath)
   outputFile <- .readablePath(outputPath)
@@ -2082,6 +2079,10 @@ projectStatus <- function(project, silent = FALSE) {
   "populationsFolder"
 )
 
+# The result of an asset copy that copied nothing and skipped nothing, as
+# `.copyExcelProjectAssets()` returns it.
+.noAssetsCopied <- list(copied = character(), notCopied = character())
+
 #' Copy an Excel project's referenced input folders next to the imported project
 #'
 #' A definition references a model, a data file, or a csv population by a path
@@ -2116,14 +2117,10 @@ projectStatus <- function(project, silent = FALSE) {
   outputDir,
   overwrite = FALSE
 ) {
-  result <- list(copied = character(), notCopied = character())
-  # Imported in place: the folders are already where the definitions expect them.
-  # Compared with `normalizePath()` rather than the lexical `fs::path_norm()`,
-  # matching the containment code above, so the same directory reached by two
-  # spellings (a symlinked root, a case-different drive letter) is recognized as
-  # one and no folder is copied onto itself.
-  sourceNorm <- normalizePath(sourceDir, mustWork = FALSE)
-  if (sourceNorm == normalizePath(outputDir, mustWork = FALSE)) {
+  result <- .noAssetsCopied
+  # Imported in place: the folders are already where the definitions expect
+  # them, and no folder must be copied onto itself.
+  if (.samePath(sourceDir, outputDir)) {
     return(result)
   }
 
@@ -2159,7 +2156,7 @@ projectStatus <- function(project, silent = FALSE) {
     from <- fs::path_norm(fs::path(sourceDir, copyAs))
     # A folder value of `"."` resolves to the project folder itself; copying that
     # would drag the whole Excel project (workbooks included) into the output.
-    if (normalizePath(from, mustWork = FALSE) == sourceNorm) {
+    if (.samePath(from, sourceDir)) {
       next
     }
     if (!fs::dir_exists(from)) {

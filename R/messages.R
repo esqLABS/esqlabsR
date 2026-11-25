@@ -334,21 +334,19 @@ messages$importWouldOverwriteProject <- function(
   outputDir,
   fromLegacySnapshot = FALSE
 ) {
-  if (fromLegacySnapshot) {
-    return(cliBullets(
-      "A JSON project already exists in {.path {outputDir}}.",
-      "x" = "Importing replaces it with the upgraded project and deletes any \\
-      definitions that the imported file does not contain.",
-      "i" = "Pass {.code overwrite = TRUE} to replace the existing JSON \\
-      project, or import into a different {.arg outputDir}."
-    ))
+  replacement <- if (fromLegacySnapshot) {
+    "Importing replaces it with the upgraded project and deletes any \\
+    definitions that the imported file does not contain."
+  } else {
+    "Re-importing replaces it with the Excel project and deletes any \\
+    definitions that exist only on the JSON side."
   }
+  withState <- if (fromLegacySnapshot) "" else " with the Excel state"
   cliBullets(
     "A JSON project already exists in {.path {outputDir}}.",
-    "x" = "Re-importing replaces it with the Excel project and deletes any \\
-    definitions that exist only on the JSON side.",
-    "i" = "Pass {.code overwrite = TRUE} to replace the existing JSON project \\
-    with the Excel state, or import into a different {.arg outputDir}."
+    "x" = replacement,
+    "i" = "Pass {.code overwrite = TRUE} to replace the existing JSON \\
+    project{withState}, or import into a different {.arg outputDir}."
   )
 }
 
@@ -361,6 +359,12 @@ messages$importWouldReplaceSource <- function(path) {
   )
 }
 
+# The two files `importProjectFromExcel()` reads, named where a call handed it
+# something else.
+.importSourcesHint <- "{.fn importProjectFromExcel} reads a \\
+{.file Project.xlsx} workbook, or the JSON file that \\
+{.fn snapshotProjectConfiguration} saved in esqlabsR 5."
+
 messages$importJsonNotLegacySnapshot <- function(path, isCurrentProject) {
   cliBullets(
     "{.file {path}} is not the JSON file that \\
@@ -369,9 +373,7 @@ messages$importJsonNotLegacySnapshot <- function(path, isCurrentProject) {
       "It is already a project in the current format. Open it with \\
       {.fn loadProject}."
     } else {
-      "{.fn importProjectFromExcel} reads a {.file Project.xlsx} workbook, or \\
-      the JSON file that {.fn snapshotProjectConfiguration} saved in esqlabsR \\
-      5."
+      .importSourcesHint
     }
   )
 }
@@ -379,9 +381,7 @@ messages$importJsonNotLegacySnapshot <- function(path, isCurrentProject) {
 messages$importJsonUnreadable <- function(path) {
   cliBullets(
     "{.file {path}} could not be read as a JSON file.",
-    "i" = "The file may be incomplete or damaged. {.fn importProjectFromExcel} \\
-    reads a {.file Project.xlsx} workbook, or the JSON file that \\
-    {.fn snapshotProjectConfiguration} saved in esqlabsR 5."
+    "i" = paste("The file may be incomplete or damaged.", .importSourcesHint)
   )
 }
 
