@@ -119,12 +119,22 @@
   # since `overwrite = FALSE` leaves a target that already holds files alone.
   # An asset folder is therefore copied twice on its way to `outputDir`, which is
   # the price of reusing the one asset copy rather than teaching it a second
-  # source directory to resolve every folder against. The folders reach the
-  # scratch project even with `copyAssets = FALSE`, because the bridge reads the
-  # observed-data workbook from there, as a workbook import reads it from beside
-  # `Project.xlsx`; `copyAssets` decides only what reaches `outputDir`.
+  # source directory to resolve every folder against.
+  #
+  # Imported in place (the usual case: the snapshot still sits in its 5.x
+  # project folder), or with `copyAssets = FALSE`, nothing travels on from the
+  # scratch project, so only the folders the bridge reads while importing are
+  # brought in: the data folder, whose workbook holds the observed data (as a
+  # workbook import reads it from beside `Project.xlsx`), and the populations
+  # folder, whose location decides how the imported project spells it. The
+  # model folder is only ever copied on, so it is left out.
   snapshotDir <- dirname(fs::path_abs(snapshotPath))
-  .copyExcelProjectAssets(props, snapshotDir, scratch, overwrite = FALSE)
+  inPlace <- .samePath(outputDir, snapshotDir)
+  scratchProps <- props
+  if (inPlace || !copyAssets) {
+    scratchProps[c("simulationsFolder", "modelFolder")] <- NULL
+  }
+  .copyExcelProjectAssets(scratchProps, snapshotDir, scratch, overwrite = FALSE)
 
   # The observed data is read from the data folder copied in above. When the
   # data workbook is not there, the bridge warns and names it, exactly as for a
@@ -137,12 +147,10 @@
     .call = .call
   )
 
-  # Imported in place (the usual case: the snapshot still sits in its 5.x
-  # project folder), the folders are already where the project expects them.
+  # Imported in place, the folders are already where the project expects them.
   # Nothing there is replaced, whatever `overwrite` says, so the copy below only
   # adds what the folder lacks, such as the population csv files the snapshot
   # carries itself.
-  inPlace <- .samePath(outputDir, snapshotDir)
   assets <- if (copyAssets) {
     .copyExcelProjectAssets(
       imported$filePathProps,
