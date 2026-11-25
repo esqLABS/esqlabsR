@@ -31,7 +31,7 @@ The practical consequences are what make this worth the indirection:
 
 - **An analysis becomes reviewable.** A colleague can read what a scenario does without reading the code that runs it.
 - **An analysis becomes comparable.** Two scenarios that differ only in dose differ in one field, visibly.
-- **An analysis becomes portable.** The definitions travel as a folder and behave the same on another machine. The files they point at (models, observed data, population CSVs) are not carried along and have to be provided or resolved separately.
+- **An analysis becomes portable.** The project folder travels as a whole, with its definitions, models, observed data, and population CSVs, and behaves the same on another machine. Only a folder the project reaches through an environment variable such as `${SHARED_DATA}` lies outside it and has to be provided separately.
 
 The cost is that you write definitions instead of statements, and that a mistake in a definition is caught by validation rather than by an R error at the line that made it. The rest of this article is largely about how the package tries to make that trade favourable.
 

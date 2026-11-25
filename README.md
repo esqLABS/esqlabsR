@@ -134,8 +134,10 @@ problems with `validateProject()`.
 
 To share or archive a project, copy or zip the project folder: it
 holds `Project.json`, the `definitions/` folder, and the model and data
-files. The project files are plain text, so the folder also works under
-version control such as Git.
+files. A folder the project reaches through an environment variable,
+such as `${SHARED_DATA}`, is not inside the project folder; your
+colleague sets that variable to their own copy. The project files are
+plain text, so the folder also works under version control such as Git.
 
 ## Learn more
 
