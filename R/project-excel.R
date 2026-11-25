@@ -297,9 +297,9 @@
 #' import and names the sheet. A workbook without the sheet gives a project
 #' without `defaultSolverSettings`.
 #'
-#' A project from esqlabsR 5 that was saved as a single JSON file with
-#' `snapshotProjectConfiguration()` (usually `ProjectConfiguration.json`) is
-#' imported the same way: pass that file as `projectConfigPath`. The model,
+#' The JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5
+#' (usually `ProjectConfiguration.json`) is imported the same way: pass it as
+#' `projectConfigPath`. The model,
 #' data, and population folders that sit beside it are copied into `outputDir`,
 #' and the import summary names each folder the new project still lacks, so you
 #' know what to place there before you run it. A working folder in the file
@@ -309,9 +309,9 @@
 #' names it, as for a `Project.xlsx`. The project file is never
 #' written over the file being imported, whatever `overwrite` says.
 #'
-#' @param projectConfigPath Path to the `Project.xlsx` file, or to the single
-#'   JSON file that `snapshotProjectConfiguration()` wrote in esqlabsR 5
-#'   (usually `ProjectConfiguration.json`). Defaults to `"Project.xlsx"`.
+#' @param projectConfigPath Path to the `Project.xlsx` file, or to the JSON
+#'   file that `snapshotProjectConfiguration()` saved in esqlabsR 5 (usually
+#'   `ProjectConfiguration.json`). Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
 #'   (default), it is created in the same directory as the source file.
 #' @param overwrite Logical. Guards against silently replacing an existing JSON

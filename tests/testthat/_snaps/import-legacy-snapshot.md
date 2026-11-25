@@ -4,9 +4,9 @@
       loadProject(snapshot)
     Condition
       Error:
-      x '<path>' is a previous-version project snapshot, not a project of the current format.
-      i A previous-version snapshot has to be upgraded before it can be opened.
-      i Upgrade it with `importProjectFromExcel(<snapshot>, outputDir = <newFolder>)`, then open the new project with `loadProject()`.
+      x '<path>' is a project configuration saved by `snapshotProjectConfiguration()` in esqlabsR 5, not a project of the current format.
+      i It has to be upgraded before it can be opened.
+      i Upgrade it with `importProjectFromExcel(<file>, outputDir = <newFolder>)`, then open the new project with `loadProject()`.
 
 # importProjectFromExcel warns about a snapshot's missing data file, also when silent
 
@@ -40,9 +40,9 @@
         * Parameter Identification: 3
       2 sections imported no definitions: initialConditions and observedData.
       Copied 1 referenced folder into the new project: 'Configurations/PopulationsCSV'.
-      i Detected a previous-version project snapshot and upgraded it to the current project format.
+      i Upgraded the project configuration that `snapshotProjectConfiguration()` saved in esqlabsR 5 to the current project format.
       ! 2 referenced folders are missing from the upgraded project: 'Models/Simulations' and 'Data'.
-      i A snapshot carries only the configuration workbooks, so a model, data or population folder travels with it only when it sits beside the snapshot file at that relative path.
+      i The JSON file holds only the configuration, so a model, data or population folder is found only when it sits beside the file at that relative path.
       i Nothing that reads from one of them will resolve until you place the folder in the project.
 
 # importProjectFromExcel refuses to import a snapshot over an existing project unless overwrite
@@ -71,7 +71,7 @@
       importProjectFromExcel(project$info$projectFilePath, outputDir = withr::local_tempdir())
     Condition
       Error in `importProjectFromExcel()`:
-      ! '<tmp-path>' is not a project configuration file from an earlier esqlabsR version.
+      ! '<tmp-path>' is not the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5.
       i It is already a project in the current format. Open it with `loadProject()`.
 
 # importProjectFromExcel rejects a JSON file that is no project configuration
@@ -80,8 +80,8 @@
       importProjectFromExcel(other, outputDir = withr::local_tempdir())
     Condition
       Error in `importProjectFromExcel()`:
-      ! '<tmp-path>' is not a project configuration file from an earlier esqlabsR version.
-      i `importProjectFromExcel()` reads a 'Project.xlsx' workbook, or the JSON file that `snapshotProjectConfiguration()` wrote in esqlabsR 5.
+      ! '<tmp-path>' is not the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5.
+      i `importProjectFromExcel()` reads a 'Project.xlsx' workbook, or the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5.
 
 # importProjectFromExcel names a JSON file it cannot read
 
@@ -89,5 +89,5 @@
       cat(rlang::cnd_message(error, inherit = FALSE), "\n")
     Output
       '<tmp-path>' could not be read as a JSON file.
-      i The file may be incomplete or damaged. `importProjectFromExcel()` reads a 'Project.xlsx' workbook, or the JSON file that `snapshotProjectConfiguration()` wrote in esqlabsR 5. 
+      i The file may be incomplete or damaged. `importProjectFromExcel()` reads a 'Project.xlsx' workbook, or the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5. 
 

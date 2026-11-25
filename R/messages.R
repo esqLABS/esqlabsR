@@ -363,14 +363,14 @@ messages$importWouldReplaceSource <- function(path) {
 
 messages$importJsonNotLegacySnapshot <- function(path, isCurrentProject) {
   cliBullets(
-    "{.file {path}} is not a project configuration file from an earlier \\
-    esqlabsR version.",
+    "{.file {path}} is not the JSON file that \\
+    {.fn snapshotProjectConfiguration} saved in esqlabsR 5.",
     "i" = if (isCurrentProject) {
       "It is already a project in the current format. Open it with \\
       {.fn loadProject}."
     } else {
       "{.fn importProjectFromExcel} reads a {.file Project.xlsx} workbook, or \\
-      the JSON file that {.fn snapshotProjectConfiguration} wrote in esqlabsR \\
+      the JSON file that {.fn snapshotProjectConfiguration} saved in esqlabsR \\
       5."
     }
   )
@@ -381,7 +381,7 @@ messages$importJsonUnreadable <- function(path) {
     "{.file {path}} could not be read as a JSON file.",
     "i" = "The file may be incomplete or damaged. {.fn importProjectFromExcel} \\
     reads a {.file Project.xlsx} workbook, or the JSON file that \\
-    {.fn snapshotProjectConfiguration} wrote in esqlabsR 5."
+    {.fn snapshotProjectConfiguration} saved in esqlabsR 5."
   )
 }
 
@@ -808,12 +808,12 @@ messages$importSkippedNonParameterSheets <- function(
 # `schemaVersion` at all.
 messages$legacySnapshotNotLoadable <- function(jsonPath) {
   cliBullets(
-    "x" = "{.file {jsonPath}} is a previous-version project snapshot, not a \\
-    project of the current format.",
-    "i" = "A previous-version snapshot has to be upgraded before it can be \\
-    opened.",
+    "x" = "{.file {jsonPath}} is a project configuration saved by \\
+    {.fn snapshotProjectConfiguration} in esqlabsR 5, not a project of the \\
+    current format.",
+    "i" = "It has to be upgraded before it can be opened.",
     "i" = "Upgrade it with \\
-    {.code importProjectFromExcel(<snapshot>, outputDir = <newFolder>)}, then \\
+    {.code importProjectFromExcel(<file>, outputDir = <newFolder>)}, then \\
     open the new project with {.fn loadProject}."
   )
 }
@@ -868,17 +868,18 @@ messages$excelProjectFileUnreadable <- function(projectConfigPath) {
 
 messages$legacySnapshotMalformedSheet <- function() {
   cliBullets(
-    "x" = "This previous-version project snapshot is malformed and cannot be \\
-    upgraded.",
-    "i" = "A sheet in the snapshot is not a {.code {{column_names, rows}}} \\
-    object; the file may be truncated or hand-edited."
+    "x" = "The project configuration in this JSON file is malformed and \\
+    cannot be upgraded.",
+    "i" = "A sheet in the file is not a {.code {{column_names, rows}}} \\
+    object; the file may be truncated or edited by hand."
   )
 }
 
 messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
   notice <- c(
-    "i" = "Detected a previous-version project snapshot and upgraded it to the \\
-    current project format."
+    "i" = "Upgraded the project configuration that \\
+    {.fn snapshotProjectConfiguration} saved in esqlabsR 5 to the current \\
+    project format."
   )
   if (length(missingFolders) > 0L) {
     notice <- c(
@@ -886,9 +887,9 @@ messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
       "!" = "{length(missingFolders)} referenced folder{?s} \\
       {cli::qty(length(missingFolders))}{?is/are} missing from the upgraded \\
       project: {.file {missingFolders}}.",
-      "i" = "A snapshot carries only the configuration workbooks, so a model, \\
-      data or population folder travels with it only when it sits beside the \\
-      snapshot file at that relative path.",
+      "i" = "The JSON file holds only the configuration, so a model, data or \\
+      population folder is found only when it sits beside the file at that \\
+      relative path.",
       "i" = "Nothing that reads from one of them will resolve until you place \\
       the folder in the project."
     )

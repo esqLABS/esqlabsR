@@ -97,7 +97,7 @@ test_that("importProjectFromExcel upgrades a previous-version snapshot to a v6 t
       importProjectFromExcel(.legacySnapshotFixture(), outputDir = dir)
     )
   )
-  expect_match(shown, "previous-version project snapshot", all = FALSE)
+  expect_match(shown, "Upgraded the project configuration", all = FALSE)
 
   # The path of the written project file comes back invisibly, as for a
   # workbook import.

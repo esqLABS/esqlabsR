@@ -352,3 +352,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 18:18: Importing a 5.x snapshotProjectConfiguration() JSON warns about observed data only when the data workbook is really missing, naming it as a workbook import does, and the upgrade notice no longer says observed data never comes along. (#1399)
 - 2026-11-25 18:20: Importing a 5.x JSON into a folder whose model, data or population folder already holds files warns that the folder was not copied, as a workbook import does. (#1399)
 - 2026-11-25 18:21: README and articles say a project is shared as its whole folder, and that a folder reached through an environment variable such as SHARED_DATA stays outside it. (#1399)
+- 2026-11-25 18:22: Messages, help, articles and NEWS call the 5.x file the JSON file that snapshotProjectConfiguration() saved in esqlabsR 5. (#1399)
