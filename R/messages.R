@@ -197,7 +197,9 @@ messages$humanIndividualForNonHumanModel <- function(simulationName, species) {
 
 # Enum####
 messages$enumPutListMultipleKeys <- function() {
-  ospsuite.utils::cliFormat("Trying to put multiple keys, but only one key is allowed!")
+  ospsuite.utils::cliFormat(
+    "Trying to put multiple keys, but only one key is allowed!"
+  )
 }
 
 # populations ####
@@ -267,7 +269,9 @@ messages$unsupportedSchemaVersion <- function(version) {
 }
 
 messages$invalidPathArgument <- function() {
-  ospsuite.utils::cliFormat("{.arg path} must be a single non-empty, non-NA string.")
+  ospsuite.utils::cliFormat(
+    "{.arg path} must be a single non-empty, non-NA string."
+  )
 }
 
 # Empty is allowed and is the default: it is the "leave whatever name the
@@ -1009,7 +1013,9 @@ messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
 }
 
 messages$overwriteDestination <- function(path) {
-  ospsuite.utils::cliFormat("Overwriting existing esqlabsR project in {.path {path}} ")
+  ospsuite.utils::cliFormat(
+    "Overwriting existing esqlabsR project in {.path {path}} "
+  )
 }
 
 messages$failedToClearProjectArtifacts <- function(path) {
@@ -1700,7 +1706,9 @@ messages$wrongOutputPath <- function(
   named <- if (is.null(outputPathId)) {
     ospsuite.utils::cliFormat("Output path {.path {path}}")
   } else {
-    ospsuite.utils::cliFormat("Output path {.val {outputPathId}} ({.path {path}})")
+    ospsuite.utils::cliFormat(
+      "Output path {.val {outputPathId}} ({.path {path}})"
+    )
   }
   ospsuite.utils::cliFormat(
     "{named} is defined in the DataCombined {.val {dataCombinedName}}
@@ -1827,7 +1835,9 @@ messages$invalidVariationRangeLength <- function() {
 }
 
 messages$sensitivityCalculationNotFound <- function(path) {
-  ospsuite.utils::cliFormat("Sensitivity calculation not found at path {.file {path}}.")
+  ospsuite.utils::cliFormat(
+    "Sensitivity calculation not found at path {.file {path}}."
+  )
 }
 
 messages$noRetainedSimulationResults <- function() {
@@ -2101,11 +2111,15 @@ messages$PITaskNotFound <- function(task) {
 }
 
 messages$PIMemberNotFound <- function(label, id, task) {
-  ospsuite.utils::cliFormat("{label} {.val {id}} not found in task {.val {task}}; no-op.")
+  ospsuite.utils::cliFormat(
+    "{label} {.val {id}} not found in task {.val {task}}; no-op."
+  )
 }
 
 messages$PITaskNowEmpty <- function(task) {
-  ospsuite.utils::cliFormat("PI task {.val {task}} is now empty and has been removed.")
+  ospsuite.utils::cliFormat(
+    "PI task {.val {task}} is now empty and has been removed."
+  )
 }
 
 messages$buildingPITask <- function(piTaskName) {
@@ -2135,7 +2149,9 @@ messages$observedDataMissingFields <- function(entryIndex, type, fields) {
 }
 
 messages$observedDataFileNotFound <- function(filePath) {
-  ospsuite.utils::cliFormat("Observed-data source file not found: {.path {filePath}}.")
+  ospsuite.utils::cliFormat(
+    "Observed-data source file not found: {.path {filePath}}."
+  )
 }
 
 messages$observedDataProgrammaticUnresolved <- function(names) {
@@ -2276,7 +2292,9 @@ messages$validatorObservedDataMissingField <- function(
   type,
   field
 ) {
-  ospsuite.utils::cliFormat("{entryLabel} ({type}) is missing required field '{field}'")
+  ospsuite.utils::cliFormat(
+    "{entryLabel} ({type}) is missing required field '{field}'"
+  )
 }
 
 messages$validatorObservedDataFileNotFound <- function(entryLabel, file) {
