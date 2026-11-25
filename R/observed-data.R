@@ -445,8 +445,8 @@ getObservedDataNames <- function(project) {
 #' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
 #'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
 #'   basename) aborts. A `DataSet` whose name matches a `programmatic` entry
-#'   that has no data in this session (loading warns about it, for example
-#'   after a snapshot taken before saving) fills that entry; `overwrite` is not
+#'   that has no data in this session (a warning names it, for example after
+#'   a snapshot taken before saving) fills that entry; `overwrite` is not
 #'   needed unless the entry declares an `id` equal to that name. Save the
 #'   project with [saveProject()] afterwards. When `TRUE`, the existing source
 #'   with that id is replaced (last-write-wins) as long as both are the same
