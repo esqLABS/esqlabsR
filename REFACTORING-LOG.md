@@ -354,3 +354,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 18:21: README and articles say a project is shared as its whole folder, and that a folder reached through an environment variable such as SHARED_DATA stays outside it. (#1399)
 - 2026-11-25 18:22: Messages, help, articles and NEWS call the 5.x file the JSON file that snapshotProjectConfiguration() saved in esqlabsR 5. (#1399)
 - 2026-11-25 18:22: The importProjectFromExcel() help mentions the 5.x JSON in its description and drops two developer phrases from its overwrite and copyAssets arguments. (#1399)
+- 2026-11-25 18:23: NEWS says snapshotProjectConfiguration(), restoreProjectConfiguration() and projectConfigurationStatus() are removed and how to bring their JSON into this version. (#1399)
