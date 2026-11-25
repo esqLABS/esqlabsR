@@ -360,3 +360,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-24 18:56: The addObservedData() help no longer says that adding a DataSet can show the warning about a programmatic entry with no data, since #1384 stops addObservedData() from reading the sources. (#1366)
 - 2026-11-25 14:13: The warning for programmatic sources that resolved to no data says the data is missing when the project is not saved after the DataSet is added, instead of saying that this project was not saved. (#1366)
 - 2026-11-25 14:13: The addObservedData() help and the definition-fields reference say that a warning names a programmatic entry with no data, instead of that loading warns about it. (#1366)
+- 2026-11-25 14:13: A code comment in addObservedData() no longer says that a filled programmatic entry would resolve under its name, which stops being true once adding a DataSet reads no sources. (#1366)

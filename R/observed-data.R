@@ -507,8 +507,9 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # Replace a programmatic entry of this name in place rather than append a
     # second one; both would be written to `<name>.pkml` at save. Without
     # `overwrite` the clash check above has already ruled out that this entry
-    # holds a DataSet in this session (it would resolve under `name`), so it was
-    # read without its data and filling it loses nothing.
+    # holds a DataSet in this session (its name would be among the names that
+    # check compares against), so it was read without its data and filling it
+    # loses nothing.
     replaceIdx <- which(vapply(
       observedData,
       function(e) {
