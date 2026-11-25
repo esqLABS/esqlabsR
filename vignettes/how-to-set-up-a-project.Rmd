@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-`esqlabsR` is built around a **Project**: the object that describes the models, individuals and populations, dosing, parameters, outputs, observed data, and figures of an analysis. This guide covers the project-level tasks: loading one into your R session, creating one from scratch, saving your edits, undoing them, and handing over the whole project to someone else as a single file.
+`esqlabsR` is built around a **Project**: the object that describes the models, individuals and populations, dosing, parameters, outputs, observed data, and figures of an analysis. This guide covers the project-level tasks: loading one into your R session, creating one from scratch, saving your edits, undoing them, and handing over the whole project to someone else.
 
 ![esqlabsR workflow](Figures/esqlabs-workflow.svg)
 
@@ -232,30 +232,9 @@ If you only want to change an option, you do not need Excel: assign the new valu
 
 **Importing pre-6.0.0 projects from Excel.** If you are bringing over a pre-6.0.0 project, rather than editing a current project in Excel, `vignette("how-to-migrate-from-excel")` is the guide for that, and it lists the rest of what to check after an import.
 
-## Save the project's definitions to one file
+## Share or archive a project
 
-`snapshotProject()` writes the project as it is in your R session, unsaved edits included, into one `.esqlabsR` file located in the current working directory (`getwd()`), so the project definitions travel as a single file rather than a folder. Give it a target `dir` and an optional `name`.
-
-The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model files (`.pkml`, exported from PK-Sim or MoBi), observed-data files and importer configurations, scripts, and population CSVs still have to reach the recipient another way, or sit at a path both of you can reach. One way is a folder path that uses an environment variable, such as `${SHARED_DATA}/aciclovir` (see "Name the project and choose its folders" above).
-
-Use a snapshot to share or archive the definitions, or as a save point you can return to. To hand over everything, including the model and data files, copy or zip the whole project folder instead.
-
-```{r}
-snapshot_dir <- withr::local_tempdir()
-snapshot_path <- snapshotProject(editable, dir = snapshot_dir, name = "study")
-```
-
-`restoreProject()` turns that file back into a working project. Give it a target folder; it recreates `Project.json` and the `definitions/` folder there and returns a freshly loaded `Project` that works from that folder:
-
-```{r}
-restored_dir <- withr::local_tempdir()
-shared <- restoreProject(snapshot_path, restored_dir)
-shared
-```
-
-The restored folder holds only `Project.json` and the `definitions/` folder. Before you run the project, copy the model, data, and population files into it, in the same subfolders as in the original project; `validateProject()` lists any file it cannot find.
-
-By default `restoreProject()` refuses any folder that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll an existing project folder back to the snapshot. Only `Project.json` and the definitions are replaced; your model and data files stay. A project you loaded from that folder earlier is then out of date: continue with the project `restoreProject()` returns, or load the old one again with `loadProject()`.
+To share or archive a project, copy or zip the whole project folder. It holds `Project.json`, the `definitions/` folder, and the model, data, and population files the definitions point at, so a colleague can open it with `loadProject()` and run it. The project files are plain text, so the folder also works under version control such as Git, where every saved change shows up as a change to the definition files it touched.
 
 ## Where to go next
 

@@ -44,7 +44,7 @@ Two functions form the bridge:
 
 ## Step 1: run the import
 
-Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries.
+Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries. If all you have is the single JSON file that `snapshotProjectConfiguration()` wrote, usually `ProjectConfiguration.json`, pass that file instead; the model, data, and population folders beside it are carried into the new project.
 
 ```{r import}
 jsonPath <- importProjectFromExcel(
@@ -134,6 +134,6 @@ When `excel_in_sync` is `FALSE`, `status$details` describes the divergence, so y
 
 ## Where to go next
 
-With the project validating, work with it as any other: `vignette("how-to-design-scenarios")` to describe what to simulate, `vignette("how-to-run-simulations")` to run, `vignette("how-to-plot-results")` to plot. To hand the whole thing to a colleague as one file, see the snapshot workflow in `vignette("how-to-set-up-a-project")`.
+With the project validating, work with it as any other: `vignette("how-to-design-scenarios")` to describe what to simulate, `vignette("how-to-run-simulations")` to run, `vignette("how-to-plot-results")` to plot. To hand the whole thing to a colleague, copy or zip the project folder.
 
 For the layout the import writes, see `vignette("reference-project-file")`. For why Excel is now an interchange format rather than the source of truth, see `vignette("about-the-project-model")`.
