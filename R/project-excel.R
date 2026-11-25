@@ -277,10 +277,11 @@
 
 #' Import project configuration from Excel files
 #'
-#' @description Reads all Excel configuration files in an esqlabsR project and
+#' @description Reads all Excel configuration files in an esqlabsR project, or
+#' the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, and
 #' converts them to the JSON project format: a `Project.json` project file plus
 #' one file per definition in the `definitions/` folder. The result is a
-#' ready-to-use project — `loadProject("<outputDir>/Project.json")` can open it
+#' ready-to-use project: `loadProject("<outputDir>/Project.json")` can open it
 #' directly. This is the migration path from Excel-based projects to the
 #' JSON-primary workflow.
 #'
@@ -299,10 +300,10 @@
 #'
 #' The JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5
 #' (usually `ProjectConfiguration.json`) is imported the same way: pass it as
-#' `projectConfigPath`. The model,
-#' data, and population folders that sit beside it are copied into `outputDir`,
-#' and the import summary names each folder the new project still lacks, so you
-#' know what to place there before you run it. A working folder in the file
+#' `projectConfigPath`. The model, data, and population folders that sit
+#' beside it are copied into `outputDir`, and the import summary names each
+#' folder the new project still lacks, so you know what to place there before
+#' you run it. A working folder in the file
 #' that points outside the project stops the import before anything is written.
 #' Observed data is imported from the data workbook the file names, in the
 #' data folder beside it; when that workbook is missing, the import warns and
@@ -317,10 +318,10 @@
 #' @param overwrite Logical. Guards against silently replacing an existing JSON
 #'   project. With `overwrite = FALSE` (default), the import aborts when a
 #'   project file or a non-empty `definitions/` tree already exists in
-#'   `outputDir`, because re-importing replaces the JSON project with the Excel
-#'   state and deletes any definitions authored only on the JSON side. Pass
-#'   `overwrite = TRUE` to replace the existing JSON project with the Excel
-#'   state.
+#'   `outputDir`, because importing again replaces the JSON project with what
+#'   the import reads and deletes every definition the source does not contain,
+#'   including one you added to the JSON project since. Pass `overwrite = TRUE`
+#'   to replace the existing JSON project.
 #' @param silent Logical. If `TRUE`, suppresses the import summary (the project
 #'   written, its per-section definition counts, and the folders copied or
 #'   missing). Defaults to `FALSE`.
@@ -328,8 +329,8 @@
 #'   references (models, data, csv populations) into `outputDir`, which is what
 #'   makes the imported project runnable where it was written. Defaults to
 #'   `TRUE`. Set it to `FALSE` when only the definitions are wanted and the
-#'   assets would be wasted work, as when the import feeds a throwaway
-#'   comparison snapshot.
+#'   assets would be wasted work, as when the import is only used for a
+#'   comparison.
 #' @param projectFileName Name of the project file the import writes in
 #'   `outputDir`. Defaults to `"Project.json"`, the same name [initProject()]
 #'   and [loadProject()] use, so an imported project opens like any other. Pass
