@@ -90,9 +90,9 @@
   snapshotPath,
   outputDir,
   outputPath,
-  overwrite = FALSE,
-  silent = FALSE,
-  copyAssets = TRUE,
+  overwrite,
+  silent,
+  copyAssets,
   .call = rlang::caller_env()
 ) {
   rlang::local_error_call(.call)

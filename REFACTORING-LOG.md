@@ -359,3 +359,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 18:27: Path comparisons in the import go through one helper, the empty asset-copy result is shared, and the import messages share their repeated wording. (#1399)
 - 2026-11-25 18:28: Importing a 5.x JSON in place or with copyAssets = FALSE no longer copies the model folder into the temporary rebuild. (#1399)
 - 2026-11-25 18:29: Comments in the 5.x JSON upgrade give the real reason for the early folder check and say why the written project is read back. (#1399)
+- 2026-11-25 18:29: The internal 5.x JSON upgrade takes overwrite, silent and copyAssets without defaults, as its one caller always passes them. (#1399)
