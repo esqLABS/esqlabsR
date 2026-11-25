@@ -126,22 +126,15 @@
   snapshotDir <- dirname(fs::path_abs(snapshotPath))
   .copyExcelProjectAssets(props, snapshotDir, scratch, overwrite = FALSE)
 
-  # A snapshot never carries the observed-data workbook itself (only the project
-  # configuration is mirrored), so the bridge's "configured data file not found"
-  # warning fires whenever the data folder beside the snapshot does not hold it.
-  # Muffle just that classed warning: it is redundant with the observed-data
-  # caveat the `upgradedLegacySnapshot()` inform already carries. Any other
-  # bridge warning still surfaces.
-  imported <- withCallingHandlers(
-    .writeImportedExcelProject(
-      pcPath,
-      outputDir = outputDir,
-      outputPath = outputPath,
-      .call = .call
-    ),
-    esqlabsR_importSkippedObservedData = function(w) {
-      invokeRestart("muffleWarning")
-    }
+  # The observed data is read from the data folder copied in above. When the
+  # data workbook is not there, the bridge warns and names it, exactly as for a
+  # workbook import, and that warning is the only thing the user hears about
+  # observed data.
+  imported <- .writeImportedExcelProject(
+    pcPath,
+    outputDir = outputDir,
+    outputPath = outputPath,
+    .call = .call
   )
 
   # Imported in place (the usual case: the snapshot still sits in its 5.x

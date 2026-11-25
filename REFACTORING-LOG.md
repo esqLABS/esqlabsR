@@ -349,3 +349,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 17:19: snapshotProject() and restoreProject() are gone, with their messages, tests, help-page entries and NEWS mentions; saving a project with no folder only points to initProject() and loadProject(). (#1399)
 - 2026-11-25 17:19: README, articles and the introduction slides say to share or archive a project by copying its folder, and the migration article says the 5.x JSON file can be imported. (#1399)
 - 2026-11-25 17:20: Help pages regenerated: the snapshotProject() and restoreProject() pages are gone and importProjectFromExcel() documents the 5.x JSON input. (#1399)
+- 2026-11-25 18:18: Importing a 5.x snapshotProjectConfiguration() JSON warns about observed data only when the data workbook is really missing, naming it as a workbook import does, and the upgrade notice no longer says observed data never comes along. (#1399)

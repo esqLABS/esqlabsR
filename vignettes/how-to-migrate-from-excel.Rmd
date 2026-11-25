@@ -44,7 +44,7 @@ Two functions form the bridge:
 
 ## Step 1: run the import
 
-Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries. If all you have is the single JSON file that `snapshotProjectConfiguration()` wrote, usually `ProjectConfiguration.json`, pass that file instead; the model, data, and population folders beside it are carried into the new project.
+Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries. If all you have is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, usually `ProjectConfiguration.json`, pass that file instead. The model, data, and population folders beside it become part of the new project, observed data comes along when its workbook sits in that data folder, and the import names any folder or data workbook it could not find.
 
 ```{r import}
 jsonPath <- importProjectFromExcel(

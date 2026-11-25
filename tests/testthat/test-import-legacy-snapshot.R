@@ -116,20 +116,27 @@ test_that("importProjectFromExcel upgrades a previous-version snapshot to a v6 t
   expect_length(project$definitions$individuals, 1)
 })
 
-test_that("upgrading a snapshot with a configured data file emits no warning", {
-  # The fixture configures a `dataFile` that no snapshot carries, so the bridge
-  # would warn "data file not found"; the upgrade muffles that redundant
-  # warning (it is covered by the upgrade's own observed-data notice), which
-  # matters under testthat 3e where an uncaught warning fails the test. The
-  # snapshot is imported from a folder of its own, so no data workbook sits
-  # beside it either.
+test_that("importProjectFromExcel warns about a snapshot's missing data file, also when silent", {
+  # The fixture configures a `dataFile`; imported from a folder of its own, no
+  # data workbook sits beside the snapshot. The import names it, as a workbook
+  # import does, and `silent = TRUE` does not hide it, since it is a warning
+  # about the result rather than part of the summary.
   lone <- withr::local_tempdir()
   snapshot <- file.path(lone, "ProjectConfiguration.json")
   file.copy(.legacySnapshotFixture(), snapshot)
 
   dir <- withr::local_tempdir()
-  expect_no_warning(
-    suppressMessages(importProjectFromExcel(snapshot, outputDir = dir))
+  expect_snapshot(
+    importProjectFromExcel(snapshot, outputDir = dir, silent = TRUE)
+  )
+  expect_warning(
+    importProjectFromExcel(
+      snapshot,
+      outputDir = dir,
+      overwrite = TRUE,
+      silent = TRUE
+    ),
+    class = "esqlabsR_importSkippedObservedData"
   )
 })
 
@@ -138,10 +145,16 @@ test_that("upgrading a snapshot with a configured data file emits no warning", {
 # project is written to (#1213).
 test_that("importProjectFromExcel carries the asset folders beside the snapshot into the project", {
   dir <- withr::local_tempdir()
-  suppressMessages(importProjectFromExcel(
+  # The data workbook sits in the data folder beside the fixture, so its
+  # observed data is imported and nothing warns about it.
+  expect_no_warning(suppressMessages(importProjectFromExcel(
     .legacySnapshotFixture(),
     outputDir = dir
-  ))
+  )))
+  expect_length(
+    list.files(file.path(dir, "definitions", "observed-data")),
+    1L
+  )
 
   expect_true(file.exists(file.path(
     dir,
@@ -269,13 +282,12 @@ test_that("importProjectFromExcel refuses to import a snapshot over an existing 
 })
 
 test_that("importProjectFromExcel upgrades a snapshot silently with silent = TRUE", {
-  lone <- withr::local_tempdir()
-  snapshot <- file.path(lone, "ProjectConfiguration.json")
-  file.copy(.legacySnapshotFixture(), snapshot)
+  # Every folder and the data workbook sit beside the fixture, so there is
+  # nothing to warn about either.
   dir <- withr::local_tempdir()
 
   expect_silent(importProjectFromExcel(
-    snapshot,
+    .legacySnapshotFixture(),
     outputDir = dir,
     silent = TRUE
   ))

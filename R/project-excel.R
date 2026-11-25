@@ -304,9 +304,9 @@
 #' and the import summary names each folder the new project still lacks, so you
 #' know what to place there before you run it. A working folder in the file
 #' that points outside the project stops the import before anything is written.
-#' Observed data comes along only when the data workbook the file names sits in
-#' the data folder beside it; otherwise add it with [addObservedData()] if a
-#' plot or a parameter identification needs it. The project file is never
+#' Observed data is imported from the data workbook the file names, in the
+#' data folder beside it; when that workbook is missing, the import warns and
+#' names it, as for a `Project.xlsx`. The project file is never
 #' written over the file being imported, whatever `overwrite` says.
 #'
 #' @param projectConfigPath Path to the `Project.xlsx` file, or to the single
@@ -2877,9 +2877,8 @@ projectStatus <- function(project, silent = FALSE) {
 
 #' Report an unreachable observed-data path and import no observed data
 #'
-#' Carries the same condition class as the missing-data-file warning, so the
-#' caller that expects no observed data (the legacy-snapshot upgrade, which
-#' never ships the data workbook) muffles both with one handler.
+#' Carries the same condition class as the missing-data-file warning, so a
+#' caller can handle both skipped-observed-data cases with one handler.
 #'
 #' @param fieldName Which boundary was crossed: `"dataFolder"` (outside the
 #'   project) or `"dataFile"` (outside the data folder).
@@ -2962,9 +2961,8 @@ projectStatus <- function(project, silent = FALSE) {
     as.character(fs::path_abs(dataFolder))
   )
   if (!file.exists(dataFilePath)) {
-    # Classed so a caller that expects a missing data file (the legacy-snapshot
-    # upgrade, which never carries the data workbook) can muffle just this
-    # warning without swallowing others.
+    # Classed so a caller that expects a missing data file can handle just
+    # this warning without swallowing others.
     cli::cli_warn(
       messages$importSkippedObservedData(dataFile),
       class = "esqlabsR_importSkippedObservedData"

@@ -8,10 +8,23 @@
       i A previous-version snapshot has to be upgraded before it can be opened.
       i Upgrade it with `importProjectFromExcel(<snapshot>, outputDir = <newFolder>)`, then open the new project with `loadProject()`.
 
+# importProjectFromExcel warns about a snapshot's missing data file, also when silent
+
+    Code
+      importProjectFromExcel(snapshot, outputDir = dir, silent = TRUE)
+    Condition
+      Warning:
+      ! The configured data file 'TestProject_TimeValuesData.xlsx' was not found, so no observed data was imported.
+      i Any plot or parameter-identification mapping that references observed data will not resolve, and `validateProject()` will report it, until the data file is present.
+
 # importProjectFromExcel names the asset folders a lone snapshot could not bring
 
     Code
       importProjectFromExcel(snapshot, outputDir = dir)
+    Condition
+      Warning:
+      ! The configured data file 'TestProject_TimeValuesData.xlsx' was not found, so no observed data was imported.
+      i Any plot or parameter-identification mapping that references observed data will not resolve, and `validateProject()` will report it, until the data file is present.
     Message
       Imported '<tmp-path>' into the JSON project '<tmp-path>'.
       -- Definitions -----------------------------------------------------------------
@@ -28,7 +41,6 @@
       2 sections imported no definitions: initialConditions and observedData.
       Copied 1 referenced folder into the new project: 'Configurations/PopulationsCSV'.
       i Detected a previous-version project snapshot and upgraded it to the current project format.
-      ! Observed data does not travel in a snapshot; add it with `addObservedData()` if a plot or parameter identification needs it.
       ! 2 referenced folders are missing from the upgraded project: 'Models/Simulations' and 'Data'.
       i A snapshot carries only the configuration workbooks, so a model, data or population folder travels with it only when it sits beside the snapshot file at that relative path.
       i Nothing that reads from one of them will resolve until you place the folder in the project.

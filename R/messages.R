@@ -878,9 +878,7 @@ messages$legacySnapshotMalformedSheet <- function() {
 messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
   notice <- c(
     "i" = "Detected a previous-version project snapshot and upgraded it to the \\
-    current project format.",
-    "!" = "Observed data does not travel in a snapshot; add it with \\
-    {.fn addObservedData} if a plot or parameter identification needs it."
+    current project format."
   )
   if (length(missingFolders) > 0L) {
     notice <- c(
