@@ -176,6 +176,30 @@ test_that("importProjectFromExcel carries the asset folders beside the snapshot 
   )))
 })
 
+# Same contract as a workbook import: a folder the output already holds files in
+# is left alone unless `overwrite = TRUE`, and the summary says so.
+test_that("importProjectFromExcel leaves a snapshot's non-empty target folder alone and says so", {
+  outputDir <- withr::local_tempdir()
+  curated <- file.path(outputDir, "Models", "Simulations", "curated.pkml")
+  dir.create(dirname(curated), recursive = TRUE)
+  writeLines("hand-curated", curated)
+
+  expect_warning(
+    suppressMessages(importProjectFromExcel(
+      .legacySnapshotFixture(),
+      outputDir = outputDir
+    )),
+    "not copied"
+  )
+  expect_identical(readLines(curated), "hand-curated")
+  expect_false(file.exists(file.path(
+    outputDir,
+    "Models",
+    "Simulations",
+    "Aciclovir.pkml"
+  )))
+})
+
 test_that("importProjectFromExcel names the asset folders a lone snapshot could not bring", {
   # Nothing sits beside the snapshot, so the user has to be told why the
   # upgraded project cannot run.

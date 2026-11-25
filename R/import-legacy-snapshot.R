@@ -155,18 +155,39 @@
     list(copied = character(), notCopied = character())
   }
 
+  # Of the folders the copy left alone, report only those the user has to act
+  # on. In place, a folder already there is the one the project uses. Elsewhere,
+  # a folder the scratch project holds but the copy skipped is one `outputDir`
+  # already holds files in, exactly the case a workbook import warns about. A
+  # folder the scratch project lacks was not beside the snapshot either, and
+  # the missing-folders notice below names it.
+  notCopied <- character()
+  if (!inPlace) {
+    inScratch <- vapply(
+      assets$notCopied,
+      function(value) {
+        copyAs <- if (.declaresEnvVarPath(value)) {
+          .replaceEnvVarPath(value)
+        } else {
+          value
+        }
+        fs::dir_exists(fs::path(imported$pcDir, copyAs))
+      },
+      logical(1)
+    )
+    notCopied <- assets$notCopied[inScratch]
+  }
+
   if (!silent) {
     # The workbooks the bridge read are the ones rebuilt from the snapshot, so
-    # the summary names the snapshot, and leaves out the two lines that
-    # describe that rebuild rather than the user's files: the workbooks read
-    # under their conventional name, and the folders not copied (a folder
-    # already in place is one of them). The folders the project still lacks
-    # are named by the notice below instead.
+    # the summary names the snapshot and leaves out the workbooks read under
+    # their conventional name, which describe that rebuild rather than the
+    # user's files.
     .reportExcelImport(
       imported$project,
       sourcePath = snapshotPath,
       outputPath = outputPath,
-      assets = list(copied = assets$copied, notCopied = character())
+      assets = list(copied = assets$copied, notCopied = unname(notCopied))
     )
     missing <- if (copyAssets) {
       .missingUpgradedAssetFolders(
