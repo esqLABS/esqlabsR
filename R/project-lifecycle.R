@@ -208,8 +208,8 @@ loadProject <- function(path = ".") {
     excelData[[n]] <- list(value = excel[[n]], description = "")
   }
 
-  # Every authored section is a definition tree under `definitions/<kind>/`; a
-  # single-file snapshot with no tree falls back to the inline section in
+  # Every authored section is a definition tree under `definitions/<kind>/`; an
+  # inline project file with no tree falls back to the inline section in
   # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
   # the kind's spec parses the raw records into the in-memory shape. Output
   # paths load before parameter identification, whose output mappings resolve
@@ -254,7 +254,7 @@ loadProject <- function(path = ".") {
     # keyed kind: `dataCombined` (`definitions/data-combined/`), `plots`
     # (`definitions/plots/`, the plot list), and `plotGrids`
     # (`definitions/plot-grids/`). Each loads from its own tree (or its own
-    # top-level inline snapshot section as the fallback).
+    # top-level inline section as the fallback).
     dataCombined = loadSection("dataCombined"),
     plots = loadSection("plots"),
     plotGrids = loadSection("plotGrids"),

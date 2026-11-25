@@ -32,10 +32,10 @@
 
 # TRUE when `jsonData` is a previous-version monolithic snapshot rather than a v6
 # `Project.json`. The discriminator is the absent `schemaVersion`
-# (every v6 snapshot carries `"2.0"`) together with the mirror's signature
+# (every v6 project file carries `"2.0"`) together with the mirror's signature
 # `projectConfiguration` sheet (its property/path table, which the upgrade needs
 # to locate the workbooks) and at least one workbook section, so neither a v6
-# snapshot nor an unrelated JSON object is mistaken for one.
+# project file nor an unrelated JSON object is mistaken for one.
 #
 # @keywords internal
 # @noRd

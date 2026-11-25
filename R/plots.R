@@ -423,9 +423,10 @@ print.DataCombined <- function(x, ...) {
 
 # Serialize ----
 #
-# The plots concern serializes as three top-level JSON sections in the inlined
-# snapshot (`dataCombined`, `plots`, `plotGrids`), each the JSON array its own
-# definition tree inlines. `.projectToJson()` emits each via one of these helpers.
+# The plots concern serializes as three top-level JSON sections in the inline
+# project file (`dataCombined`, `plots`, `plotGrids`), each the JSON array its
+# own definition tree inlines. `.projectToJson()` emits each via one of these
+# helpers.
 
 # JSON array of dataCombined records (the inlined `dataCombined` section);
 # `NULL` when the section is empty so the key round-trips as the absent shape.

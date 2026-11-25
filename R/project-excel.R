@@ -1812,10 +1812,10 @@ projectStatus <- function(project, silent = FALSE) {
   # `plots` object (`plots = {dataCombined, plotConfiguration, plotGrids}`).
   # The current shape is three top-level sections (`dataCombined`, `plots` the
   # plot list, `plotGrids`). Lift a legacy nested object to the three top-level
-  # keys so a legacy snapshot still migrates losslessly into the tree. A new
-  # snapshot already carries the three top-level keys and is untouched here (its
-  # `plots` is an array of plot records, not an object with a `dataCombined`
-  # field).
+  # keys so a legacy inline project file migrates losslessly into the tree. A
+  # current one already carries the three top-level keys and is untouched here
+  # (its `plots` is an array of plot records, not an object with a
+  # `dataCombined` field).
   legacyPlots <- jsonData$plots
   if (
     is.list(legacyPlots) &&

@@ -16,8 +16,8 @@
 # (every `add*` / `remove*` / `set*` and any write-back through
 # `project$<section>`) update memory and set the dirty bit, and `saveProject()`
 # reconciles the whole tree to memory (write-if-different plus orphan-delete).
-# A project file that carries its sections inline, with no tree beside it,
-# still loads (see `.loadDefinitionTree()`).
+# An inline project file, which carries its sections in `Project.json` with no
+# tree beside it, loads the same way (see `.loadDefinitionTree()`).
 #
 # Per-kind subfolder names and granularity (all under `definitions/`):
 #   scenarios                -> scenarios/                one file per scenario
@@ -44,8 +44,8 @@
 # section. The inner cross-references (a grid's `plots` -> a plot's `id`
 # -> a `dataCombined`) are validated lazily by `.validatePlots()`, not at
 # write, so a dangling inner ref stays a Critical Error surfaced at
-# `validateProject()` / `createPlots()`, never a write-time abort. The derived
-# single-file snapshot inlines all three as three top-level JSON sections.
+# `validateProject()` / `createPlots()`, never a write-time abort. An inline
+# project file carries all three as three top-level JSON sections.
 
 # Guard a `definitionsFolder` value against escaping the project directory.
 # The field names one folder joined onto `projectDirPath`, and it drives the two
@@ -128,8 +128,8 @@
 #                   (serialize-all-before-write-any).
 #   - parse       : function(records, project) -> the in-memory section, given
 #                   `records`, the list of per-file JSON records.
-#   - inline      : function(jsonData) -> the inline section as it appears in a
-#                   single-file `Project.json` snapshot, used as the fallback
+#   - inline      : function(jsonData) -> the inline section as it appears in
+#                   an inline project file, used as the fallback
 #                   when no tree directory exists. Shaped exactly like what the
 #                   keyed `parse` consumes.
 #
@@ -253,8 +253,8 @@
     # `plots` (folder `plots`, the plot list keyed by `id`), and `plotGrids`
     # (folder `plot-grids`). Each `serialize` turns its keyed list into an
     # `id -> json-record` map; each `parse` rebuilds the keyed list from the
-    # per-file records; each `inline` falls back to its own top-level snapshot
-    # section so a single-file snapshot reloads each self-contained.
+    # per-file records; each `inline` falls back to its own top-level section
+    # so an inline project file loads each self-contained.
     dataCombined = list(
       kind = "data-combined",
       serialize = function(section, project) {
@@ -329,8 +329,8 @@
   file.path(dir, paste0(id, ".json"))
 }
 
-# Canonical JSON write options shared by every definition file and the snapshot,
-# for byte-stable round-trips.
+# Canonical JSON write options shared by every definition file and the inline
+# project file, for byte-stable round-trips.
 #
 # Write-if-different: serialize the content to a string first and, when the
 # target file already holds byte-identical content, skip the write entirely.
@@ -411,7 +411,7 @@
   )
   # Tag each record with the file it came from so the keyed parsers can name the
   # offending file in a load error and check the inner id against the filename
-  # stem. An inline-snapshot fallback record carries no such tag.
+  # stem. An inline project file's fallback record carries no such tag.
   lapply(files, function(f) {
     rec <- .readDefinitionJsonFile(f)
     attr(rec, ".definitionFile") <- f
@@ -672,8 +672,9 @@
   .mergeParameterSetSections(jsonData)
 }
 
-# Convert the inline `{id: [entries]}` parameter-set map (the snapshot shape)
-# to the per-record `[{id, parameters}, ...]` list the tree parser consumes.
+# Convert the inline `{id: [entries]}` parameter-set map (the inline project
+# file's shape) to the per-record `[{id, parameters}, ...]` list the tree
+# parser consumes.
 #
 # @keywords internal
 # @noRd
@@ -735,9 +736,9 @@
   entries
 }
 
-# Convert the inline `{id: [entries]}` initial-conditions map (the snapshot
-# shape) to the per-record `[{id, initialConditions}, ...]` list the tree parser
-# consumes.
+# Convert the inline `{id: [entries]}` initial-conditions map (the inline
+# project file's shape) to the per-record `[{id, initialConditions}, ...]` list
+# the tree parser consumes.
 #
 # @keywords internal
 # @noRd
@@ -783,9 +784,9 @@
   .parseApplications(appsObj)
 }
 
-# Convert the inline `{id: {parameterSets}}` application map (the snapshot
-# shape) to the per-record `[{id, parameterSets}, ...]` list the tree parser
-# consumes.
+# Convert the inline `{id: {parameterSets}}` application map (the inline
+# project file's shape) to the per-record `[{id, parameterSets}, ...]` list the
+# tree parser consumes.
 #
 # @keywords internal
 # @noRd
@@ -837,8 +838,8 @@
   out
 }
 
-# Convert the inline `{id: "path"}` output-path map (the snapshot shape) to the
-# per-record `[{id, path}, ...]` list the tree parser consumes.
+# Convert the inline `{id: "path"}` output-path map (the inline project file's
+# shape) to the per-record `[{id, path}, ...]` list the tree parser consumes.
 #
 # @keywords internal
 # @noRd
@@ -906,8 +907,8 @@
 # from its source. Both must still agree with the filename, or the next
 # `saveProject()` files the declaration under a different name and reconciles
 # the loaded file away, and two files that derive one id load fine but make the
-# save abort. Checked only for a record read from a tree file; an inline
-# snapshot record has no filename to check against.
+# save abort. Checked only for a record read from a tree file; a record from
+# an inline project file has no filename to check against.
 #
 # A declaration with no derivable id at all passes here: reporting an
 # under-specified source is `validateProject()`'s job, not the loader's.
@@ -1056,7 +1057,7 @@
 # the authoritative key. Each part's in-memory shape (a keyed list whose entries
 # are the per-record fields) is the per-file JSON shape, so the serialize side
 # is near-identity (it only strips the entry class) and the file content is
-# byte-identical to the inlined snapshot's per-entry shape.
+# byte-identical to the inline project file's per-entry shape.
 
 # data-combined: one file per dataCombined entry, the nested JSON object with
 # its `id` re-added (the list key). The serializer canonicalizes
@@ -1257,7 +1258,8 @@
 #   - for a record loaded from a tree file (tagged with `.definitionFile`), the
 #     inner id must equal the filename stem, so the on-disk filename stays the
 #     authoritative key and two files can never collapse onto one id.
-# An inline-snapshot record (no `.definitionFile` tag) skips the filename check.
+# A record from an inline project file (no `.definitionFile` tag) skips the
+# filename check.
 #
 # @keywords internal
 # @noRd
