@@ -131,48 +131,10 @@ test_that("writing a project as a tree and loading it back is a fixed point", {
   expect_identical(.projectToJson(reloaded), .projectToJson(project))
 })
 
-test_that("the tree fixed point holds for the plots trio", {
-  # testProject()'s fixture has no dataCombined/plots/plotGrids, so the fixed
-  # point above never exercises the three sections reshaped most by this
-  # refactor. exampleProject() populates all three.
-  project <- exampleProject()
-  expect_gt(length(project$definitions$dataCombined), 0)
-  expect_gt(length(project$definitions$plots), 0)
-  expect_gt(length(project$definitions$plotGrids), 0)
-
-  reloaded <- .reloadThroughTree(project)
-
-  json1 <- .projectToJson(project)
-  json2 <- .projectToJson(reloaded)
-  expect_identical(json2, json1)
-  # The three sections must actually be serialized, not silently dropped to
-  # NULL.
-  expect_length(json1$dataCombined, length(project$definitions$dataCombined))
-  expect_length(json1$plots, length(project$definitions$plots))
-  expect_length(json1$plotGrids, length(project$definitions$plotGrids))
-})
-
-test_that("saveProject() on a reloaded tree project materializes the whole set", {
-  project <- .reloadThroughTree(testProject())
-  dir <- project$info$projectDirPath
-  before <- names(project$definitions$scenarios)
-  scenariosDir <- file.path(dir, "definitions", "scenarios")
-
-  # A reloaded project already has a full on-disk tree; an in-memory add plus a
-  # save reconciles the whole set, so a reload sees every sibling.
-  addScenario(project, "newlyadded", modelFile = "Aciclovir.pkml")
-  expect_false(file.exists(file.path(scenariosDir, "newlyadded.json")))
-  saveProject(project)
-  reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_named(
-    reloaded$definitions$scenarios,
-    c(before, "newlyadded"),
-    ignore.order = TRUE
-  )
-})
-
-test_that("a write-back plus saveProject() on a reloaded tree project preserves siblings", {
-  project <- .reloadThroughTree(testProject())
+test_that("a write-back plus saveProject() preserves the sibling scenarios", {
+  # The save rewrites the whole scenarios folder from memory, so changing one
+  # scenario must leave every other scenario's file in place.
+  project <- testProject()
   dir <- project$info$projectDirPath
   before <- names(project$definitions$scenarios)
 

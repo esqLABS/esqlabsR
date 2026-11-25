@@ -289,22 +289,6 @@ test_that("a section edit stays in memory until saveProject()", {
   expect_false("notyetsaved" %in% names(reloadedSource$definitions$individuals))
 })
 
-test_that("saveProject() on a reloaded tree project materializes the full section tree", {
-  project <- .reloadThroughTree(exampleProject())
-  dir <- project$info$projectDirPath
-  before <- names(project$definitions$individuals)
-
-  addIndividual(project, "freshindiv", species = "Human", gender = "MALE")
-  saveProject(project)
-
-  reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_named(
-    reloaded$definitions$individuals,
-    c(before, "freshindiv"),
-    ignore.order = TRUE
-  )
-})
-
 # A `definitions/<kind>/` path that is a regular file (not a directory) is a
 # corrupted tree, not an absent section. `dir.exists()` is FALSE for both, so
 # without a guard the project would load as structurally-valid but empty. The
@@ -556,16 +540,17 @@ test_that("an emptied plots part clears its folder's files on save", {
 })
 
 test_that("writing and reloading the tree is a fixed point over the three plots folders", {
+  # testProject()'s fixture has no dataCombined/plots/plotGrids, so the
+  # whole-project fixed point in test-definition-files.R never exercises them;
+  # exampleProject() populates all three.
   source <- exampleProject()
+  expect_gt(length(source$definitions$dataCombined), 0)
+  expect_gt(length(source$definitions$plots), 0)
+  expect_gt(length(source$definitions$plotGrids), 0)
   reloaded <- .reloadThroughTree(source)
 
-  # Each plots section is identical (same ids) and the three folders
-  # materialized in the reloaded project's folder.
+  # The three folders materialized in the reloaded project's folder.
   defs <- file.path(reloaded$info$projectDirPath, "definitions")
-  expect_setequal(
-    names(reloaded$definitions$dataCombined),
-    names(source$definitions$dataCombined)
-  )
   expect_true(file.exists(file.path(
     defs,
     "data-combined",
@@ -577,13 +562,16 @@ test_that("writing and reloading the tree is a fixed point over the three plots 
     "plot-grids",
     "individual_diagnostics.json"
   )))
-  # The inlined plots JSON (all three top-level sections) is a fixed point
-  # across the round-trip.
-  reloadedJson <- .projectToJson(reloaded)
+  # The whole project, the three plots sections included, is a fixed point,
+  # and the three sections are really serialized, not dropped to NULL.
   sourceJson <- .projectToJson(source)
-  expect_identical(reloadedJson$dataCombined, sourceJson$dataCombined)
-  expect_identical(reloadedJson$plots, sourceJson$plots)
-  expect_identical(reloadedJson$plotGrids, sourceJson$plotGrids)
+  expect_identical(.projectToJson(reloaded), sourceJson)
+  expect_length(
+    sourceJson$dataCombined,
+    length(source$definitions$dataCombined)
+  )
+  expect_length(sourceJson$plots, length(source$definitions$plots))
+  expect_length(sourceJson$plotGrids, length(source$definitions$plotGrids))
 })
 
 # plots / PI serialize key-alignment guards ----

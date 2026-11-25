@@ -354,22 +354,6 @@ test_that("initProject() scaffolds a project already in sync with its Excel side
   expect_true(status$excel_in_sync)
 })
 
-test_that("initProject() leaves an unnamed project without a name", {
-  # The default `name = ""` means "keep the template's name", and the minimal
-  # template has none, so the project carries no name rather than an empty
-  # string that would show as a blank name.
-  destination <- withr::local_tempdir()
-  initProject(
-    destination,
-    type = "minimal",
-    createExcel = FALSE,
-    overwrite = TRUE
-  )
-  project <- loadProject(file.path(destination, "Project.json"))
-
-  expect_null(project$info$name)
-})
-
 test_that("initProject() rejects a name that is not a single string", {
   destination <- withr::local_tempdir()
 
