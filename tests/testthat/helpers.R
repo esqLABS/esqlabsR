@@ -173,6 +173,18 @@ exampleProject <- function(envir = parent.frame()) {
   loadProject(file.path(dest, "Project.json"))
 }
 
+#' Write `project` as a tree project (`Project.json` plus `definitions/`) into
+#' a fresh temporary folder and load it back from there.
+#'
+#' The in-memory state is written, unsaved edits included, and the folder the
+#' project was loaded from is left alone, so a test can check that every
+#' section survives the definition-file writer and parser without touching the
+#' source. The folder is removed when the calling test finishes.
+.reloadThroughTree <- function(project, envir = parent.frame()) {
+  dir <- withr::local_tempdir("Reloaded_", .local_envir = envir)
+  loadProject(.writeProjectTree(project, dir))
+}
+
 #' One row of an Excel `Scenarios` sheet, with every required column present.
 #'
 #' Named arguments override a column's value; passing `NULL` drops the column

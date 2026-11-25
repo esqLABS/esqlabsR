@@ -289,10 +289,9 @@ test_that("a section edit stays in memory until saveProject()", {
   expect_false("notyetsaved" %in% names(reloadedSource$definitions$individuals))
 })
 
-test_that("saveProject() on a restored project materializes the full section tree", {
-  snap <- snapshotProject(exampleProject(), dir = withr::local_tempdir())
-  dir <- withr::local_tempdir()
-  project <- restoreProject(snap, dir)
+test_that("saveProject() on a reloaded tree project materializes the full section tree", {
+  project <- .reloadThroughTree(exampleProject())
+  dir <- project$info$projectDirPath
   before <- names(project$definitions$individuals)
 
   addIndividual(project, "freshindiv", species = "Human", gender = "MALE")
@@ -431,10 +430,11 @@ test_that("an empty-object scalar field on a non-scenario kind aborts the load",
   )
 })
 
-test_that("an inline-section snapshot loads identically to its tree source", {
+test_that("an inline-section project file loads identically to its tree source", {
   source <- exampleProject()
-  snap <- snapshotProject(source, dir = withr::local_tempdir())
-  reloaded <- restoreProject(snap, withr::local_tempdir())
+  inlinePath <- file.path(withr::local_tempdir(), "Project.json")
+  .saveProjectJson(source, inlinePath)
+  reloaded <- loadProject(inlinePath)
 
   expect_named(
     reloaded$definitions$individuals,
@@ -463,8 +463,8 @@ test_that("an inline-section snapshot loads identically to its tree source", {
 # The plots concern is three independent top-level keyed sections
 # (`dataCombined`, `plots`, `plotGrids`), each its own `definitions/<kind>/`
 # tree. These exercise loading each section from its folder, the lazy
-# referential contract across the three files, and the snapshot fixed-point
-# over the tree.
+# referential contract across the three files, and the write-and-reload
+# fixed point over the tree.
 
 test_that("loadProject reads each plots section from its own folder", {
   project <- exampleProject()
@@ -557,13 +557,12 @@ test_that("an emptied plots part clears its folder's files on save", {
   expect_length(reloaded$definitions$plotGrids %||% list(), 0L)
 })
 
-test_that("snapshot then restore is a fixed point over the three plots folders", {
+test_that("writing and reloading the tree is a fixed point over the three plots folders", {
   source <- exampleProject()
-  snap <- snapshotProject(source, dir = withr::local_tempdir())
-  reloaded <- restoreProject(snap, withr::local_tempdir())
+  reloaded <- .reloadThroughTree(source)
 
   # Each plots section is identical (same ids) and the three folders
-  # materialized on the loaded snapshot.
+  # materialized in the reloaded project's folder.
   defs <- file.path(reloaded$info$projectDirPath, "definitions")
   expect_setequal(
     names(reloaded$definitions$dataCombined),

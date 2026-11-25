@@ -354,9 +354,10 @@ test_that("initProject() scaffolds a project already in sync with its Excel side
   expect_true(status$excel_in_sync)
 })
 
-test_that("initProject() names an unnamed project's snapshot after the fallback stem", {
-  # `snapshotProject()` falls back to "project" only on a NULL name, so an
-  # empty-string name would produce a leading-dash filename.
+test_that("initProject() leaves an unnamed project without a name", {
+  # The default `name = ""` means "keep the template's name", and the minimal
+  # template has none, so the project carries no name rather than an empty
+  # string that would show as a blank name.
   destination <- withr::local_tempdir()
   initProject(
     destination,
@@ -366,8 +367,7 @@ test_that("initProject() names an unnamed project's snapshot after the fallback 
   )
   project <- loadProject(file.path(destination, "Project.json"))
 
-  snapshot <- snapshotProject(project, dir = withr::local_tempdir())
-  expect_match(basename(snapshot), "^project-")
+  expect_null(project$info$name)
 })
 
 test_that("initProject() rejects a name that is not a single string", {

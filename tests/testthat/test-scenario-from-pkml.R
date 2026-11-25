@@ -708,7 +708,7 @@ test_that("a failing addScenario rolls back the on-disk scenario tree", {
 
 # createScenariosFromPKML: end-to-end round trips ----
 
-test_that("end-to-end: seed from PKML, snapshot, loadProject round-trips", {
+test_that("end-to-end: seed from PKML, write, loadProject round-trips", {
   project <- testProject()
   suppressMessages(createScenariosFromPKML(
     pkmlInProject(project),
@@ -716,7 +716,8 @@ test_that("end-to-end: seed from PKML, snapshot, loadProject round-trips", {
     scenarios = "seeded"
   ))
 
-  path <- snapshotProject(project, dir = withr::local_tempdir())
+  path <- file.path(withr::local_tempdir(), "Project.json")
+  .saveProjectJson(project, path)
   reloaded <- loadProject(path)
 
   expect_equal(
@@ -729,7 +730,7 @@ test_that("end-to-end: seed from PKML, snapshot, loadProject round-trips", {
   )
 })
 
-test_that("end-to-end: steadyState = TRUE round-trips through snapshot and load", {
+test_that("end-to-end: steadyState = TRUE round-trips through write and load", {
   project <- testProject()
   suppressMessages(createScenariosFromPKML(
     pkmlInProject(project),
@@ -740,7 +741,8 @@ test_that("end-to-end: steadyState = TRUE round-trips through snapshot and load"
     steadyStateTimeUnit = "h"
   ))
 
-  path <- snapshotProject(project, dir = withr::local_tempdir())
+  path <- file.path(withr::local_tempdir(), "Project.json")
+  .saveProjectJson(project, path)
   reloaded <- loadProject(path)
 
   expect_equal(
