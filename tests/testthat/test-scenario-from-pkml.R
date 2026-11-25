@@ -716,9 +716,7 @@ test_that("end-to-end: seed from PKML, write, loadProject round-trips", {
     scenarios = "seeded"
   ))
 
-  path <- file.path(withr::local_tempdir(), "Project.json")
-  .saveProjectJson(project, path)
-  reloaded <- loadProject(path)
+  reloaded <- .reloadThroughInlineFile(project)
 
   expect_equal(
     reloaded$definitions$scenarios[["seeded"]],
@@ -741,9 +739,7 @@ test_that("end-to-end: steadyState = TRUE round-trips through write and load", {
     steadyStateTimeUnit = "h"
   ))
 
-  path <- file.path(withr::local_tempdir(), "Project.json")
-  .saveProjectJson(project, path)
-  reloaded <- loadProject(path)
+  reloaded <- .reloadThroughInlineFile(project)
 
   expect_equal(
     reloaded$definitions$scenarios[["ss"]],

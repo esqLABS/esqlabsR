@@ -109,15 +109,14 @@ test_that("an unknown outputPathId is a lazy referential finding, not a load err
 
 test_that("an inlined project file loads with every scenario", {
   project <- testProject()
-  path <- file.path(withr::local_tempdir(), "Project.json")
-  .saveProjectJson(project, path)
+  reloaded <- .reloadThroughInlineFile(project)
+  path <- reloaded$info$projectFilePath
 
   raw <- jsonlite::fromJSON(path, simplifyVector = FALSE)
   expect_length(raw$scenarios, length(project$definitions$scenarios))
   # The folder has no definitions/ tree; the inline array suffices.
   expect_false(dir.exists(file.path(dirname(path), "definitions", "scenarios")))
 
-  reloaded <- loadProject(path)
   expect_named(
     reloaded$definitions$scenarios,
     names(project$definitions$scenarios),
@@ -546,9 +545,7 @@ test_that("a high-precision numeric value survives a definition write/reload rou
 
   # The single-file form, with every section written into the project file,
   # keeps full precision too.
-  inlinePath <- file.path(withr::local_tempdir(), "Project.json")
-  .saveProjectJson(reloaded, inlinePath)
-  inlineReloaded <- loadProject(inlinePath)
+  inlineReloaded <- .reloadThroughInlineFile(reloaded)
   expect_identical(
     inlineReloaded$definitions$initialConditions[["precise"]][[1]]$value,
     preciseValue

@@ -432,9 +432,7 @@ test_that("an empty-object scalar field on a non-scenario kind aborts the load",
 
 test_that("an inline-section project file loads identically to its tree source", {
   source <- exampleProject()
-  inlinePath <- file.path(withr::local_tempdir(), "Project.json")
-  .saveProjectJson(source, inlinePath)
-  reloaded <- loadProject(inlinePath)
+  reloaded <- .reloadThroughInlineFile(source)
 
   expect_named(
     reloaded$definitions$individuals,

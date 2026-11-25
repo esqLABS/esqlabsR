@@ -185,6 +185,21 @@ exampleProject <- function(envir = parent.frame()) {
   loadProject(.writeProjectTree(project, dir))
 }
 
+#' Write `project` as one inline project file (every section in `Project.json`,
+#' no `definitions/` tree) into a fresh temporary folder and load it back.
+#'
+#' The single-file counterpart of [.reloadThroughTree()]: the in-memory state is
+#' written, unsaved edits included, and the source folder is left alone. The
+#' folder is removed when the calling test finishes.
+.reloadThroughInlineFile <- function(project, envir = parent.frame()) {
+  path <- file.path(
+    withr::local_tempdir("Inline_", .local_envir = envir),
+    "Project.json"
+  )
+  .saveProjectJson(project, path)
+  loadProject(path)
+}
+
 #' One row of an Excel `Scenarios` sheet, with every required column present.
 #'
 #' Named arguments override a column's value; passing `NULL` drops the column
