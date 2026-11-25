@@ -99,8 +99,10 @@
   props <- .legacyConfigProperties(jsonData$projectConfiguration)
 
   # Refuse a working folder the finished project could not resolve, before
-  # anything is written, so the upgrade does not leave a complete project
-  # behind that `loadProject()` refuses to open.
+  # anything is written. The project would load, but reading the folder through
+  # `project$paths` aborts, which every run does and so does the missing-folders
+  # notice below: letting it through would leave a complete project on disk and
+  # then fail on it.
   .assertLegacySnapshotFoldersContained(props, outputDir)
 
   scratch <- tempfile("legacy-snapshot")
@@ -196,6 +198,10 @@
       outputPath = outputPath,
       assets = list(copied = assets$copied, notCopied = unname(notCopied))
     )
+    # Read back from `outputPath` rather than taken from `imported$project`,
+    # which was parsed from a throwaway container elsewhere: only the written
+    # project resolves its folders against `outputDir` by the loader's own
+    # rules (`${VAR}` expansion, containment).
     missing <- if (copyAssets) {
       .missingUpgradedAssetFolders(
         Project$new(projectFilePath = outputPath),
