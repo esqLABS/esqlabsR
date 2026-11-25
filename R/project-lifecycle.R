@@ -136,9 +136,9 @@ loadProject <- function(path = ".") {
     # A previous-version monolithic snapshot has no `schemaVersion`, so it
     # fails this check for a reason the version number cannot express: it is
     # not a malformed project of the current format, it is an older project
-    # that `restoreProject()` upgrades. Name that call rather than reporting
-    # a missing schema version. Every entrypoint that opens a project file
-    # (`loadProject()`, `Project$new()`, the deprecated
+    # that `importProjectFromExcel()` upgrades. Name that call rather than
+    # reporting a missing schema version. Every entrypoint that opens a project
+    # file (`loadProject()`, `Project$new()`, the deprecated
     # `ProjectConfiguration()`) reads it through here, so
     # the one guard covers all of them.
     if (.isLegacySnapshot(jsonData)) {

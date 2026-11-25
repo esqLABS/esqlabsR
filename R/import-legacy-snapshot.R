@@ -5,13 +5,14 @@
 # sheet-by-sheet as `{column_names, rows}` objects, keyed by workbook name
 # (`projectConfiguration`, `Scenarios`, `Individuals`, ...). That file is not a
 # v6 `Project.json` (it carries no `schemaVersion` and none of the v6 section
-# shapes), so `restoreProject()` cannot read it directly.
+# shapes), so `loadProject()` cannot read it directly.
 #
-# This upgrades one on read: it rebuilds the Excel workbooks the snapshot mirrors
-# into a scratch directory, then runs them through the Excel bridge
-# (`importProjectFromExcel()`) to produce the v6 definitions tree. The parsing
-# is the bridge's, not reimplemented here; this file only reverses the
-# sheet-to-JSON dump and wires the bridge behind `restoreProject()`.
+# `importProjectFromExcel()` accepts one in place of a `Project.xlsx`: this file
+# rebuilds the Excel workbooks the snapshot mirrors into a scratch directory,
+# then runs them through the same Excel bridge to produce the v6 definitions
+# tree. The parsing is the bridge's, not reimplemented here; this file only
+# reverses the sheet-to-JSON dump and hands the rebuilt workbooks to the
+# bridge.
 
 # The mirror's top-level section keys: the property/path sheet plus one key per
 # configuration workbook. Every released `snapshotProjectConfiguration()`, back
@@ -30,7 +31,7 @@
 )
 
 # TRUE when `jsonData` is a previous-version monolithic snapshot rather than a v6
-# `Project.json` / `.esqlabsR`. The discriminator is the absent `schemaVersion`
+# `Project.json`. The discriminator is the absent `schemaVersion`
 # (every v6 snapshot carries `"2.0"`) together with the mirror's signature
 # `projectConfiguration` sheet (its property/path table, which the upgrade needs
 # to locate the workbooks) and at least one workbook section, so neither a v6
@@ -45,37 +46,62 @@
     length(intersect(names(jsonData), .legacySnapshotSectionKeys)) >= 2L
 }
 
-# Upgrade a previous-version monolithic snapshot to a v6 tree project at `dir`.
-# Rebuilds the mirrored Excel workbooks into a scratch directory, runs them
-# through `importProjectFromExcel()` (writing the tree into `dir`), informs the
-# user, and returns the freshly loaded `Project`. `overwrite` is forwarded to
-# the import so it governs replacing an existing project in `dir` the same way a
-# v6 restore does. `replacedExistingTree` (whether `dir` already held a project)
-# drives the same stale-handle warning the v6 restore path emits on overwrite.
-# `snapshotDir` is the folder holding the snapshot file, where the asset folders
-# it references are looked for (see below). `name`, when given, names the upgraded
-# project: a previous-version snapshot carries no project name at all, so without
-# it the upgraded project has none.
+# Read the JSON file `importProjectFromExcel()` was handed and return it parsed,
+# after checking that it is a previous-version snapshot. A file that does not
+# parse, and one that parses into anything else, abort naming the file; a
+# current project file (it carries a `schemaVersion`) is pointed at
+# `loadProject()`, the call that opens it.
+#
+# @keywords internal
+# @noRd
+.readLegacySnapshotFile <- function(path, .call = rlang::caller_env()) {
+  jsonData <- tryCatch(
+    jsonlite::fromJSON(path, simplifyVector = FALSE),
+    error = function(e) {
+      cli::cli_abort(
+        messages$importJsonUnreadable(path),
+        parent = e,
+        call = .call
+      )
+    }
+  )
+  if (!.isLegacySnapshot(jsonData)) {
+    isCurrentProject <- is.list(jsonData) && !is.null(jsonData$schemaVersion)
+    cli::cli_abort(
+      messages$importJsonNotLegacySnapshot(path, isCurrentProject),
+      call = .call
+    )
+  }
+  jsonData
+}
+
+# Upgrade a previous-version monolithic snapshot to a v6 tree project: the
+# container at `outputPath` plus the `definitions/` tree in `outputDir`. Called
+# by `importProjectFromExcel()` after its own checks on `outputDir` and
+# `outputPath`, with the same `overwrite`, `silent` and `copyAssets`.
+# `snapshotPath` is the JSON file; the asset folders its definitions reference
+# are looked for beside it. Returns `outputPath` invisibly, like the workbook
+# import.
 #
 # @keywords internal
 # @noRd
 .upgradeLegacySnapshot <- function(
   jsonData,
-  dir,
-  overwrite,
-  replacedExistingTree = FALSE,
-  snapshotDir = NULL,
-  name = NULL
+  snapshotPath,
+  outputDir,
+  outputPath,
+  overwrite = FALSE,
+  silent = FALSE,
+  copyAssets = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   props <- .legacyConfigProperties(jsonData$projectConfiguration)
 
   # Refuse a working folder the finished project could not resolve, before
-  # anything is written. An upgrade has to hand back a *loaded* project, so such a
-  # value is a guaranteed failure a few lines below, and letting it get that far
-  # would leave a complete but unopenable project behind. (A plain Excel import is
-  # deliberately more permissive: it hands back a tree the user can still fix, and
-  # a folder placed outside the project on purpose is a supported migration.)
-  .assertLegacySnapshotFoldersContained(props, dir)
+  # anything is written, so the upgrade does not leave a complete project
+  # behind that `loadProject()` refuses to open.
+  .assertLegacySnapshotFoldersContained(props, outputDir)
 
   scratch <- tempfile("legacy-snapshot")
   dir.create(scratch)
@@ -87,62 +113,80 @@
   # population folders its definitions reference exist only beside the snapshot
   # file. Bring them into the scratch project, which is otherwise only the
   # workbooks: reconstructing the Excel project the snapshot describes is what
-  # lets the bridge's own asset copy carry them into `dir`, exactly as it does
-  # for an Excel project imported into another folder. Folders the snapshot
+  # lets the bridge's own asset copy carry them into `outputDir`, exactly as it
+  # does for an Excel project imported into another folder. Folders the snapshot
   # carries itself (the population csv files) are already in `scratch` and win,
   # since `overwrite = FALSE` leaves a target that already holds files alone.
-  # An asset folder is therefore copied twice on its way to `dir`, which is the
-  # price of reusing the one asset copy rather than teaching it a second source
-  # directory to resolve every folder against.
-  if (!is.null(snapshotDir)) {
-    .copyExcelProjectAssets(props, snapshotDir, scratch, overwrite = FALSE)
-  }
+  # An asset folder is therefore copied twice on its way to `outputDir`, which is
+  # the price of reusing the one asset copy rather than teaching it a second
+  # source directory to resolve every folder against. The folders reach the
+  # scratch project even with `copyAssets = FALSE`, because the bridge reads the
+  # observed-data workbook from there, as a workbook import reads it from beside
+  # `Project.xlsx`; `copyAssets` decides only what reaches `outputDir`.
+  snapshotDir <- dirname(fs::path_abs(snapshotPath))
+  .copyExcelProjectAssets(props, snapshotDir, scratch, overwrite = FALSE)
 
-  # `silent = TRUE`: the bridge's per-step chatter is an implementation detail
-  # of the upgrade; the single `cli_inform` below is the user-facing signal.
-  #
   # A snapshot never carries the observed-data workbook itself (only the project
   # configuration is mirrored), so the bridge's "configured data file not found"
-  # warning fires on every such upgrade. Muffle just that classed warning: it is
-  # redundant with the observed-data caveat the `upgradedLegacySnapshot()`
-  # inform already carries, and left uncaught it fails the suite under
-  # testthat's third edition. Any other bridge warning still surfaces.
-  containerPath <- withCallingHandlers(
-    importProjectFromExcel(
+  # warning fires whenever the data folder beside the snapshot does not hold it.
+  # Muffle just that classed warning: it is redundant with the observed-data
+  # caveat the `upgradedLegacySnapshot()` inform already carries. Any other
+  # bridge warning still surfaces.
+  imported <- withCallingHandlers(
+    .writeImportedExcelProject(
       pcPath,
-      outputDir = dir,
-      overwrite = overwrite,
-      silent = TRUE
+      outputDir = outputDir,
+      outputPath = outputPath,
+      .call = .call
     ),
     esqlabsR_importSkippedObservedData = function(w) {
       invokeRestart("muffleWarning")
     }
   )
 
-  project <- loadProject(containerPath)
-  # The name has to be applied after the import (which owns the whole write) and
-  # saved, since the upgrade hands back a project with nothing left unsaved.
-  if (!is.null(name)) {
-    project$info$name <- name
-    suppressMessages(project$save())
+  # Imported in place (the usual case: the snapshot still sits in its 5.x
+  # project folder), the folders are already where the project expects them.
+  # Nothing there is replaced, whatever `overwrite` says, so the copy below only
+  # adds what the folder lacks, such as the population csv files the snapshot
+  # carries itself.
+  inPlace <- normalizePath(outputDir, mustWork = FALSE) ==
+    normalizePath(snapshotDir, mustWork = FALSE)
+  assets <- if (copyAssets) {
+    .copyExcelProjectAssets(
+      imported$filePathProps,
+      imported$pcDir,
+      outputDir,
+      overwrite = overwrite && !inPlace
+    )
+  } else {
+    list(copied = character(), notCopied = character())
   }
 
-  # Name the folders that did not travel. This is the case the report always
-  # applies to (a snapshot is a single file, and whether its assets were kept
-  # beside it is up to whoever shared it), and it is the whole reason a scenario
-  # would otherwise fail with nothing but a File Not Found.
-  cli::cli_inform(messages$upgradedLegacySnapshot(
-    .missingUpgradedAssetFolders(project, dir)
-  ))
-
-  # The overwrite replaced a live tree; any `Project` loaded from `dir` before
-  # this call now points at stale in-memory state. Same warning the v6 restore
-  # path emits.
-  if (replacedExistingTree && overwrite) {
-    cli::cli_warn(messages$restoreOverwroteTree(dir))
+  if (!silent) {
+    # The workbooks the bridge read are the ones rebuilt from the snapshot, so
+    # the summary names the snapshot, and leaves out the two lines that
+    # describe that rebuild rather than the user's files: the workbooks read
+    # under their conventional name, and the folders not copied (a folder
+    # already in place is one of them). The folders the project still lacks
+    # are named by the notice below instead.
+    .reportExcelImport(
+      imported$project,
+      sourcePath = snapshotPath,
+      outputPath = outputPath,
+      assets = list(copied = assets$copied, notCopied = character())
+    )
+    missing <- if (copyAssets) {
+      .missingUpgradedAssetFolders(
+        Project$new(projectFilePath = outputPath),
+        outputDir
+      )
+    } else {
+      character()
+    }
+    cli::cli_inform(messages$upgradedLegacySnapshot(missing))
   }
 
-  project
+  invisible(outputPath)
 }
 
 # The input folders an upgraded project declares but that are not on disk under

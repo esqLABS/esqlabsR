@@ -111,12 +111,7 @@ snapshotProject <- function(
 #'   Snapshots are usually `.esqlabsR` files written by [snapshotProject()],
 #'   but a `Project.json` in which all sections are written out in the file
 #'   itself, rather than in a `definitions/` folder (a legacy single-file
-#'   project), is accepted too. A monolithic snapshot written by a
-#'   previous esqlabsR version (`snapshotProjectConfiguration()`) is also
-#'   accepted and upgraded to the current project format on read, through the
-#'   Excel bridge; observed data is not carried in such a snapshot, so add it
-#'   with [addObservedData()] if a plot or parameter identification needs it.
-#'   The result is a normal project: [loadProject()] opens it from `dir` with
+#'   project), is accepted too. The result is a normal project: [loadProject()] opens it from `dir` with
 #'   exactly the same content.
 #'
 #' @param snapshot Path to the snapshot file to read (a `.esqlabsR` file, a
@@ -188,18 +183,10 @@ restoreProject <- function(
 
   jsonData <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
 
-  # A previous-version monolithic snapshot (Excel workbooks dumped to one JSON by
-  # an older `snapshotProjectConfiguration()`) is not a v6 `Project.json`; upgrade
-  # it through the Excel bridge rather than trying to parse it as a v6 snapshot.
+  # A previous-version monolithic snapshot is upgraded by
+  # `importProjectFromExcel()`, not restored.
   if (.isLegacySnapshot(jsonData)) {
-    return(.upgradeLegacySnapshot(
-      jsonData,
-      dir,
-      overwrite,
-      replacedExistingTree,
-      snapshotDir = dirname(fs::path_abs(snapshot)),
-      name = name
-    ))
+    cli::cli_abort(messages$legacySnapshotNotLoadable(snapshot))
   }
 
   # A legacy or hand-authored snapshot may carry non-canonical ids (e.g.

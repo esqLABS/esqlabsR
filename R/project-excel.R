@@ -297,10 +297,23 @@
 #' import and names the sheet. A workbook without the sheet gives a project
 #' without `defaultSolverSettings`.
 #'
-#' @param projectConfigPath Path to the `Project.xlsx` file.
-#'   Defaults to `"Project.xlsx"`.
+#' A project from esqlabsR 5 that was saved as a single JSON file with
+#' `snapshotProjectConfiguration()` (usually `ProjectConfiguration.json`) is
+#' imported the same way: pass that file as `projectConfigPath`. The model,
+#' data, and population folders that sit beside it are copied into `outputDir`,
+#' and the import summary names each folder the new project still lacks, so you
+#' know what to place there before you run it. A working folder in the file
+#' that points outside the project stops the import before anything is written.
+#' Observed data comes along only when the data workbook the file names sits in
+#' the data folder beside it; otherwise add it with [addObservedData()] if a
+#' plot or a parameter identification needs it. The project file is never
+#' written over the file being imported, whatever `overwrite` says.
+#'
+#' @param projectConfigPath Path to the `Project.xlsx` file, or to the single
+#'   JSON file that `snapshotProjectConfiguration()` wrote in esqlabsR 5
+#'   (usually `ProjectConfiguration.json`). Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
-#'   (default), it is created in the same directory as the source Excel file.
+#'   (default), it is created in the same directory as the source file.
 #' @param overwrite Logical. Guards against silently replacing an existing JSON
 #'   project. With `overwrite = FALSE` (default), the import aborts when a
 #'   project file or a non-empty `definitions/` tree already exists in
@@ -346,7 +359,7 @@ importProjectFromExcel <- function(
   ospsuite.utils::validateIsLogical(copyAssets)
   .validateFilenameSegment(projectFileName, messages$invalidProjectFileName)
 
-  # The import writes beside the Excel project unless told otherwise, and the
+  # The import writes beside the source file unless told otherwise, and the
   # read half is handed that folder, so resolve it before reading.
   outputDir <- outputDir %||% dirname(fs::path_abs(projectConfigPath))
 
@@ -360,11 +373,32 @@ importProjectFromExcel <- function(
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
+  # A `.json` source is the configuration a 5.x project froze with
+  # `snapshotProjectConfiguration()`. Parsed and recognized here, ahead of the
+  # destination checks: a JSON file of any other kind is answered by what it is
+  # (a current project file is opened with `loadProject()`), not by a refusal
+  # about where its import would have been written.
+  isJsonSource <- identical(tolower(fs::path_ext(projectConfigPath)), "json")
+  legacySnapshot <- if (isJsonSource) {
+    .readLegacySnapshotFile(projectConfigPath)
+  }
+
   # Append `.json` rather than `fs::path_ext_set()`, which would *replace* an
   # existing extension: a dotted stem like `trial.v1` reads as an extension, so
   # setting it would strip the `.v1` and collapse `trial.v1` and `trial.v2` onto
   # one container.
   outputPath <- file.path(outputDir, .withJsonExtension(projectFileName))
+
+  # The project file must never land on the file being imported: that would
+  # replace the only copy of a 5.x configuration with the project made from it.
+  # `overwrite` does not lift this, since it consents to replacing an earlier
+  # project, not the source.
+  if (
+    file.exists(outputPath) &&
+      normalizePath(outputPath) == normalizePath(projectConfigPath)
+  ) {
+    cli::cli_abort(messages$importWouldReplaceSource(projectConfigPath))
+  }
 
   # Guard against silently replacing an existing JSON project. The import writes
   # the container and fully reconciles the `definitions/` tree (deleting any
@@ -376,14 +410,83 @@ importProjectFromExcel <- function(
   hasDefinitionTree <- dir.exists(definitionsDir) &&
     any(grepl("\\.json$", list.files(definitionsDir, recursive = TRUE)))
   if (!overwrite && (file.exists(outputPath) || hasDefinitionTree)) {
-    cli::cli_abort(messages$importWouldOverwriteProject(outputDir))
+    cli::cli_abort(messages$importWouldOverwriteProject(
+      outputDir,
+      fromLegacySnapshot = isJsonSource
+    ))
   }
 
-  read <- .excelToProjectJson(projectConfigPath, projectDir = outputDir)
-  jsonData <- read$jsonData
-  pcDir <- read$pcDir
-  filePathProps <- read$filePathProps
-  conventionWorkbooks <- read$conventionWorkbooks
+  if (isJsonSource) {
+    return(.upgradeLegacySnapshot(
+      legacySnapshot,
+      snapshotPath = projectConfigPath,
+      outputDir = outputDir,
+      outputPath = outputPath,
+      overwrite = overwrite,
+      silent = silent,
+      copyAssets = copyAssets
+    ))
+  }
+
+  imported <- .writeImportedExcelProject(
+    projectConfigPath,
+    outputDir = outputDir,
+    outputPath = outputPath
+  )
+
+  # The definitions reference models, data, and population files by a path
+  # relative to the project folder, so importing into a different folder would
+  # leave every one of those references dangling. Bring the referenced input
+  # folders along, so the imported project runs where it was written.
+  assets <- if (copyAssets) {
+    .copyExcelProjectAssets(
+      imported$filePathProps,
+      imported$pcDir,
+      outputDir,
+      overwrite
+    )
+  } else {
+    list(copied = character(), notCopied = character())
+  }
+
+  # Report what the import produced. Not gated on an interactive session: an
+  # import run from a script is exactly the case where the call would otherwise
+  # finish with no sign of what (or whether) anything was written. `silent` is
+  # the way to turn it off.
+  if (!silent) {
+    .reportExcelImport(
+      imported$project,
+      sourcePath = projectConfigPath,
+      outputPath = outputPath,
+      conventionWorkbooks = imported$conventionWorkbooks,
+      assets = assets
+    )
+  }
+
+  invisible(outputPath)
+}
+
+# Read an Excel project and write it to `outputDir` as a tree project: the
+# container at `outputPath` plus the `definitions/<kind>/` tree. The writing
+# half of `importProjectFromExcel()`, shared by the workbook import and the
+# upgrade of a 5.x configuration JSON, which rebuilds that project's workbooks
+# first. Returns the imported in-memory project together with the pieces of the
+# read that the asset copy and the summary need (`pcDir`, `filePathProps`,
+# `conventionWorkbooks`, as `.excelToProjectJson()` documents them).
+#
+# @keywords internal
+# @noRd
+.writeImportedExcelProject <- function(
+  projectConfigPath,
+  outputDir,
+  outputPath,
+  .call = rlang::caller_env()
+) {
+  read <- .excelToProjectJson(
+    projectConfigPath,
+    projectDir = outputDir,
+    .call = .call
+  )
 
   # Build an in-memory project from the imported data by writing the inlined
   # JSON to a throwaway container and parsing it back. The container sits in a
@@ -398,7 +501,7 @@ importProjectFromExcel <- function(
   on.exit(unlink(treelessDir, recursive = TRUE), add = TRUE)
   treelessPath <- file.path(treelessDir, "Project.json")
   jsonText <- jsonlite::toJSON(
-    jsonData,
+    read$jsonData,
     pretty = TRUE,
     auto_unbox = TRUE,
     digits = NA,
@@ -418,59 +521,64 @@ importProjectFromExcel <- function(
   # it needs no inlined container to diff against.
   .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
 
-  # The definitions reference models, data, and population files by a path
-  # relative to the project folder, so importing into a different folder would
-  # leave every one of those references dangling. Bring the referenced input
-  # folders along, so the imported project runs where it was written.
-  assets <- if (copyAssets) {
-    .copyExcelProjectAssets(filePathProps, pcDir, outputDir, overwrite)
-  } else {
-    list(copied = character(), notCopied = character())
-  }
+  list(
+    project = importedProject,
+    pcDir = read$pcDir,
+    filePathProps = read$filePathProps,
+    conventionWorkbooks = read$conventionWorkbooks
+  )
+}
 
-  # Report what the import produced. Not gated on an interactive session: an
-  # import run from a script is exactly the case where the call would otherwise
-  # finish with no sign of what (or whether) anything was written. `silent` is
-  # the way to turn it off.
-  if (!silent) {
-    inputFile <- .readablePath(projectConfigPath)
-    outputFile <- .readablePath(outputPath)
-    msg <- messages$importedProject(inputFile, outputFile)
+# Print the summary of an import: the project written, its per-section
+# definition counts, the sections that came out empty, the workbooks read under
+# their conventional filename, and the folders copied or not copied. `assets` is
+# the `.copyExcelProjectAssets()` result. `sourcePath` is the file the user
+# named, which for an upgraded 5.x configuration is the JSON file, not the
+# workbooks rebuilt from it.
+#
+# @keywords internal
+# @noRd
+.reportExcelImport <- function(
+  project,
+  sourcePath,
+  outputPath,
+  conventionWorkbooks = character(),
+  assets = list(copied = character(), notCopied = character())
+) {
+  inputFile <- .readablePath(sourcePath)
+  outputFile <- .readablePath(outputPath)
+  msg <- messages$importedProject(inputFile, outputFile)
+  cli::cli_inform("{msg}")
+  # The per-section counts, rendered by the project's own definitions block so
+  # the summary and `print(project)` can never disagree about the labels. That
+  # block prints to stdout, so it is captured and re-emitted verbatim on the
+  # message stream, keeping the whole summary on one stream (and out of the way
+  # of anything capturing the function's own output).
+  cli::cli_verbatim(utils::capture.output(print(project$definitions)))
+  # The counts block lists only the sections that hold something, so the
+  # sections that imported nothing are named here: a section that came out
+  # empty is exactly what a reader has to see to notice that a workbook did
+  # not arrive.
+  empty <- .emptyProjectSections(project)
+  if (length(empty) > 0L) {
+    msg <- messages$importEmptySections(empty)
     cli::cli_inform("{msg}")
-    # The per-section counts, rendered by the project's own definitions block so
-    # the summary and `print(project)` can never disagree about the labels. That
-    # block prints to stdout, so it is captured and re-emitted verbatim on the
-    # message stream, keeping the whole summary on one stream (and out of the way
-    # of anything capturing the function's own output).
-    cli::cli_verbatim(utils::capture.output(print(
-      importedProject$definitions
-    )))
-    # The counts block lists only the sections that hold something, so the
-    # sections that imported nothing are named here: a section that came out
-    # empty is exactly what a reader has to see to notice that a workbook did
-    # not arrive.
-    empty <- .emptyProjectSections(importedProject)
-    if (length(empty) > 0L) {
-      msg <- messages$importEmptySections(empty)
-      cli::cli_inform("{msg}")
-    }
-    # A workbook read under its conventional filename is content the project
-    # does not declare, so a reader would otherwise have no way to know it was
-    # imported.
-    if (length(conventionWorkbooks) > 0L) {
-      .informFormatted(messages$importUndeclaredWorkbooks(conventionWorkbooks))
-    }
-    if (length(assets$copied) > 0L) {
-      msg <- messages$importCopiedAssetFolders(assets$copied)
-      cli::cli_inform("{msg}")
-    }
-    if (length(assets$notCopied) > 0L) {
-      msg <- messages$importUncopiedAssetFolders(assets$notCopied)
-      cli::cli_warn("{msg}")
-    }
   }
-
-  invisible(outputPath)
+  # A workbook read under its conventional filename is content the project
+  # does not declare, so a reader would otherwise have no way to know it was
+  # imported.
+  if (length(conventionWorkbooks) > 0L) {
+    .informFormatted(messages$importUndeclaredWorkbooks(conventionWorkbooks))
+  }
+  if (length(assets$copied) > 0L) {
+    msg <- messages$importCopiedAssetFolders(assets$copied)
+    cli::cli_inform("{msg}")
+  }
+  if (length(assets$notCopied) > 0L) {
+    msg <- messages$importUncopiedAssetFolders(assets$notCopied)
+    cli::cli_warn("{msg}")
+  }
+  invisible(NULL)
 }
 
 # Read an Excel project into the in-memory `Project.json` shape, doing all of

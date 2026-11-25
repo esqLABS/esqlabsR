@@ -67,11 +67,11 @@ test_that(".legacySheetToDf reads cells by name and rejects a malformed sheet", 
   )
 })
 
-test_that("loadProject on a previous-version snapshot points at restoreProject", {
+test_that("loadProject on a previous-version snapshot points at importProjectFromExcel", {
   # `loadProject()` is the name a migrating user reaches for first, so the
   # snapshot's absent `schemaVersion` must not be reported to them as an
-  # unsupported version: the file is an older project, and `restoreProject()`
-  # is what opens it.
+  # unsupported version: the file is an older project, and
+  # `importProjectFromExcel()` is what upgrades it.
   dir <- withr::local_tempdir()
   snapshot <- file.path(dir, "ProjectConfiguration.json")
   file.copy(.legacySnapshotFixture(), snapshot)
@@ -89,68 +89,59 @@ test_that("loadProject on a previous-version snapshot points at restoreProject",
   )
 })
 
-test_that("restoreProject upgrades a previous-version snapshot to a v6 tree", {
+test_that("importProjectFromExcel upgrades a previous-version snapshot to a v6 tree", {
   dir <- withr::local_tempdir()
 
-  expect_message(
-    project <- restoreProject(.legacySnapshotFixture(), dir),
-    "previous-version project snapshot"
+  shown <- capture_messages(
+    result <- withVisible(
+      importProjectFromExcel(.legacySnapshotFixture(), outputDir = dir)
+    )
   )
+  expect_match(shown, "previous-version project snapshot", all = FALSE)
+
+  # The path of the written project file comes back invisibly, as for a
+  # workbook import.
+  expect_false(result$visible)
+  expect_identical(result$value, file.path(dir, "Project.json"))
+  expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
 
   # Counts match a faithful migration of the fixture through the Excel bridge:
   # the previous-version layout carries one protocol sheet per application and a
   # `PITaskName`-keyed parameter-identification layout, both of which the bridge
   # reifies (3 applications, 3 PI tasks).
-  expect_s3_class(project, "Project")
+  project <- loadProject(dir)
   expect_length(project$definitions$scenarios, 8)
   expect_length(project$definitions$applications, 3)
   expect_length(project$definitions$parameterIdentification, 3)
   expect_length(project$definitions$individuals, 1)
-
-  # The upgrade materializes a real tree project at `dir` that loads on its own.
-  expect_true(file.exists(file.path(dir, "Project.json")))
-  reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_length(reloaded$definitions$scenarios, 8)
-})
-
-# #1213 item 26: a previous-version snapshot carries no project name, so an
-# upgraded project had none and nothing could give it one. `restoreProject(name =)`
-# names the project it produces, on this path and on the v6 one.
-test_that("restoreProject names the project it upgrades", {
-  dir <- withr::local_tempdir()
-
-  project <- suppressMessages(
-    restoreProject(.legacySnapshotFixture(), dir, name = "Aciclovir study")
-  )
-
-  expect_identical(project$info$name, "Aciclovir study")
-  # Written into the project file, so it survives on its own.
-  expect_identical(
-    loadProject(file.path(dir, "Project.json"))$info$name,
-    "Aciclovir study"
-  )
-  # And nothing is left unsaved by the naming.
-  expect_true(project$status$tree_in_sync)
 })
 
 test_that("upgrading a snapshot with a configured data file emits no warning", {
   # The fixture configures a `dataFile` that no snapshot carries, so the bridge
   # would warn "data file not found"; the upgrade muffles that redundant
   # warning (it is covered by the upgrade's own observed-data notice), which
-  # matters under testthat 3e where an uncaught warning fails the test.
+  # matters under testthat 3e where an uncaught warning fails the test. The
+  # snapshot is imported from a folder of its own, so no data workbook sits
+  # beside it either.
+  lone <- withr::local_tempdir()
+  snapshot <- file.path(lone, "ProjectConfiguration.json")
+  file.copy(.legacySnapshotFixture(), snapshot)
+
   dir <- withr::local_tempdir()
   expect_no_warning(
-    suppressMessages(restoreProject(.legacySnapshotFixture(), dir))
+    suppressMessages(importProjectFromExcel(snapshot, outputDir = dir))
   )
 })
 
 # A snapshot is a single file: the models, data and population folders its
-# definitions reference live beside it. Nothing travelled at all before, because
-# the upgrade handed the bridge a scratch directory holding only the rebuilt
-# workbooks, so every scenario validated as File Not Found (#1213).
-test_that("restoreProject carries the asset folders beside the snapshot into the project", {
+# definitions reference live beside it, and have to travel into the folder the
+# project is written to (#1213).
+test_that("importProjectFromExcel carries the asset folders beside the snapshot into the project", {
   dir <- withr::local_tempdir()
-  suppressMessages(restoreProject(.legacySnapshotFixture(), dir))
+  suppressMessages(importProjectFromExcel(
+    .legacySnapshotFixture(),
+    outputDir = dir
+  ))
 
   expect_true(file.exists(file.path(
     dir,
@@ -165,33 +156,31 @@ test_that("restoreProject carries the asset folders beside the snapshot into the
   )))
   # The population csv files the snapshot carries itself land where the upgraded
   # project resolves them.
-  project <- loadProject(file.path(dir, "Project.json"))
+  project <- loadProject(dir)
   expect_true(file.exists(file.path(
     project$paths$populationsFolder,
     "TestPopulation.csv"
   )))
 })
 
-test_that("restoreProject names the asset folders a lone snapshot could not bring", {
-  # The one case the report always applies to, and the one where it used to be
-  # suppressed: nothing sits beside the snapshot, so the user has to be told why
-  # the upgraded project cannot run.
+test_that("importProjectFromExcel names the asset folders a lone snapshot could not bring", {
+  # Nothing sits beside the snapshot, so the user has to be told why the
+  # upgraded project cannot run.
   lone <- withr::local_tempdir()
   snapshot <- file.path(lone, "shared.json")
   file.copy(.legacySnapshotFixture(), snapshot)
 
   dir <- withr::local_tempdir()
-  expect_message(
-    suppressWarnings(restoreProject(snapshot, dir)),
-    "missing from the upgraded project"
+  expect_snapshot(
+    importProjectFromExcel(snapshot, outputDir = dir),
+    transform = .redactTmpDir
   )
   expect_false(dir.exists(file.path(dir, "Models", "Simulations")))
 })
 
-test_that("restoreProject refuses an out-of-project folder before writing anything", {
-  # The value makes the finished project unopenable, and the upgrade has to
-  # return a loaded project, so it is refused up front rather than after a
-  # complete definitions tree is on disk (#1213).
+test_that("importProjectFromExcel refuses an out-of-project folder in a snapshot before writing anything", {
+  # The value makes the finished project unopenable, so it is refused up front
+  # rather than after a complete definitions tree is on disk (#1213).
   fixture <- jsonlite::fromJSON(
     .legacySnapshotFixture(),
     simplifyVector = FALSE
@@ -210,10 +199,189 @@ test_that("restoreProject refuses an out-of-project folder before writing anythi
 
   dir <- withr::local_tempdir()
   expect_error(
-    restoreProject(snapshot, dir),
+    importProjectFromExcel(snapshot, outputDir = dir),
     "resolves outside the project folder"
   )
   expect_length(list.files(dir, all.files = TRUE, no.. = TRUE), 0L)
+})
+
+test_that("importProjectFromExcel writes the upgraded project beside the snapshot by default", {
+  # The usual case: the snapshot still sits in the 5.x project folder, beside
+  # the models, data and configuration workbooks. The project is written there,
+  # and none of the files already in the folder is touched.
+  src <- withr::local_tempdir()
+  file.copy(
+    list.files(test_path("data", "TestProjectExcel"), full.names = TRUE),
+    src,
+    recursive = TRUE
+  )
+  snapshot <- file.path(src, "ProjectConfiguration.json")
+  before <- list.files(src, recursive = TRUE, all.files = TRUE)
+  checksumsBefore <- tools::md5sum(file.path(src, before))
+
+  expect_no_warning(
+    path <- suppressMessages(importProjectFromExcel(snapshot))
+  )
+
+  expect_identical(
+    normalizePath(path),
+    normalizePath(file.path(src, "Project.json"))
+  )
+  # Nothing that was there before changed; the import only added the project
+  # file and its definitions.
+  expect_identical(tools::md5sum(file.path(src, before)), checksumsBefore)
+  added <- setdiff(list.files(src, recursive = TRUE, all.files = TRUE), before)
+  expect_true(all(added == "Project.json" | startsWith(added, "definitions/")))
+
+  project <- loadProject(src)
+  expect_length(project$definitions$scenarios, 8)
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+
+  # Importing again with `overwrite = TRUE` replaces the project, not the
+  # folders it was made from: the population csv files rebuilt from the
+  # snapshot would otherwise replace the originals beside it.
+  suppressMessages(importProjectFromExcel(snapshot, overwrite = TRUE))
+  expect_identical(tools::md5sum(file.path(src, before)), checksumsBefore)
+})
+
+test_that("importProjectFromExcel refuses to import a snapshot over an existing project unless overwrite", {
+  dir <- withr::local_tempdir()
+  suppressMessages(importProjectFromExcel(
+    .legacySnapshotFixture(),
+    outputDir = dir
+  ))
+
+  expect_snapshot(
+    importProjectFromExcel(.legacySnapshotFixture(), outputDir = dir),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+
+  expect_no_error(suppressMessages(importProjectFromExcel(
+    .legacySnapshotFixture(),
+    outputDir = dir,
+    overwrite = TRUE
+  )))
+  expect_length(loadProject(dir)$definitions$scenarios, 8)
+})
+
+test_that("importProjectFromExcel upgrades a snapshot silently with silent = TRUE", {
+  lone <- withr::local_tempdir()
+  snapshot <- file.path(lone, "ProjectConfiguration.json")
+  file.copy(.legacySnapshotFixture(), snapshot)
+  dir <- withr::local_tempdir()
+
+  expect_silent(importProjectFromExcel(
+    snapshot,
+    outputDir = dir,
+    silent = TRUE
+  ))
+  expect_true(file.exists(file.path(dir, "Project.json")))
+})
+
+test_that("importProjectFromExcel copies no folder for a snapshot with copyAssets = FALSE", {
+  dir <- withr::local_tempdir()
+  suppressMessages(importProjectFromExcel(
+    .legacySnapshotFixture(),
+    outputDir = dir,
+    copyAssets = FALSE
+  ))
+
+  expect_setequal(
+    list.files(dir, all.files = TRUE, no.. = TRUE),
+    c("Project.json", "definitions")
+  )
+  # The definitions are the same as with the folders copied: the observed data
+  # is still read from the data workbook beside the snapshot, as a workbook
+  # import reads it from beside `Project.xlsx`.
+  expect_true(dir.exists(file.path(dir, "definitions", "observed-data")))
+  expect_length(
+    list.files(file.path(dir, "definitions", "observed-data")),
+    1L
+  )
+})
+
+test_that("importProjectFromExcel honors projectFileName for a snapshot", {
+  dir <- withr::local_tempdir()
+  path <- suppressMessages(importProjectFromExcel(
+    .legacySnapshotFixture(),
+    outputDir = dir,
+    projectFileName = "AciclovirStudy"
+  ))
+
+  expect_identical(path, file.path(dir, "AciclovirStudy.json"))
+  expect_false(file.exists(file.path(dir, "Project.json")))
+  expect_length(loadProject(path)$definitions$scenarios, 8)
+})
+
+test_that("importProjectFromExcel refuses to write the project over the snapshot it imports", {
+  # Naming the project file after the snapshot, in the snapshot's own folder,
+  # would replace the only copy of the 5.x configuration with the new project.
+  # `overwrite = TRUE` is about an earlier project, not about the source.
+  src <- withr::local_tempdir()
+  snapshot <- file.path(src, "ProjectConfiguration.json")
+  file.copy(.legacySnapshotFixture(), snapshot)
+  checksumBefore <- tools::md5sum(snapshot)
+
+  expect_snapshot(
+    importProjectFromExcel(
+      snapshot,
+      projectFileName = "ProjectConfiguration.json",
+      overwrite = TRUE
+    ),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(
+    list.files(src, all.files = TRUE, no.. = TRUE),
+    basename(snapshot)
+  )
+  expect_identical(tools::md5sum(snapshot), checksumBefore)
+})
+
+test_that("importProjectFromExcel points a current project file at loadProject", {
+  project <- testProject()
+
+  expect_snapshot(
+    importProjectFromExcel(
+      project$info$projectFilePath,
+      outputDir = withr::local_tempdir()
+    ),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+})
+
+test_that("importProjectFromExcel rejects a JSON file that is no project configuration", {
+  dir <- withr::local_tempdir()
+  other <- file.path(dir, "settings.json")
+  jsonlite::write_json(list(solver = "CVODE", tolerance = 1e-6), other)
+
+  expect_snapshot(
+    importProjectFromExcel(other, outputDir = withr::local_tempdir()),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+})
+
+test_that("importProjectFromExcel names a JSON file it cannot read", {
+  dir <- withr::local_tempdir()
+  broken <- file.path(dir, "ProjectConfiguration.json")
+  writeLines("{\"projectConfiguration\": {\"column_names\": [", broken)
+
+  # Only the esqlabsR message is under test; the parser's own text chained onto
+  # it belongs to jsonlite.
+  error <- expect_error(
+    importProjectFromExcel(broken, outputDir = withr::local_tempdir())
+  )
+  expect_snapshot(
+    cat(rlang::cnd_message(error, inherit = FALSE), "\n"),
+    transform = .redactTmpDir
+  )
+  expect_s3_class(error$parent, "error")
 })
 
 test_that("materializer writes the population csvs under the recorded folder name", {
@@ -285,30 +453,3 @@ test_that(".restoreColumnTypes keeps a zero-padded id column as text", {
   expect_type(out$n, "double")
 })
 
-test_that("restoreProject warns of a stale handle when it overwrites a tree", {
-  # First restore creates a tree; the second, with overwrite, must warn that a
-  # Project loaded from `dir` before is now stale, matching the v6 path.
-  dir <- withr::local_tempdir()
-  suppressMessages(restoreProject(.legacySnapshotFixture(), dir))
-  expect_warning(
-    suppressMessages(
-      restoreProject(.legacySnapshotFixture(), dir, overwrite = TRUE)
-    ),
-    "still contain the old project"
-  )
-})
-
-test_that("restoreProject still restores a v6 snapshot (regression)", {
-  src <- withr::local_tempdir()
-  initProject(src, type = "example", createExcel = FALSE)
-  snapshot <- snapshotProject(
-    loadProject(file.path(src, "Project.json")),
-    dir = withr::local_tempdir(),
-    name = "v6"
-  )
-
-  dir <- withr::local_tempdir()
-  restored <- restoreProject(snapshot, dir)
-  expect_s3_class(restored, "Project")
-  expect_true(file.exists(file.path(dir, "Project.json")))
-})
