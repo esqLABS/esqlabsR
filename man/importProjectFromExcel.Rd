@@ -14,11 +14,12 @@ importProjectFromExcel(
 )
 }
 \arguments{
-\item{projectConfigPath}{Path to the \code{Project.xlsx} file.
-Defaults to \code{"Project.xlsx"}.}
+\item{projectConfigPath}{Path to the \code{Project.xlsx} file, or to the single
+JSON file that \code{snapshotProjectConfiguration()} wrote in esqlabsR 5
+(usually \code{ProjectConfiguration.json}). Defaults to \code{"Project.xlsx"}.}
 
 \item{outputDir}{Directory where the JSON project is created. If \code{NULL}
-(default), it is created in the same directory as the source Excel file.}
+(default), it is created in the same directory as the source file.}
 
 \item{overwrite}{Logical. Guards against silently replacing an existing JSON
 project. With \code{overwrite = FALSE} (default), the import aborts when a
@@ -76,6 +77,18 @@ checks \code{Project.json}: an unknown setting, a value of the wrong type, a
 setting named in two rows, or a value with no setting beside it stops the
 import and names the sheet. A workbook without the sheet gives a project
 without \code{defaultSolverSettings}.
+
+A project from esqlabsR 5 that was saved as a single JSON file with
+\code{snapshotProjectConfiguration()} (usually \code{ProjectConfiguration.json}) is
+imported the same way: pass that file as \code{projectConfigPath}. The model,
+data, and population folders that sit beside it are copied into \code{outputDir},
+and the import summary names each folder the new project still lacks, so you
+know what to place there before you run it. A working folder in the file
+that points outside the project stops the import before anything is written.
+Observed data comes along only when the data workbook the file names sits in
+the data folder beside it; otherwise add it with \code{\link[=addObservedData]{addObservedData()}} if a
+plot or a parameter identification needs it. The project file is never
+written over the file being imported, whatever \code{overwrite} says.
 }
 \seealso{
 Other projectPersistence:
@@ -85,8 +98,6 @@ Other projectPersistence:
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}}
+\code{\link[=saveProject]{saveProject()}}
 }
 \concept{projectPersistence}

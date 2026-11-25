@@ -7,11 +7,9 @@
 saveProject(project)
 }
 \arguments{
-\item{project}{A \code{Project} loaded from disk with \code{\link[=loadProject]{loadProject()}} (or
-restored with \code{\link[=restoreProject]{restoreProject()}}). A project created directly with
-\code{Project$new()} has no folder on disk to save to; use \code{\link[=snapshotProject]{snapshotProject()}}
-to write it to a single file, or create a project folder first with
-\code{\link[=initProject]{initProject()}}.}
+\item{project}{A \code{Project} loaded from disk with \code{\link[=loadProject]{loadProject()}}. A
+project created directly with \code{Project$new()} has no folder on disk to
+save to; create a project folder first with \code{\link[=initProject]{initProject()}}.}
 }
 \value{
 Invisibly, the \code{project}.
@@ -49,8 +47,7 @@ saveProject(project) # clean save: "Project is already up to date; ..."
 }
 }
 \seealso{
-\code{\link[=loadProject]{loadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
+\code{\link[=loadProject]{loadProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
@@ -59,8 +56,6 @@ Other projectPersistence:
 \code{\link[=initProject]{initProject()}},
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
-\code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}}
+\code{\link[=projectStatus]{projectStatus()}}
 }
 \concept{projectPersistence}
