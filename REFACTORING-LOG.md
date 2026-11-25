@@ -346,3 +346,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
 - 2026-11-25 16:52: Tests that wrote a project to one file and read it back now write the project folder or the single project file directly, without the snapshot functions. (#1399)
 - 2026-11-25 17:03: importProjectFromExcel() takes the single JSON file that snapshotProjectConfiguration() wrote in esqlabsR 5 and upgrades it, and refuses to write the project file over that file; restoreProject() no longer upgrades one. (#1399)
+- 2026-11-25 17:19: snapshotProject() and restoreProject() are gone, with their messages, tests, help-page entries and NEWS mentions; saving a project with no folder only points to initProject() and loadProject(). (#1399)

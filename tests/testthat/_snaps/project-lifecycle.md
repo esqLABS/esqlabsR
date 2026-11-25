@@ -12,8 +12,7 @@
     Condition
       Error in `saveProject()`:
       ! This project does not have a project folder on disk yet, so it cannot be saved.
-      i Use `snapshotProject()` to save it to a single file.
-      i Or create a project folder with `initProject()` and load it with `loadProject()`.
+      i Create a project folder with `initProject()` and load it with `loadProject()`.
 
 # initProject() rejects a name that is not a single string
 

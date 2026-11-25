@@ -20,8 +20,7 @@
 #' @returns Object of type `Project`
 #' @export
 #' @family projectPersistence
-#' @seealso [saveProject()], [snapshotProject()],
-#'   [restoreProject()], [projectStatus()].
+#' @seealso [saveProject()], [projectStatus()].
 #'
 #' @section Editing a loaded project:
 #'   Changes you make to a loaded project — with `addScenario()`,
@@ -41,11 +40,8 @@
 #'
 #'   Write your changes to the project files with [saveProject()]. Discard
 #'   unsaved changes and go back to what is saved on disk by loading the
-#'   project again with `project <- loadProject(project$info$projectFilePath)`. Save the current state of the whole project to a
-#'   single file you can archive or share with [snapshotProject()], and
-#'   recreate a project folder from such a file (or roll an existing one
-#'   back) with [restoreProject()]. Check for unsaved changes and outdated
-#'   Excel files with [projectStatus()].
+#'   project again with `project <- loadProject(project$info$projectFilePath)`. Check for unsaved
+#'   changes and outdated Excel files with [projectStatus()].
 #'
 #' @examples
 #' \dontrun{
@@ -293,17 +289,14 @@ loadProject <- function(path = ".") {
 #'   [projectStatus()] to check whether project files on disk, the Excel files,
 #'   and your R session are in sync.
 #'
-#' @param project A `Project` loaded from disk with [loadProject()] (or
-#'   restored with [restoreProject()]). A project created directly with
-#'   `Project$new()` has no folder on disk to save to; use [snapshotProject()]
-#'   to write it to a single file, or create a project folder first with
-#'   [initProject()].
+#' @param project A `Project` loaded from disk with [loadProject()]. A
+#'   project created directly with `Project$new()` has no folder on disk to
+#'   save to; create a project folder first with [initProject()].
 #'
 #' @returns Invisibly, the `project`.
 #' @export
 #' @family projectPersistence
-#' @seealso [loadProject()], [snapshotProject()],
-#'   [restoreProject()], [projectStatus()].
+#' @seealso [loadProject()], [projectStatus()].
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
@@ -710,7 +703,7 @@ initProject <- function(
   }
 
   # The template ships a fixed `esqlabsRVersion`, and every other writer
-  # (`saveProject()`, `snapshotProject()`, the Excel bridge) stamps the running
+  # (`saveProject()`, the Excel bridge) stamps the running
   # package version, so the copied value is restamped here: the field says which
   # version wrote the project, and a scaffold that claimed one version and then
   # reported another after the first save read as a downgrade. `name` is applied

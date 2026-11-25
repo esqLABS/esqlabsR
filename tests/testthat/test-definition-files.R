@@ -1,7 +1,7 @@
 # Tests for the scenarios definition-files format layer (R/definition-files.R):
 # the per-scenario JSON tree loader, in-memory mutators reconciled to disk by
-# saveProject(), lazy referential validation, and the derived single-file
-# snapshot.
+# saveProject(), lazy referential validation, and the single project file that
+# carries every section inline.
 
 test_that("loadProject reads scenarios from the definitions/scenarios/ tree", {
   project <- testProject()

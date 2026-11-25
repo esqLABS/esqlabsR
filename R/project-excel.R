@@ -1619,9 +1619,8 @@ projectStatus <- function(project, silent = FALSE) {
 
   # Derive the Excel side-car by swapping the extension to `.xlsx`. Using
   # `path_ext_set` (rather than a `.json`-only substitution) keeps the
-  # derivation correct for any container extension, including a `.esqlabsR`
-  # snapshot, so a snapshot-loaded project does not mistake itself for its own
-  # Excel side-car.
+  # derivation correct for a container with any extension, so such a project
+  # does not mistake itself for its own Excel side-car.
   excelPath <- file.path(dirname(jsonPath), .excelSideCarName(jsonPath))
   if (!file.exists(excelPath)) {
     if (!silent) {

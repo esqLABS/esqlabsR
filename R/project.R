@@ -43,9 +43,7 @@
 #'   functions — live only in your R session until you write them to the
 #'   project files with [saveProject()]. This makes a loaded project a safe
 #'   place to experiment: discard unsaved changes by loading the project
-#'   again with [loadProject()], or
-#'   use [snapshotProject()] / [restoreProject()] to set a save-point and
-#'   return to it later.
+#'   again with [loadProject()].
 #'
 #'   A `Project` cannot be copied with `$clone()` — because nothing is
 #'   written to disk until you save, there is no need for a working copy: the

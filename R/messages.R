@@ -279,8 +279,7 @@ messages$invalidInitProjectName <- function() {
 messages$saveProjectNoTree <- function() {
   cliBullets(
     "This project does not have a project folder on disk yet, so it cannot be saved.",
-    "i" = "Use {.fn snapshotProject} to save it to a single file.",
-    "i" = "Or create a project folder with {.fn initProject} and load it with {.fn loadProject}."
+    "i" = "Create a project folder with {.fn initProject} and load it with {.fn loadProject}."
   )
 }
 
@@ -288,33 +287,11 @@ messages$projectAlreadyUpToDate <- function() {
   "Project is already up to date; nothing to save."
 }
 
-messages$snapshotFileExists <- function(path) {
-  cliBullets(
-    "A snapshot file already exists at {.file {path}}.",
-    "i" = "Pass {.code overwrite = TRUE} to replace it, or a different {.arg name}."
-  )
-}
-
-# The `{name}` placeholder is the validated value, not `snapshotProject()`'s
-# `name` argument (`{.arg name}` above renders that literally). `given` is
+# The `{name}` placeholder is the validated value. `given` is
 # `.validateFilenameSegment()`'s description of a value that is no name at all
 # (and `NULL` for a well-formed name that would escape the directory), because
 # quoting an empty string, an `NA` or a number as if it "contained a path
 # separator" says something untrue about it.
-messages$invalidSnapshotName <- function(name, given) {
-  cliBullets(
-    "{.arg name} must be a single filename stem without path separators.",
-    "x" = if (is.null(given)) {
-      "The stem {.val {name}} contains a path separator or is {.val .} / \\
-      {.val ..}, so it could write outside {.arg dir}."
-    } else {
-      "It is {given}, not a single non-empty string."
-    },
-    "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
-    {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
-  )
-}
-
 messages$invalidProjectFileName <- function(name, given) {
   cliBullets(
     "{.arg projectFileName} must be a single filename without path separators.",
@@ -347,25 +324,6 @@ messages$invalidDefinitionsFolder <- function(name, given) {
     },
     "i" = "Pass a plain folder name, for example {.val definitions} (the \\
     default) or {.val defs}."
-  )
-}
-
-messages$restoreDirNotEmpty <- function(dir) {
-  cliBullets(
-    "The folder {.path {dir}} is not empty.",
-    "i" = "{.fn restoreProject} needs an empty or new folder. Pass \\
-    {.code overwrite = TRUE} to replace the folder's contents, or choose a \\
-    different folder."
-  )
-}
-
-messages$restoreOverwroteTree <- function(dir) {
-  cliBullets(
-    "Replaced the project in {.path {dir}} with the snapshot.",
-    "!" = "Project objects loaded from this folder before the restore still \\
-    contain the old project.",
-    "i" = "Continue with the project returned by {.fn restoreProject}, or \\
-    load it again with {.fn loadProject}."
   )
 }
 

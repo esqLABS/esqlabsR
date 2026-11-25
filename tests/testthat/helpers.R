@@ -408,10 +408,9 @@ importLegacyExcelProject <- function(
 
 #' Redact a whole quoted absolute path that lives under the session temp
 #' directory, so an `expect_snapshot()` of a message naming a per-run temp path
-#' (a snapshot file, a target directory) is stable across runs. Both the temp
+#' (a source file, a target directory) is stable across runs. Both the temp
 #' root and the random per-run basename vary run to run, so the whole quoted
-#' path is collapsed to `'<tmp-path>'`, keeping a fixed `.esqlabsR` suffix when
-#' present so a snapshot-file message still reads as one. Used as the
+#' path is collapsed to `'<tmp-path>'`. Used as the
 #' `transform` of snapshots whose message names such a path with no meaningful
 #' project-relative tail.
 #'
@@ -431,13 +430,6 @@ importLegacyExcelProject <- function(
   # matches the drive-prefixed form a message reports; a Unix path starts with
   # `/tmp/...`. Either way, an unrelated absolute path is left intact.
   prefix <- .escapeRegex(tmp)
-  # A quoted temp path ending in the snapshot extension keeps that suffix; any
-  # other quoted temp path collapses to a bare placeholder.
-  lines <- gsub(
-    paste0("'", prefix, "[^']*\\.esqlabsR'"),
-    "'<tmp-path>.esqlabsR'",
-    lines
-  )
   gsub(paste0("'", prefix, "[^']*'"), "'<tmp-path>'", lines)
 }
 

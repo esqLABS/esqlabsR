@@ -16,9 +16,8 @@
 # (every `add*` / `remove*` / `set*` and any write-back through
 # `project$<section>`) update memory and set the dirty bit, and `saveProject()`
 # reconciles the whole tree to memory (write-if-different plus orphan-delete).
-# `snapshotProject()` renders a derived single-file `.esqlabsR` with every
-# section inlined, for sharing or archiving; `restoreProject()` materializes
-# one back into a tree.
+# A project file that carries its sections inline, with no tree beside it,
+# still loads (see `.loadDefinitionTree()`).
 #
 # Per-kind subfolder names and granularity (all under `definitions/`):
 #   scenarios                -> scenarios/                one file per scenario
@@ -369,9 +368,9 @@
 # files are globbed, parsed, and returned as the list of per-file records in
 # sorted-filename order for a stable load order. When there is no
 # `definitions/<kind>/` directory, the inline section from the `Project.json` is
-# used instead, so a derived single-file snapshot (see `snapshotProject()`)
-# reloads self-contained. A malformed file is a structural error and aborts the
-# load.
+# used instead, so a project file that carries every section inline (such as
+# the throwaway container the Excel import parses) loads self-contained. A
+# malformed file is a structural error and aborts the load.
 #
 # @keywords internal
 # @noRd
@@ -465,7 +464,7 @@
 # is a stale entry (a removed definition, or an orphan a hand-edit or a prior run
 # dropped in) and is deleted. After a write the directory mirrors the in-memory
 # section exactly. This is the "make disk look like my project now" contract
-# `saveProject()` and `restoreProject()` both rely on: because they hold the
+# `saveProject()` and the Excel import both rely on: because they hold the
 # whole section in memory, they can and must reconcile the directory to it.
 # Each definition file is written write-if-different (see
 # `.writeDefinitionJson()`), so an unchanged definition's file (and mtime) is
@@ -1342,19 +1341,18 @@
 # Explode an in-memory `Project` into a full on-disk tree project at `dir`: a
 # container file plus a `definitions/<kind>/` tree (one file per definition) for
 # every section. Returns the container path. This is the full-tree reconciler
-# that `saveProject()` and `restoreProject()` both drive: it serializes every
+# that `saveProject()` and the Excel import both drive: it serializes every
 # kind and writes each definition write-if-different, and each kind's writer
 # owns its `<kind>/` directory (it deletes any `.json` not in the
 # freshly-written keep-set), so a re-run reconciles the tree to memory exactly,
-# leaving no stale entries. Shared by `saveProject()`, `restoreProject()`, and
-# the Excel import.
+# leaving no stale entries.
 #
 # `containerPath` names the container file to write. `saveProject()` passes the
 # path the project was loaded from (`project$info$projectFilePath`), so a save
 # updates that file in place rather than writing a stray `Project.json` next to
-# a legacy-named container. `restoreProject()` and the Excel import pass a fresh
-# `file.path(dir, "Project.json")` (the canonical name for a new tree project),
-# the import instead honouring its `projectFileName` when the caller sets one.
+# a legacy-named container. The Excel import passes the path it builds in
+# `outputDir` from its `projectFileName` (`Project.json` unless the caller names
+# another).
 #
 # @keywords internal
 # @noRd
