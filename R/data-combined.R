@@ -142,18 +142,6 @@ createDataCombined <- function(
   unique(unlist(lapply(referenced, function(p) p$dataCombined)))
 }
 
-#' @rdname createDataCombined
-#' @param ... Passed on to [createDataCombined()].
-#' @export
-createDataCombinedFromExcel <- function(...) {
-  lifecycle::deprecate_soft(
-    what = "createDataCombinedFromExcel()",
-    with = "createDataCombined()",
-    when = "6.0.0"
-  )
-  createDataCombined(...)
-}
-
 # Build a single DataCombined from one JSON spec (its nested `simulated` /
 # `observed` entry lists). An empty spec (no entries) yields an empty
 # DataCombined carrying just the name. Runtime resolution against
