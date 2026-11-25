@@ -2175,7 +2175,7 @@ messages$observedDataScriptSecurityWarn <- function() {
 messages$observedDataProgrammaticUnresolved <- function(names) {
   cliBullets(
     "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
-    "i" = "A {.cls DataSet} added with {.fn addObservedData} is written to the data folder only when the project is saved with {.fn saveProject}. This project was not saved after {cli::qty(names)}{?it/they} {?was/were} added, for example because a snapshot was taken before saving.",
+    "i" = "A {.cls DataSet} added with {.fn addObservedData} is written to the data folder only when the project is saved with {.fn saveProject}. The data is missing when the project is not saved after {cli::qty(names)}{?it is/they are} added, for example when a snapshot is taken before saving.",
     "i" = "Add {cli::qty(names)}{?it/them} again with {.fn addObservedData}, then save the project with {.fn saveProject}."
   )
 }

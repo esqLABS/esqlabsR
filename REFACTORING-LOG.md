@@ -358,3 +358,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-24 18:53: The tests for the unresolved programmatic warning no longer check addObservedData(), check validateProject() inside the loadObservedData() test, check a reload once, and check that a non-default rlib_warning_verbosity survives loadProject(). (#1365)
 - 2026-11-24 18:53: Air formatting of ten R files (messages, populations, scenario execution and results, simulation, sensitivity); the parsed code is unchanged.
 - 2026-11-24 18:56: The addObservedData() help no longer says that adding a DataSet can show the warning about a programmatic entry with no data, since #1384 stops addObservedData() from reading the sources. (#1366)
+- 2026-11-25 14:13: The warning for programmatic sources that resolved to no data says the data is missing when the project is not saved after the DataSet is added, instead of saying that this project was not saved. (#1366)

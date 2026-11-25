@@ -14,7 +14,7 @@
     Condition
       Warning:
       ! 1 programmatic observed-data source resolved to no data: "Scratch measurement".
-      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. This project was not saved after it was added, for example because a snapshot was taken before saving.
+      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. The data is missing when the project is not saved after it is added, for example when a snapshot is taken before saving.
       i Add it again with `addObservedData()`, then save the project with `saveProject()`.
       This warning is displayed once per session.
 
@@ -25,7 +25,7 @@
     Condition
       Warning:
       ! 2 programmatic observed-data sources resolved to no data: "Scratch measurement" and "Second measurement".
-      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. This project was not saved after they were added, for example because a snapshot was taken before saving.
+      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. The data is missing when the project is not saved after they are added, for example when a snapshot is taken before saving.
       i Add them again with `addObservedData()`, then save the project with `saveProject()`.
       This warning is displayed once per session.
 
