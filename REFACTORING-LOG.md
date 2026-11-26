@@ -345,3 +345,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
 - 2026-11-26 15:55: Removed four test data files that no test reads. (#82)
+- 2026-11-26 15:55: Removed three vignette figures and the PowerPoint they were drawn in, which no article uses. (#82)
