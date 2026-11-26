@@ -2264,7 +2264,7 @@ projectStatus <- function(project, silent = FALSE) {
 #'   new project refuses that path as outside its data folder, just as it does
 #'   for an absolute `dataFile` in a copied `Data/` folder.
 #' - A file inside a folder this import has just copied whole (for example a
-#'   `dataFile` of `Models/Simulations/x.xlsx`): it already travelled with that
+#'   `dataFile` of `Models/Simulations/x.xlsx`): it already traveled with that
 #'   folder.
 #'
 #' @param filePathProps The project's raw `filePaths` properties.

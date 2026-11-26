@@ -3436,7 +3436,7 @@ test_that("a data folder that is the project folder copies only its named files 
 })
 
 # A data file inside a folder the same import copies whole has already
-# travelled with it, so it is neither copied again nor reported as one the
+# traveled with it, so it is neither copied again nor reported as one the
 # output already held.
 test_that("a data file inside a copied folder is not reported as kept", {
   src <- withr::local_tempdir()
