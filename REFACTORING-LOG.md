@@ -344,14 +344,22 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 12:17: Message catalog entries let cli list vectors instead of pre-joining them with paste().
 - 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
-- 2026-11-20 20:11: removeObservedData() reads a removed Excel or PKML source's DataSet names and warns about the DataCombined and PI tasks that still use them, and notes that a script source was not checked. (#1364)
+- 2026-11-20 20:11: removeObservedData() reads a removed Excel or PKML source's DataSet names and warns about the DataCombined and PI tasks that still use them. (#1364)
 - 2026-11-20 20:11: The observed-data guide and removeObservedData() help say which definitions the removal warns about. (#1364)
 - 2026-11-20 20:21: removeOutputPath() and removeObservedData() raise their PI-task warning from one catalog entry, and the removal warnings list every id however many there are. (#1364)
 - 2026-11-20 20:21: The removeObservedData() reference check reads the data folder only inside its guarded file read, and its helpers are simpler. (#1364)
 - 2026-11-20 20:21: The removeObservedData() help and the observed-data guide say the warning names the DataCombined and PI tasks, and that an unreadable source is removed without the check. (#1364)
 - 2026-11-20 20:22: The removeObservedData() tests write their PKML fixtures directly and also cover a batch removal and a PI task fitting an unsaved DataSet. (#1364)
+- 2026-11-20 20:52: createDataCombinedFromExcel() and createPlotsFromExcel() are removed, with their help-page entries and reference-index entries. (#1361)
+- 2026-11-20 20:52: NEWS lists the removal of createDataCombinedFromExcel() and createPlotsFromExcel() as a breaking change, with the renamed arguments, and drops their soft-deprecation entry. (#1361)
+- 2026-11-20 20:56: The NEWS deprecation intro is in plain words and no longer claims removed functions abort, and the removal bullet says project is now the first argument. (#1361)
+- 2026-11-20 20:57: The NEWS deprecation intro no longer says the warning appears on every call. (#1361)
 - 2026-11-24 17:30: The remove*() warnings about a definition that is still in use say what to update instead of calling it a dangling reference, and only a DataCombined is offered for removal; the removeObservedData() help and the observed-data guide no longer suggest removing a PI task. (#1364)
 - 2026-11-24 17:33: The remove*() warnings that .warnIfReferenced() raises come from the messages catalog instead of inline text; what they print is unchanged. (#1364)
 - 2026-11-24 17:37: The removeObservedData() warnings name the DataSets of the removed source that a DataCombined or PI task still uses, since those reference a DataSet and not the source. (#1364)
 - 2026-11-24 17:38: The removeObservedData() tests drop three that repeated the batch test, guard the two that rely on the test project fitting observed data, and check that a source with several DataSets names only the one in use. (#1364)
 - 2026-11-24 17:38: Two long code lines in the observed-data guide are wrapped to the 80-column width air uses.
+- 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
+- 2026-11-25 16:24: Formatted the message catalog with Air.
+- 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
+- 2026-11-26 11:51: Merged v6, which removed the script source, and dropped the removeObservedData() note that a script source was not checked, with its message and tests. (#1364)

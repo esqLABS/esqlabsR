@@ -5,7 +5,7 @@
     Condition
       Error in `loadObservedData()`:
       x Invalid type "invalid_type" in `observedData` entry.
-      i Must be one of: "excel", "pkml", "script", and "programmatic".
+      i Must be one of: "excel", "pkml", or "programmatic".
 
 # loadObservedData errors when excel entry is missing required fields
 
@@ -14,6 +14,15 @@
     Condition
       Error in `loadObservedData()`:
       ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
+
+# addObservedData rejects a script entry
+
+    Code
+      addObservedData(project, list(type = "script", file = "make_dataset.R"))
+    Condition
+      Error in `addObservedData()`:
+      x Invalid type "script" in `observedData` entry.
+      i Must be one of: "excel" or "pkml".
 
 # loadObservedData errors when dataFolder is not declared
 
@@ -154,8 +163,6 @@
       DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
       * aciclovirsimple
       i Update the output mappings of this task.
-    Message
-      i Could not check whether the data of script source "make_data.R" is still used, because that would run the script. Check your DataCombined and parameter identification definitions.
 
 # the removeObservedData warnings agree in number with the DataSets they name
 

@@ -184,100 +184,17 @@ test_that("loadObservedData loads pkml observed data", {
   expect_error(loadObservedData(project))
 })
 
-test_that("loadObservedData sources script entries", {
-  tmpDir <- withr::local_tempdir()
-  scriptPath <- file.path(tmpDir, "make_dataset.R")
-  writeLines(
-    c(
-      "ds <- ospsuite::DataSet$new(name = 'TestDataSet')",
-      "ds$setValues(xValues = c(0, 1, 2), yValues = c(1, 2, 3))",
-      "ds"
-    ),
-    scriptPath
-  )
-  jsonPath <- file.path(tmpDir, "Project.json")
-  jsonlite::write_json(
-    list(
-      schemaVersion = "2.0",
-      filePaths = list(dataFolder = "."),
-      outputPaths = structure(list(), names = character(0)),
-      scenarios = list(),
-      observedData = list(list(type = "script", file = "make_dataset.R"))
-    ),
-    jsonPath,
-    auto_unbox = TRUE,
-    null = "null"
-  )
-  project <- loadProject(jsonPath)
-  # A script source executes arbitrary R, so the first source in a session warns.
-  # The warning is gated once per session per project (keyed by the project file
-  # path), so this fresh temp project has its own gate; reset it so the assertion
-  # does not depend on any earlier run of this test.
-  rlang::reset_warning_verbosity(paste0(
-    "esqlabsR_observed_data_script_source_",
-    project$info$projectFilePath
-  ))
-  expect_warning(
-    result <- loadObservedData(project),
-    "executing arbitrary R code"
-  )
-  expect_named(result, "TestDataSet")
-  expect_s3_class(result$TestDataSet, "DataSet")
-})
-
-test_that("loadObservedData re-keys a script's list of DataSets by each name", {
-  tmpDir <- withr::local_tempdir()
-  scriptPath <- file.path(tmpDir, "make_list.R")
-  writeLines(
-    c(
-      "a <- ospsuite::DataSet$new(name = 'Alpha')",
-      "a$setValues(xValues = c(0, 1), yValues = c(1, 2))",
-      "b <- ospsuite::DataSet$new(name = 'Beta')",
-      "b$setValues(xValues = c(0, 1), yValues = c(3, 4))",
-      # Deliberately give the list the wrong names; the loader must ignore
-      # them and key by each DataSet's own $name.
-      "list(wrong1 = a, wrong2 = b)"
-    ),
-    scriptPath
-  )
-  jsonPath <- file.path(tmpDir, "Project.json")
-  jsonlite::write_json(
-    list(
-      schemaVersion = "2.0",
-      filePaths = list(dataFolder = "."),
-      outputPaths = structure(list(), names = character(0)),
-      scenarios = list(),
-      observedData = list(list(type = "script", file = "make_list.R"))
-    ),
-    jsonPath,
-    auto_unbox = TRUE,
-    null = "null"
-  )
-  project <- loadProject(jsonPath)
-  # The script-source security warning is covered by its own test; suppress it
-  # here so this list-keying assertion is not tangled up with it.
-  result <- suppressWarnings(loadObservedData(project))
-  expect_named(result, c("Alpha", "Beta"))
-})
-
 test_that("loadObservedData aborts on a name collision across sources", {
   tmpDir <- withr::local_tempdir()
-  writeLines(
-    c(
-      "ds <- ospsuite::DataSet$new(name = 'Dup')",
-      "ds$setValues(xValues = c(0, 1), yValues = c(1, 2))",
-      "ds"
-    ),
-    file.path(tmpDir, "one.R")
-  )
-  writeLines(
-    c(
-      "ds <- ospsuite::DataSet$new(name = 'Dup')",
-      "ds$setValues(xValues = c(0, 1), yValues = c(3, 4))",
-      "ds"
-    ),
-    file.path(tmpDir, "two.R")
-  )
+  # Two PKML files, each holding a DataSet named "Dup".
+  for (i in 1:2) {
+    ds <- ospsuite::DataSet$new(name = "Dup")
+    ds$setValues(xValues = c(0, 1), yValues = c(i, i + 1))
+    ospsuite::saveDataSetToPKML(
+      ds,
+      file.path(tmpDir, paste0("dup", i, ".pkml"))
+    )
+  }
   jsonPath <- file.path(tmpDir, "Project.json")
   jsonlite::write_json(
     list(
@@ -286,8 +203,8 @@ test_that("loadObservedData aborts on a name collision across sources", {
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
       observedData = list(
-        list(type = "script", file = "one.R"),
-        list(type = "script", file = "two.R")
+        list(type = "pkml", file = "dup1.pkml"),
+        list(type = "pkml", file = "dup2.pkml")
       )
     ),
     jsonPath,
@@ -296,32 +213,16 @@ test_that("loadObservedData aborts on a name collision across sources", {
   )
   project <- loadProject(jsonPath)
   expect_error(
-    suppressWarnings(loadObservedData(project)),
+    loadObservedData(project),
     "Duplicate observed-data set name"
   )
 })
 
-test_that("loadObservedData errors when script returns wrong type", {
-  tmpDir <- withr::local_tempdir()
-  scriptPath <- file.path(tmpDir, "bad.R")
-  writeLines("42", scriptPath)
-  jsonPath <- file.path(tmpDir, "Project.json")
-  jsonlite::write_json(
-    list(
-      schemaVersion = "2.0",
-      filePaths = list(dataFolder = "."),
-      outputPaths = structure(list(), names = character(0)),
-      scenarios = list(),
-      observedData = list(list(type = "script", file = "bad.R"))
-    ),
-    jsonPath,
-    auto_unbox = TRUE,
-    null = "null"
-  )
-  project <- loadProject(jsonPath)
-  expect_error(
-    suppressWarnings(loadObservedData(project)),
-    "did not return a"
+test_that("addObservedData rejects a script entry", {
+  project <- testProject()
+  expect_snapshot(
+    addObservedData(project, list(type = "script", file = "make_dataset.R")),
+    error = TRUE
   )
 })
 
@@ -923,16 +824,6 @@ usesObservedDataInPI <- function(project) {
   length(refs) > 0L
 }
 
-# A script source that leaves a marker file behind if it is ever run.
-addMarkerScriptSource <- function(project, marker) {
-  writeLines(
-    paste0("file.create(", deparse(marker), ")"),
-    file.path(project$paths$dataFolder, "make_data.R")
-  )
-  addObservedData(project, list(type = "script", file = "make_data.R"))
-  invisible(project)
-}
-
 test_that("removeObservedData warns about the DataCombined and PI task using a removed Excel source", {
   # The example project plots and fits the only DataSet of its Excel source.
   project <- exampleProject()
@@ -1002,16 +893,10 @@ test_that("removeObservedData removes a source whose file is missing", {
   )
 })
 
-test_that("removeObservedData is silent about a script source when no definition uses observed data", {
-  project <- .fakeProject()
-  addObservedData(project, list(type = "script", file = "make_data.R"))
-  expect_silent(removeObservedData(project, "make_data.R"))
-  expect_length(project$definitions$observedData, 0L)
-})
-
 test_that("removeObservedData reports each removed source of a batch in the order given", {
-  # The PKML source feeds a DataCombined, the Excel source the test project's
-  # PI task, and the script source cannot be checked without running it.
+  # The first PKML source feeds a DataCombined, the Excel source the test
+  # project's PI task, and the second PKML source has lost its file, so it is
+  # removed without a check.
   project <- testProject()
   addPkmlSource(project, "Aciclovir plasma")
   addDataCombined(
@@ -1019,15 +904,16 @@ test_that("removeObservedData reports each removed source of a batch in the orde
     id = "aciclovir_plasma",
     observed = list(list(label = "Plasma", dataSet = "Aciclovir plasma"))
   )
-  marker <- file.path(withr::local_tempdir(), "script-ran")
-  addMarkerScriptSource(project, marker)
+  addPkmlSource(project, "Aciclovir urine")
+  expect_true(
+    file.remove(file.path(project$paths$dataFolder, "Aciclovir urine.pkml"))
+  )
   ids <- c(
     "Aciclovir plasma.pkml",
     "Aciclovir_TimeValuesData.xlsx",
-    "make_data.R"
+    "Aciclovir urine.pkml"
   )
   expect_snapshot(removeObservedData(project, ids))
-  expect_false(file.exists(marker))
   expect_length(project$definitions$observedData, 0L)
 })
 

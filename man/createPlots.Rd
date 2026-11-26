@@ -2,7 +2,6 @@
 % Please edit documentation in R/create-plots.R
 \name{createPlots}
 \alias{createPlots}
-\alias{createPlotsFromExcel}
 \title{Generate plots from a Project}
 \usage{
 createPlots(
@@ -14,8 +13,6 @@ createPlots(
   stopIfNotFound = TRUE,
   validate = TRUE
 )
-
-createPlotsFromExcel(...)
 }
 \arguments{
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}
@@ -44,8 +41,6 @@ section validators via \code{\link[=validateProject]{validateProject()}} before 
 plots and aborts with a formatted summary on critical errors. Set
 to \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
-
-\item{...}{Passed on to \code{\link[=createPlots]{createPlots()}}.}
 }
 \value{
 A named list of \strong{plot grids} keyed by Plot Grid name: one entry
