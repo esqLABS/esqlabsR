@@ -2134,7 +2134,7 @@ messages$runningPITask <- function(piTaskName) {
 messages$observedDataInvalidEntryType <- function(badType, validTypes) {
   cliBullets(
     "x" = "Invalid {.field type} {.val {badType}} in {.code observedData} entry.",
-    "i" = "Must be one of: {.val {validTypes}}."
+    "i" = "Must be one of: {.or {.val {validTypes}}}."
   )
 }
 
@@ -2151,24 +2151,6 @@ messages$observedDataMissingFields <- function(entryIndex, type, fields) {
 messages$observedDataFileNotFound <- function(filePath) {
   ospsuite.utils::cliFormat(
     "Observed-data source file not found: {.path {filePath}}."
-  )
-}
-
-messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
-  cliBullets(
-    "x" = "Script {.path {filePath}} did not return a {.cls DataSet} or list of {.cls DataSet}.",
-    "i" = "Got an object of class {.cls {klass}}."
-  )
-}
-
-messages$observedDataScriptSourcing <- function(filePath) {
-  ospsuite.utils::cliFormat("Sourcing observed-data script: {.path {filePath}}")
-}
-
-messages$observedDataScriptSecurityWarn <- function() {
-  cliBullets(
-    "!" = "This project runs an R script to build observed data, executing arbitrary R code on your machine.",
-    "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details."
   )
 }
 

@@ -5,7 +5,7 @@
     Condition
       Error in `loadObservedData()`:
       x Invalid type "invalid_type" in `observedData` entry.
-      i Must be one of: "excel", "pkml", "script", and "programmatic".
+      i Must be one of: "excel", "pkml", or "programmatic".
 
 # loadObservedData says how to bring back programmatic sources that resolved to no data
 
@@ -37,17 +37,14 @@
       Error in `loadObservedData()`:
       ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
 
-# loadObservedData sources script entries
+# addObservedData rejects a script entry
 
     Code
-      result <- loadObservedData(project)
+      addObservedData(project, list(type = "script", file = "make_dataset.R"))
     Condition
-      Warning:
-      ! This project runs an R script to build observed data, executing arbitrary R code on your machine.
-      i Only resolve observed data from a project you trust. See `?esqlabsR::loadObservedData()` for details.
-      This warning is displayed once per session.
-    Message
-      Sourcing observed-data script: '<tmp-path>/make_dataset.R'
+      Error in `addObservedData()`:
+      x Invalid type "script" in `observedData` entry.
+      i Must be one of: "excel" or "pkml".
 
 # loadObservedData errors when dataFolder is not declared
 

@@ -228,13 +228,12 @@ Required fields by `type`:
 | --- | --- | --- |
 | `excel` | `file`, `importerConfiguration`, `sheets` | Sheets of a workbook through an OSPS data-importer configuration. |
 | `pkml` | `file` | A `DataSet` saved to a PKML file. |
-| `script` | `file` | An R script returning a `DataSet` or a list of them. |
 | `programmatic` | none | A `DataSet` built in the session. |
 
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
-| `type` | **yes** | one of the four above | Critical error. |
-| `file` | per type | string | Critical error for `excel`, `pkml`, `script`. Relative to the project's data folder. |
+| `type` | **yes** | one of the three above | Critical error. |
+| `file` | per type | string | Critical error for `excel`, `pkml`. Relative to the project's data folder. |
 | `importerConfiguration` | `excel` only | string | Critical error for an `excel` source. |
 | `sheets` | `excel` only | character vector | Critical error for an `excel` source. An empty but present `sheets` counts as missing. |
 | `id` | no | string | Inherited from the source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one. |
