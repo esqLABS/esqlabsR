@@ -27,7 +27,10 @@ project file or a non-empty \verb{definitions/} tree already exists in
 \code{outputDir}, because importing again replaces the JSON project with what
 the import reads and deletes every definition the source does not contain,
 including one you added to the JSON project since. Pass \code{overwrite = TRUE}
-to replace the existing JSON project.}
+to replace the existing JSON project. The same flag governs the folders
+and observed-data files copied into another folder (see \code{copyAssets}):
+with \code{overwrite = FALSE}, one that \code{outputDir} already holds is kept as it
+is and named in a warning; with \code{overwrite = TRUE}, it is replaced.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
 written, its per-section definition counts, and the folders and files
@@ -36,9 +39,9 @@ copied or missing). Defaults to \code{FALSE}.}
 \item{copyAssets}{Logical. Whether to copy the input folders the project
 references (models, data, csv populations) into \code{outputDir}, which is what
 makes the imported project runnable where it was written. Defaults to
-\code{TRUE}. When the data folder is the project folder itself (\code{dataFolder} is
-\code{"."}), only the data workbook and its importer configuration are copied
-from it, so the Excel workbooks stay behind. Set it to \code{FALSE} when only
+\code{TRUE}. From a data folder that is the project folder itself (\code{dataFolder}
+is \code{"."}), only the data workbook and its importer configuration are
+copied, and nothing else in that folder. Set it to \code{FALSE} when only
 the definitions are wanted and the assets would be wasted work, as when
 the import is only used for a comparison.}
 
@@ -84,7 +87,9 @@ without \code{defaultSolverSettings}.
 The JSON file that \code{snapshotProjectConfiguration()} saved in esqlabsR 5
 (usually \code{ProjectConfiguration.json}) is imported the same way: pass it as
 \code{projectConfigPath}. The model, data, and population folders that sit
-beside it are copied into \code{outputDir}, and the import summary names each
+beside it are copied into \code{outputDir} (from a data folder that is the folder
+holding the JSON file, only the data workbook and its importer
+configuration), and the import summary names each
 folder the new project still lacks, so you know what to place there before
 you run it. A working folder in the file
 that points outside the project stops the import before anything is written.
