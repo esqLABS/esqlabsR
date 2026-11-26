@@ -137,6 +137,7 @@
     scratchProps[c("simulationsFolder", "modelFolder")] <- NULL
   }
   .copyExcelProjectAssets(scratchProps, snapshotDir, scratch, overwrite = FALSE)
+  .stageDataFilesFromProjectFolder(props, snapshotDir, scratch)
 
   # The observed data is read from the data folder copied in above. When the
   # data workbook is not there, the bridge warns and names it, exactly as for a
@@ -234,6 +235,45 @@
     return(character())
   }
   as.character(fs::path_rel(missing, fs::path_abs(dir)))
+}
+
+# Copy the data workbook and its importer configuration from beside the
+# snapshot into `scratch`, when the snapshot's `dataFolder` is the folder that
+# holds the snapshot (a value such as `"."`). `.copyExcelProjectAssets()` never
+# copies that folder, since it is the whole project, so without this the bridge
+# would look for the data workbook in `scratch` and report it missing although
+# it sits beside the snapshot. Only the files the bridge reads are staged, each
+# under the same relative path; what reaches `outputDir` is decided later, as
+# for a workbook import with the same `dataFolder`.
+#
+# @keywords internal
+# @noRd
+.stageDataFilesFromProjectFolder <- function(props, snapshotDir, scratch) {
+  dataFolder <- props[["dataFolder"]]
+  if (
+    is.null(dataFolder) ||
+      .declaresEnvVarPath(dataFolder) ||
+      fs::is_absolute_path(dataFolder) ||
+      !.samePath(fs::path(snapshotDir, dataFolder), snapshotDir)
+  ) {
+    return(invisible(NULL))
+  }
+  files <- c(props[["dataFile"]], props[["dataImporterConfigurationFile"]])
+  for (file in files) {
+    # A name that climbs out of the folder is not staged; the bridge reports
+    # it as out of the project.
+    if (.pathEscapesRoot(file, snapshotDir)) {
+      next
+    }
+    from <- fs::path(snapshotDir, file)
+    if (!fs::file_exists(from)) {
+      next
+    }
+    to <- fs::path(scratch, file)
+    fs::dir_create(fs::path_dir(to))
+    fs::file_copy(from, to, overwrite = TRUE)
+  }
+  invisible(NULL)
 }
 
 # Rebuild the Excel workbooks a monolithic snapshot mirrors, into `dir`. Writes

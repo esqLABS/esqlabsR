@@ -286,6 +286,46 @@ test_that("importProjectFromExcel writes the upgraded project beside the snapsho
   expect_identical(tools::md5sum(file.path(src, before)), checksumsBefore)
 })
 
+# A data folder of `"."` is the project folder itself, which is never copied as
+# a folder; the data workbook beside the snapshot still has to be read.
+test_that("importProjectFromExcel reads a snapshot's data workbook when the data folder is the project folder", {
+  fixture <- jsonlite::fromJSON(
+    .legacySnapshotFixture(),
+    simplifyVector = FALSE
+  )
+  pc <- fixture$projectConfiguration
+  for (i in seq_along(pc$rows)) {
+    if (identical(pc$rows[[i]][["Property"]], "dataFolder")) {
+      pc$rows[[i]][["Value"]] <- "."
+    }
+  }
+  fixture$projectConfiguration <- pc
+
+  src <- withr::local_tempdir()
+  snapshot <- file.path(src, "ProjectConfiguration.json")
+  jsonlite::write_json(fixture, snapshot, auto_unbox = TRUE, null = "null")
+  dataDir <- test_path("data", "TestProjectExcel", "Data")
+  file.copy(
+    file.path(
+      dataDir,
+      c(
+        "TestProject_TimeValuesData.xlsx",
+        "esqlabs_dataImporter_configuration.xml"
+      )
+    ),
+    src
+  )
+
+  dir <- withr::local_tempdir()
+  expect_no_warning(suppressMessages(
+    importProjectFromExcel(snapshot, outputDir = dir)
+  ))
+  expect_length(
+    list.files(file.path(dir, "definitions", "observed-data")),
+    1L
+  )
+})
+
 test_that("importProjectFromExcel recognizes an in-place import whatever the folder's spelling", {
   # `outputDir` given relative to the working directory, the snapshot by its
   # absolute path: still the snapshot's own folder. Not recognized, the folders
