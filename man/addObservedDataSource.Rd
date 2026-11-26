@@ -27,13 +27,11 @@ built in the session, or a list naming the file the data is read from:\tabular{l
    \code{type} \tab required fields \tab optional fields \cr
    \code{"excel"} \tab \code{file}, \code{importerConfiguration}, \code{sheets} \tab \code{id} \cr
    \code{"pkml"} \tab \code{file} \tab \code{id} \cr
-   \code{"script"} \tab \code{file} \tab \code{id} \cr
 }
 
 
 Paths are relative to the project's data folder: \code{"observed.xlsx"}, not
-\code{"Data/observed.xlsx"}. A \code{script} source runs the R file it names (see the
-Security section of \code{\link[=loadObservedData]{loadObservedData()}}).
+\code{"Data/observed.xlsx"}.
 
 \code{id} names the source: it is the name of its definition file and what
 \code{\link[=removeObservedDataSource]{removeObservedDataSource()}} takes. It is lowercased and made a safe file name,
@@ -51,12 +49,12 @@ name, and its data stays in the R session until \code{\link[=saveProject]{savePr
 \verb{<name>.pkml} in the data folder. Saving therefore needs a data folder. From
 then on it is a \code{pkml} source that keeps its name as id.
 
-Adding a \code{DataSet} reads no source and runs no script. Its name is refused
-at once when the project already knows it, for example from a \code{DataSet} of
-that name added or saved earlier. A clash with a data set inside an Excel,
-PKML or script source that has not been loaded yet stops the next
-\code{\link[=loadObservedData]{loadObservedData()}} with an error naming the duplicate. Then remove the
-\code{DataSet} with \code{\link[=removeObservedDataSource]{removeObservedDataSource()}}, rename it, and add it again.
+Adding a \code{DataSet} reads no source. Its name is refused at once when the
+project already knows it, for example from a \code{DataSet} of that name added or
+saved earlier. A clash with a data set inside an Excel or PKML source that
+has not been loaded yet stops the next \code{\link[=loadObservedData]{loadObservedData()}} with an error
+naming the duplicate. Then remove the \code{DataSet} with \code{\link[=removeObservedDataSource]{removeObservedDataSource()}},
+rename it, and add it again.
 }
 \seealso{
 Other observedData:

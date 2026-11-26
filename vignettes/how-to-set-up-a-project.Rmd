@@ -228,7 +228,7 @@ If you only want to change an option, you do not need Excel: assign the new valu
 
 **Solver settings are not exported.** A scenario's `solverSettings` has no column in the spreadsheets, so exporting warns and leaves it out, and a project imported from those spreadsheets has no scenario solver settings. The project's `defaultSolverSettings` are exported, to the `DefaultSolverSettings` sheet of `Project.xlsx`.
 
-**Only one observed-data workbook.** The Excel files can name only one observed-data workbook, the `dataFile` row in `Project.xlsx`. If the project has more than one observed-data source, or a PKML, script, or programmatic source, the export writes one Excel source and warns about the others. A project imported from these files has only that one source, reading every sheet of its workbook, and re-importing over the existing project removes the other sources from it.
+**Only one observed-data workbook.** The Excel files can name only one observed-data workbook, the `dataFile` row in `Project.xlsx`. If the project has more than one observed-data source, or a PKML or programmatic source, the export writes one Excel source and warns about the others. A project imported from these files has only that one source, reading every sheet of its workbook, and re-importing over the existing project removes the other sources from it.
 
 **Importing pre-6.0.0 projects from Excel.** If you are bringing over a pre-6.0.0 project, rather than editing a current project in Excel, `vignette("how-to-migrate-from-excel")` is the guide for that, and it lists the rest of what to check after an import.
 
@@ -236,7 +236,7 @@ If you only want to change an option, you do not need Excel: assign the new valu
 
 `snapshotProject()` writes the project as it is in your R session, unsaved edits included, into one `.esqlabsR` file located in the current working directory (`getwd()`), so the project definitions travel as a single file rather than a folder. Give it a target `dir` and an optional `name`.
 
-The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model files (`.pkml`, exported from PK-Sim or MoBi), observed-data files and importer configurations, scripts, and population CSVs still have to reach the recipient another way, or sit at a path both of you can reach. One way is a folder path that uses an environment variable, such as `${SHARED_DATA}/aciclovir` (see "Name the project and choose its folders" above).
+The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model files (`.pkml`, exported from PK-Sim or MoBi), observed-data files and importer configurations, and population CSVs still have to reach the recipient another way, or sit at a path both of you can reach. One way is a folder path that uses an environment variable, such as `${SHARED_DATA}/aciclovir` (see "Name the project and choose its folders" above).
 
 Use a snapshot to share or archive the definitions, or as a save point you can return to. To hand over everything, including the model and data files, copy or zip the whole project folder instead.
 

@@ -2,7 +2,6 @@
 % Please edit documentation in R/data-combined.R
 \name{createDataCombined}
 \alias{createDataCombined}
-\alias{createDataCombinedFromExcel}
 \title{Generate DataCombined objects from a Project}
 \usage{
 createDataCombined(
@@ -13,8 +12,6 @@ createDataCombined(
   stopIfNotFound = TRUE,
   validate = TRUE
 )
-
-createDataCombinedFromExcel(...)
 }
 \arguments{
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}
@@ -36,8 +33,6 @@ referenced simulated path or observed dataSet cannot be resolved. If
 \item{validate}{If \code{TRUE} (default), the \code{dataCombined} section is validated
 before any DataCombined is built, so a definition missing a required field
 aborts with a clear message instead of failing mid-build.}
-
-\item{...}{Passed on to \code{\link[=createDataCombined]{createDataCombined()}}.}
 }
 \value{
 A named list of \code{DataCombined} objects, one per requested name.
