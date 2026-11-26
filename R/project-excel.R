@@ -2237,8 +2237,9 @@ projectStatus <- function(project, silent = FALSE) {
 #' relative path under `outputDir`, and no other file of the project folder is.
 #' A file name that is absolute (it resolves the same from the new project),
 #' climbs out of the project folder, or names no file is left out without a
-#' word: the observed-data import already reports a data workbook it cannot
-#' read, and writes no definition that would need either file.
+#' word. The observed-data import already reports such a data workbook and
+#' writes no definition for it; such an importer configuration cannot be read
+#' from the source project either, so a copy would not make it readable.
 #'
 #' @param filePathProps The project's raw `filePaths` properties.
 #' @param sourceDir Absolute path to the project folder the files are read from.
