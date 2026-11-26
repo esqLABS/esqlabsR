@@ -791,7 +791,8 @@ removeObservedData <- function(project, id) {
 # reports the broken source.
 #
 # The switch mirrors the one in `.loadObservedData_impl()`; a new source type
-# goes into both.
+# goes into both. A type with no branch gives `NULL`, which `switch()` returns
+# when nothing matches.
 #
 # @keywords internal
 # @noRd
@@ -801,8 +802,7 @@ removeObservedData <- function(project, id) {
       entry$type,
       "programmatic" = entry$name,
       "excel" = names(.loadObservedExcel(entry, project$paths$dataFolder)),
-      "pkml" = names(.loadObservedPkml(entry, project$paths$dataFolder)),
-      NULL
+      "pkml" = names(.loadObservedPkml(entry, project$paths$dataFolder))
     ))),
     error = function(cnd) NULL
   )

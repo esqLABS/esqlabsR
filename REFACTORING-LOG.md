@@ -363,3 +363,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 16:24: Formatted the message catalog with Air.
 - 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
 - 2026-11-26 11:51: Merged v6, which removed the script source, and dropped the removeObservedData() note that a script source was not checked, with its message and tests. (#1364)
+- 2026-11-26 15:33: The DataSet-name lookup of removeObservedData() drops its explicit NULL fallback, which only repeated what switch() returns when no type matches. (#1364)
