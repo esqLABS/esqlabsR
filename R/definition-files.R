@@ -958,7 +958,7 @@
 }
 
 # The on-disk id of an observed-data declaration: its own `id` field when it
-# declares one, else the file basename for `excel`/`pkml`/`script` and the
+# declares one, else the file basename for `excel`/`pkml` and the
 # DataSet name for `programmatic`. This is the id `removeObservedData()` matches
 # on, so the filename and that id agree.
 #

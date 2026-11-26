@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This article explains how `esqlabsR` describes a figure, and why it takes three building blocks rather than one to do it. It also covers the other half of a diagnostic figure, the measured data: why a project stores a reference to observed data instead of the numbers themselves, why two different names attach to every observed-data source, and how to think about the four kinds of source.
+This article explains how `esqlabsR` describes a figure, and why it takes three building blocks rather than one to do it. It also covers the other half of a diagnostic figure, the measured data: why a project stores a reference to observed data instead of the numbers themselves, why two different names attach to every observed-data source, and how to think about the three kinds of source.
 
 Nothing here is a procedure. To build figures, see `vignette("how-to-plot-results")`; to declare observed data, see `vignette("how-to-use-observed-data")`; for the field-by-field description of a plot definition, see `vignette("reference-definition-fields")`.
 
@@ -103,25 +103,17 @@ The practical rule that falls out: read the DataSet name from `getObservedDataNa
 
 This is also the one place where ids are **not** canonicalized, unlike every other definition kind. An observed-data id is matched verbatim, because it is so often a filename (`Aciclovir_TimeValuesData.xlsx`) or a DataSet name, and lowercasing it would rewrite the very string that identifies the source. The general rationale for canonicalizing ids, and why this exception does not undermine it, is in `vignette("about-the-project-model")`.
 
-## Four kinds of source, one question
+## Three kinds of source
 
-The four source types (`excel`, `pkml`, `script`, `programmatic`) look like four separate choices and reduce to one question: **is the data fixed, or is it derived?**
-
-For fixed data you already have, the answer is a file-backed source: `excel` for a workbook read through an OSPS importer configuration, `pkml` for a saved DataSet, or `programmatic` for a DataSet you built in the session. Nothing runs when the data is resolved; the values are read back. This is the default, and it should stay the default.
-
-For derived data, the answer is `script`: an R file that computes the DataSet each time it is resolved. Reach for it when the data is not a fixed set of numbers but a recipe (digitized points that need transforming, a join across several inputs, a unit conversion applied to a raw file). The recipe then travels with the project and stays in step with its inputs, which is the whole point.
+The three source types (`excel`, `pkml`, `programmatic`) differ only in where the numbers come from: `excel` for a workbook read through an OSPS importer configuration, `pkml` for a saved DataSet, and `programmatic` for a DataSet you built in the session.
 
 `programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only on the in-memory project, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, addressed by the PKML file's basename rather than the DataSet name.
 
-So the `script` versus `programmatic` choice is not really about persistence, once that save has happened. It is about whether the numbers are a given or a computation.
+### Derived data stays in your own code
 
-### The trust boundary a script source creates
+Some observed data is not a fixed set of numbers but a recipe: digitized points that need transforming, a unit conversion applied to a raw file, a combination of several inputs. The project does not hold that recipe. You compute the DataSet in your own R code and give the project the result, either as a `programmatic` source or as a PKML file you save and declare as a `pkml` source. When the inputs change, you run your code again and save the new DataSet over the old file.
 
-A `script` source runs an R file on your machine, with `source()`, every time the data is resolved. Any R code in that file executes, with your permissions.
-
-That is a genuine security consideration and not merely a caveat, because it changes what receiving a project means. A project with a `script` source should be treated the way you would treat a script someone emails you: only load and resolve observed data from a project you trust. The package warns the first time a session sources a `script` source, so the execution is never silent, but the warning is a notification rather than a protection.
-
-This is the reason the file-backed sources are the recommended default rather than merely one option among four. Choose `script` when the data really is derived, and accept the trust cost knowingly; do not choose it for data that a PKML file could hold.
+This keeps a clear line between the project and the code around it. A project that ran R code to build its data would have to be trusted the way you would trust a script someone emails you, because opening it would run that code on your machine with your permissions. A project that only reads files carries no such risk, so you can open a project someone sends you and look at its observed data without running anything from it. The recipe stays reproducible, because it lives in your analysis code, where you read and run it yourself.
 
 ## Where to go next
 
