@@ -330,17 +330,29 @@
       next
     }
     to <- fs::path(scratch, file)
+    # A file already in `scratch` is one the rebuild wrote (a configuration
+    # workbook); a data file of the same name must not replace it.
+    if (fs::file_exists(to)) {
+      next
+    }
     fs::dir_create(fs::path_dir(to))
-    fs::file_copy(from, to, overwrite = TRUE)
+    fs::file_copy(from, to)
   }
   invisible(NULL)
 }
 
+# The file name the rebuilt property-sheet workbook is written under. A 5.x
+# project's own files, a data workbook named `Project.xlsx` included, are
+# staged beside it in the same scratch folder, so it carries a name no project
+# file uses. It never reaches the user: the import summary names the snapshot,
+# and the written project does not record it.
+.legacyEntrypointName <- "_rebuilt_project_configuration.xlsx"
+
 # Rebuild the Excel workbooks a monolithic snapshot mirrors, into `dir`. Writes
-# the root `ProjectConfiguration.xlsx` (path/property sheet), one workbook per
-# mirrored section under `Configurations/`, and any populations CSVs under
-# `Configurations/PopulationsCSV/`. Returns the path to the root
-# `ProjectConfiguration.xlsx`, the entry point `importProjectFromExcel()` reads.
+# the root entry point (the path/property sheet, under `.legacyEntrypointName`),
+# one workbook per mirrored section under `Configurations/`, and any populations
+# CSVs under `Configurations/PopulationsCSV/`. Returns the path to the entry
+# point, the workbook the bridge reads first.
 #
 # @keywords internal
 # @noRd
@@ -348,13 +360,13 @@
   configDir <- file.path(dir, "Configurations")
   dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
 
-  pcPath <- file.path(dir, "Project.xlsx")
+  pcPath <- file.path(dir, .legacyEntrypointName)
   .writeExcel(.legacySheetToDf(jsonData$projectConfiguration), pcPath)
 
   # Write each configuration workbook under the filename the snapshot's own
   # `projectConfiguration` records for it, not a hardcoded name: those filenames
-  # are user-customizable, and the property sheet is copied verbatim into
-  # `Project.xlsx`, so the bridge resolves each section from the property value.
+  # are user-customizable, and the property sheet is copied verbatim into the
+  # entry point, so the bridge resolves each section from the property value.
   # Writing under a hardcoded name would leave a renamed section's file where
   # the bridge does not look, silently dropping it. Each mirror section maps to
   # its filename property (default filename when the property is absent).

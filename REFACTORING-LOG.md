@@ -376,3 +376,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-26 14:37: Importing a 5.x JSON whose data folder is the project folder itself reads the data workbook beside it instead of warning that it is missing. (#1399)
 - 2026-11-26 14:45: An in-place import of a 5.x JSON adds the files a folder already there lacks, such as a population CSV beside a README, without replacing any file, and names them in the summary. (#1399)
 - 2026-11-26 14:45: README and the set-up article say to save the project with saveProject() before copying or zipping its folder. (#1399)
+- 2026-11-26 15:28: Importing a 5.x JSON whose data workbook is named Project.xlsx and sits in the project folder no longer reads that workbook as the project configuration. (#1399)

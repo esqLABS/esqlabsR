@@ -287,43 +287,46 @@ test_that("importProjectFromExcel writes the upgraded project beside the snapsho
 })
 
 # A data folder of `"."` is the project folder itself, which is never copied as
-# a folder; the data workbook beside the snapshot still has to be read.
+# a folder; the data workbook beside the snapshot still has to be read. The
+# second name is the one the import rebuilds the 5.x workbooks under, which the
+# data workbook must not replace.
 test_that("importProjectFromExcel reads a snapshot's data workbook when the data folder is the project folder", {
-  fixture <- jsonlite::fromJSON(
-    .legacySnapshotFixture(),
-    simplifyVector = FALSE
-  )
-  pc <- fixture$projectConfiguration
-  for (i in seq_along(pc$rows)) {
-    if (identical(pc$rows[[i]][["Property"]], "dataFolder")) {
-      pc$rows[[i]][["Value"]] <- "."
-    }
-  }
-  fixture$projectConfiguration <- pc
-
-  src <- withr::local_tempdir()
-  snapshot <- file.path(src, "ProjectConfiguration.json")
-  jsonlite::write_json(fixture, snapshot, auto_unbox = TRUE, null = "null")
   dataDir <- test_path("data", "TestProjectExcel", "Data")
-  file.copy(
-    file.path(
-      dataDir,
-      c(
-        "TestProject_TimeValuesData.xlsx",
-        "esqlabs_dataImporter_configuration.xml"
-      )
-    ),
-    src
-  )
+  for (dataFile in c("TestProject_TimeValuesData.xlsx", "Project.xlsx")) {
+    fixture <- jsonlite::fromJSON(
+      .legacySnapshotFixture(),
+      simplifyVector = FALSE
+    )
+    pc <- fixture$projectConfiguration
+    for (i in seq_along(pc$rows)) {
+      property <- pc$rows[[i]][["Property"]]
+      if (identical(property, "dataFolder")) {
+        pc$rows[[i]][["Value"]] <- "."
+      }
+      if (identical(property, "dataFile")) {
+        pc$rows[[i]][["Value"]] <- dataFile
+      }
+    }
+    fixture$projectConfiguration <- pc
 
-  dir <- withr::local_tempdir()
-  expect_no_warning(suppressMessages(
-    importProjectFromExcel(snapshot, outputDir = dir)
-  ))
-  expect_length(
-    list.files(file.path(dir, "definitions", "observed-data")),
-    1L
-  )
+    src <- withr::local_tempdir()
+    snapshot <- file.path(src, "ProjectConfiguration.json")
+    jsonlite::write_json(fixture, snapshot, auto_unbox = TRUE, null = "null")
+    file.copy(
+      file.path(dataDir, "TestProject_TimeValuesData.xlsx"),
+      file.path(src, dataFile)
+    )
+    file.copy(file.path(dataDir, "esqlabs_dataImporter_configuration.xml"), src)
+
+    dir <- withr::local_tempdir()
+    expect_no_warning(suppressMessages(
+      importProjectFromExcel(snapshot, outputDir = dir)
+    ))
+    project <- loadProject(dir)
+    expect_length(project$definitions$scenarios, 8)
+    expect_length(project$definitions$parameterIdentification, 3)
+    expect_length(project$definitions$observedData, 1)
+  }
 })
 
 # In place, a folder that exists may still lack files the snapshot carries:
