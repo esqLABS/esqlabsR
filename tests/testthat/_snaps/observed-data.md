@@ -5,7 +5,7 @@
     Condition
       Error in `loadObservedData()`:
       x Invalid type "invalid_type" in `observedData` entry.
-      i Must be one of: "excel", "pkml", "script", and "programmatic".
+      i Must be one of: "excel", "pkml", or "programmatic".
 
 # loadObservedData errors when excel entry is missing required fields
 
@@ -14,6 +14,15 @@
     Condition
       Error in `loadObservedData()`:
       ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
+
+# addObservedData rejects a script entry
+
+    Code
+      addObservedData(project, list(type = "script", file = "make_dataset.R"))
+    Condition
+      Error in `addObservedData()`:
+      x Invalid type "script" in `observedData` entry.
+      i Must be one of: "excel" or "pkml".
 
 # loadObservedData errors when dataFolder is not declared
 
@@ -58,14 +67,6 @@
       Error in `addObservedData()`:
       ! observedData entry with name "prog_ds" already exists.
       i Pass `overwrite = TRUE` to replace it.
-
-# addObservedData with a DataSet runs no script source
-
-    Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
-    Message
-      i Added the <DataSet> "Scratch measurement" as an observed-data source. It lives in this session until you save.
-      i On `saveProject()` it is written to 'Scratch measurement.pkml' under the data folder, so it survives a reload.
 
 # addObservedData with a DataSet reads no other source's file
 
@@ -123,7 +124,7 @@
       ! observedData entry with name "Cohort B" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
       i Remove it first with `removeObservedData()` by its id, then add the <DataSet>.
 
-# a DataSet name inside a script source not loaded yet aborts the next load
+# a DataSet name inside a PKML source not loaded yet aborts the next load
 
     Code
       suppressWarnings(suppressMessages(loadObservedData(project)))
