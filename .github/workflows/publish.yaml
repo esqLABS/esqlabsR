@@ -32,7 +32,6 @@ jobs:
     with:
       setup-quarto: true
       extra-packages: local::.
-      extra-repositories: https://open-systems-pharmacology.r-universe.dev
 
   publish-release:
     needs: [guard-branch, R-CMD-Check]
