@@ -32,10 +32,10 @@
 #     `Group` and `ObservedDataSheet` columns, and carries a `Units` cell v5
 #     ignored.
 #
-# `Models/Simulations/` holds only a placeholder: the 7 MB `Aciclovir.pkml` is
-# not duplicated into this fixture. `localLegacyExcelProject()` injects it from
-# `TestProjectExcel/` into each throwaway copy, so the fixture is a runnable
-# project when a test uses it while costing the repository nothing.
+# `Models/Simulations/` holds only a placeholder: like every project fixture,
+# this one runs the example project's `Aciclovir.pkml`, which
+# `localLegacyExcelProject()` copies into each throwaway copy, so the fixture is
+# a runnable project when a test uses it while costing the repository nothing.
 
 library(writexl)
 
@@ -476,10 +476,9 @@ for (f in c(
 writeLines(
   c(
     "The simulation this project references (`Aciclovir.pkml`) is not committed",
-    "here. It is the same 7 MB public model the `TestProjectExcel/` fixture",
-    "carries, and `localLegacyExcelProject()` copies it in when a test makes a",
-    "throwaway copy of this project, so the fixture is runnable in a test",
-    "without a second copy of the binary in the repository."
+    "here. It is the model of the example project in",
+    "`inst/extdata/projects/Example/`, and the test helpers copy it in when a test",
+    "makes a throwaway copy of this project."
   ),
   file.path(modelDir, "README.md")
 )

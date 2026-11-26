@@ -345,3 +345,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
 - 2026-11-26 15:56: Tests take the Aciclovir model from the example project and copy it into each throwaway copy of a fixture. (#1405)
+- 2026-11-26 15:56: Removed the two test copies of Aciclovir.pkml. (#1405)
