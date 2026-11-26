@@ -25,8 +25,8 @@ The \code{project} object, invisibly.
 \description{
 Removes by the source's id: its \code{id} field when the declaration carries one,
 else the DataSet name (for a \code{type = "programmatic"} entry that has not been
-saved yet) or the \code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"} /
-\code{"script"} entries). Vectorizes over a vector of ids, removing each in one
+saved yet) or the \code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"}
+entries). Vectorizes over a vector of ids, removing each in one
 in-memory update; persist with \code{\link[=saveProject]{saveProject()}}. Warns and skips any id with
 no matching entry.
 }

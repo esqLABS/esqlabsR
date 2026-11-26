@@ -5,7 +5,7 @@
     Condition
       Error in `loadObservedData()`:
       x Invalid type "invalid_type" in `observedData` entry.
-      i Must be one of: "excel", "pkml", "script", and "programmatic".
+      i Must be one of: "excel", "pkml", or "programmatic".
 
 # loadObservedData errors when excel entry is missing required fields
 
@@ -14,6 +14,15 @@
     Condition
       Error in `loadObservedData()`:
       ! `observedData` entry 1 (type "excel") is missing required field importerConfiguration.
+
+# addObservedData rejects a script entry
+
+    Code
+      addObservedData(project, list(type = "script", file = "make_dataset.R"))
+    Condition
+      Error in `addObservedData()`:
+      x Invalid type "script" in `observedData` entry.
+      i Must be one of: "excel" or "pkml".
 
 # loadObservedData errors when dataFolder is not declared
 

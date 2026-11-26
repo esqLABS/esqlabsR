@@ -27,13 +27,11 @@ built in the session, or a list naming the file the data is read from:\tabular{l
    \code{type} \tab required fields \tab optional fields \cr
    \code{"excel"} \tab \code{file}, \code{importerConfiguration} \tab \code{sheets}, \code{id} \cr
    \code{"pkml"} \tab \code{file} \tab \code{id} \cr
-   \code{"script"} \tab \code{file} \tab \code{id} \cr
 }
 
 
 Paths are relative to the project's data folder: \code{"observed.xlsx"}, not
-\code{"Data/observed.xlsx"}. A \code{script} source runs the R file it names (see the
-Security section of \code{\link[=loadObservedData]{loadObservedData()}}).
+\code{"Data/observed.xlsx"}.
 
 \code{sheets} names the Excel sheets to import; the sheets listed in the importer
 configuration are not used. Left out or empty, every sheet is imported, and

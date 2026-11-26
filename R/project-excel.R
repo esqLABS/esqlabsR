@@ -1116,7 +1116,7 @@ exportProjectToExcel <- function(
   }
 
   # Every declaration the single `dataFile` row cannot carry: the remaining
-  # `excel` sources, and every `pkml` / `script` / `programmatic` one.
+  # `excel` sources, and every `pkml` / `programmatic` one.
   declaredFile <- pathProps$dataFile$value
   unrepresented <- if (.isBlankCell(declaredFile)) {
     observed

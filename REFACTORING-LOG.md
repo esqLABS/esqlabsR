@@ -344,6 +344,10 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 12:17: Message catalog entries let cli list vectors instead of pre-joining them with paste().
 - 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
+- 2026-11-20 20:52: createDataCombinedFromExcel() and createPlotsFromExcel() are removed, with their help-page entries and reference-index entries. (#1361)
+- 2026-11-20 20:52: NEWS lists the removal of createDataCombinedFromExcel() and createPlotsFromExcel() as a breaking change, with the renamed arguments, and drops their soft-deprecation entry. (#1361)
+- 2026-11-20 20:56: The NEWS deprecation intro is in plain words and no longer claims removed functions abort, and the removal bullet says project is now the first argument. (#1361)
+- 2026-11-20 20:57: The NEWS deprecation intro no longer says the warning appears on every call. (#1361)
 - 2026-11-21 16:34: An Excel observed-data source without sheets, or with an empty list, loads every sheet of its workbook instead of being rejected. (#1371)
 - 2026-11-21 16:35: Printing an Excel observed-data source that lists no sheets shows "Sheets: all sheets". (#1371)
 - 2026-11-21 16:35: The observed-data help page, vignettes and NEWS say an Excel source's sheets are optional and that leaving them out loads every sheet. (#1371)
@@ -351,3 +355,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-21 16:54: A test checks that an Excel source without sheets comes back from an Excel export and import listing every sheet and loading the same data. (#1371)
 - 2026-11-21 16:54: The NEWS bullet and the observed-data docs describe optional Excel sheets the same way, including what to do when a sheet does not fit and that the importer configuration's sheets are not used. (#1371)
 - 2026-11-21 17:18: The help page of addObservedData() is regenerated for optional Excel sheets. (#1371)
+- 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
+- 2026-11-25 16:24: Formatted the message catalog with Air.
+- 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
+- 2026-11-26 11:50: After merging v6, the addObservedData() help page and a code comment no longer mention script sources. (#1371)
