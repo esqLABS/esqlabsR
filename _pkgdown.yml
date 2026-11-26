@@ -186,5 +186,3 @@ reference:
       deprecation warning. Use the new project-driven API above.
     contents:
       - ProjectConfiguration
-      - createDataCombinedFromExcel
-      - createPlotsFromExcel

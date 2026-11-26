@@ -344,6 +344,10 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 12:17: Message catalog entries let cli list vectors instead of pre-joining them with paste().
 - 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
+- 2026-11-20 20:52: createDataCombinedFromExcel() and createPlotsFromExcel() are removed, with their help-page entries and reference-index entries. (#1361)
+- 2026-11-20 20:52: NEWS lists the removal of createDataCombinedFromExcel() and createPlotsFromExcel() as a breaking change, with the renamed arguments, and drops their soft-deprecation entry. (#1361)
+- 2026-11-20 20:56: The NEWS deprecation intro is in plain words and no longer claims removed functions abort, and the removal bullet says project is now the first argument. (#1361)
+- 2026-11-20 20:57: The NEWS deprecation intro no longer says the warning appears on every call. (#1361)
 - 2026-11-21 16:02: Adding a DataSet with addObservedData() no longer reads the other observed-data sources or runs their scripts. (#1367)
 - 2026-11-23 14:44: Adding or saving a DataSet no longer overwrites a PKML file another observed-data source reads, and the add-time name check is documented. (#1367)
 - 2026-11-23 14:45: The help page of addObservedData() is regenerated for the add-time name check. (#1367)
@@ -354,3 +358,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 19:35: Ten R files are formatted with Air, which wraps lines longer than 80 characters; the code itself is unchanged.
 - 2026-11-23 19:35: DESCRIPTION records roxygen2 8.1.1, the version that last regenerated the help pages.
 - 2026-11-23 19:55: The addObservedData() help is shorter: the add-time name check is described once, in Details, without the full list of checks. (#1367)
+- 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
+- 2026-11-25 16:24: Formatted the message catalog with Air.
+- 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
+- 2026-11-26 11:58: Merged v6, which removed the script source; the add-time name-check tests use PKML and missing-file sources, and the help no longer mentions scripts. (#1367)
