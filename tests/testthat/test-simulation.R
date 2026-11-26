@@ -309,16 +309,7 @@ test_that("It returns an empty list when a molecule is defined that is not in th
 
 # Human model of the test project, re-exported with PK-Sim 13
 .loadHumanAciclovirSimulation <- function() {
-  loadSimulation(
-    testthat::test_path(
-      "data",
-      "TestProject",
-      "Models",
-      "Simulations",
-      "Aciclovir.pkml"
-    ),
-    loadFromCache = FALSE
-  )
+  loadSimulation(testModelPath(), loadFromCache = FALSE)
 }
 
 test_that("`applyIndividualParameters()` scales a human model to a rat", {

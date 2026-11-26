@@ -155,16 +155,7 @@ test_that("loadObservedData rejects an observed-data file that escapes the data 
 
 test_that("loadObservedData loads pkml observed data", {
   tmpDir <- withr::local_tempdir()
-  file.copy(
-    testthat::test_path(
-      "data",
-      "TestProject",
-      "Models",
-      "Simulations",
-      "Aciclovir.pkml"
-    ),
-    file.path(tmpDir, "Aciclovir.pkml")
-  )
+  file.copy(testModelPath(), file.path(tmpDir, "Aciclovir.pkml"))
   jsonPath <- file.path(tmpDir, "Project.json")
   jsonlite::write_json(
     list(
