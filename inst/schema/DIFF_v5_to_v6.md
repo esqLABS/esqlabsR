@@ -118,9 +118,9 @@ several Excel-era string encodings (see §12). Both are flagged as open question
 
 1. **v5:** a data sheet listing files + importer config.
 2. **v6:** `observedData` is an **array** of `{type, file, importerConfiguration, sheets[]}`.
-   `type` ∈ {`excel`,`pkml`,`script`,`programmatic`} (`R/observed-data.R`), and required
-   sub-fields differ by type (excel needs `file`+`importerConfiguration`+`sheets`; pkml/
-   script need `file`). Imported datasets get derived labels later referenced by plots and
+   `type` ∈ {`excel`,`pkml`,`programmatic`} (`R/observed-data.R`), and required
+   sub-fields differ by type (excel needs `file`+`importerConfiguration`+`sheets`; pkml
+   needs `file`). Imported datasets get derived labels later referenced by plots and
    parameter identification.
 
 ## 10. Simulation time

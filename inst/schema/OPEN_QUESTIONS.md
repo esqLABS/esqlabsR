@@ -15,7 +15,7 @@ Numbered so you can reply by number. Each notes where it bites and a suggested d
    arrays-with-`id` (rationale in `schema-clean/RATIONALE.md`). Needs Felix's call.
 
 3. **Which enums are actually closed?** Confirmed closed in code: `observedData.type`
-   {excel,pkml,script,programmatic}, axis scales {lin,log}, PI `scaling` {lin,log}. **Not**
+   {excel,pkml,programmatic}, axis scales {lin,log}, PI `scaling` {lin,log}. **Not**
    closed in code but conventionally limited: `plotType`, `aggregation`, PI `algorithm`,
    PI `ciMethod`, `gender`, `species`, `population` (OSP db name), all `*Unit` fields.
    Please give the authoritative allowed-value lists. *Bite:* validation strictness and
