@@ -371,3 +371,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 18:31: Round-trip tests that repeated other save tests are gone, the two plots fixed-point tests are one, and the sibling-preservation test runs on the fixture project directly. (#1399)
 - 2026-11-26 10:44: Tests cover refusing a 5.x JSON whose model folder climbs out of the project with ../, and recognizing an in-place import when the output folder is spelled differently. (#1399)
 - 2026-11-26 10:44: The importProjectFromExcel() help page is regenerated from the revised documentation. (#1399)
+- 2026-11-26 11:58: The addObservedData() help page is regenerated, so it no longer carries the paragraph its documentation dropped with the script source.
