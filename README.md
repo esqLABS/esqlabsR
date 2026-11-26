@@ -151,7 +151,7 @@ ways:
   `restoreProject(snapshot, dir, overwrite = TRUE)`. A project you
   created in R that has no folder yet can be snapshotted as well.
 - **It holds the configuration only.** Model files, observed data files,
-  population CSV files, and scripts are not packed into the snapshot.
+  and population CSV files are not packed into the snapshot.
   They have to reach the recipient another way, for example alongside
   the snapshot or on a shared drive that both of you point at. A
   `DataSet` you added with `addObservedData()` and a `Population` you

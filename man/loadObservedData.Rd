@@ -17,16 +17,6 @@ A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Empty
 Reads the \code{observedData} declarations from a \link[=loadProject]{Project}
 and returns the corresponding \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects.
 }
-\section{Security}{
-
-A \code{script} observed-data source runs the R file it names, with
-\code{source()}, on your machine when the data is resolved. Any R code in
-that file executes, so treat a project the same way you would treat a
-script someone sends you: only load and resolve observed data from a
-project you trust. This applies to \code{loadObservedData()} and to anything
-that resolves observed data for you, such as \code{\link[=createDataCombined]{createDataCombined()}}.
-}
-
 \examples{
 \dontrun{
 project <- loadProject("path/to/Project.json")

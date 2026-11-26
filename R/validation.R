@@ -1362,8 +1362,8 @@ validationSummary <- function(validationResults) {
       }
       # `observedData` names a data set inside an observed-data source, not a
       # declaration, so it resolves against the loaded data-set names. A `NULL`
-      # name set means the project could not be asked without running user code
-      # (see `.observedDataNamesForCrossReference()`), which leaves the reference
+      # name set means a source could not be read (see
+      # `.observedDataNamesForCrossReference()`), which leaves the reference
       # unresolved rather than reported as dangling.
       if (
         !is.null(observedDataNames) &&

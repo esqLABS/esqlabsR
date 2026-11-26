@@ -10,7 +10,7 @@ addObservedData(project, entry, overwrite = FALSE)
 \item{project}{A \code{Project} object.}
 
 \item{entry}{An \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object, or a configuration list
-carrying a \code{type} (\code{"excel"}, \code{"pkml"}, or \code{"script"}) and that type's
+carrying a \code{type} (\code{"excel"} or \code{"pkml"}) and that type's
 fields, as described above.}
 
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), a source whose id
@@ -35,7 +35,6 @@ Such a list always carries a \code{type}, plus the fields that type needs:\tabul
    \code{type} \tab required fields \tab optional fields \cr
    \code{"excel"} \tab \code{file}, \code{importerConfiguration}, \code{sheets} \tab \code{id} \cr
    \code{"pkml"} \tab \code{file} \tab \code{id} \cr
-   \code{"script"} \tab \code{file} \tab \code{id} \cr
 }
 
 
@@ -43,8 +42,6 @@ Such a list always carries a \code{type}, plus the fields that type needs:\tabul
 folder} (\code{project$paths$dataFolder}). A file sitting directly in that folder
 is \code{"observed.xlsx"}, not \code{"Data/observed.xlsx"}; one in a subfolder of it is
 \code{"subfolder/observed.xlsx"}. \code{sheets} lists the Excel sheet names to import.
-A \code{script} source runs the R file it names (see the Security section of
-\code{\link[=loadObservedData]{loadObservedData()}}).
 
 \code{id} names the declaration itself: it becomes the declaration's file under
 the project's definitions folder (\verb{definitions/observed-data/<id>.json} in
