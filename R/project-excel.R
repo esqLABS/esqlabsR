@@ -2223,7 +2223,7 @@ projectStatus <- function(project, silent = FALSE) {
     fs::dir_create(fs::path_dir(to))
     fs::dir_copy(from, to, overwrite = TRUE)
     result$copied <- c(result$copied, value)
-    copiedDirs <- c(copiedDirs, to)
+    copiedDirs <- c(copiedDirs, as.character(fs::path_abs(to)))
   }
   if (dataFolderIsProjectFolder) {
     files <- .copyProjectFolderDataFiles(
@@ -2272,7 +2272,8 @@ projectStatus <- function(project, silent = FALSE) {
 #' @param outputDir Directory the files are copied to.
 #' @param overwrite With `FALSE`, a file `outputDir` already holds is kept and
 #'   reported rather than replaced.
-#' @param copiedDirs Folders under `outputDir` the same import has just copied.
+#' @param copiedDirs Absolute paths of the folders under `outputDir` the same
+#'   import has just copied.
 #' @returns `list(copiedFiles, notCopiedFiles)`: the file names copied, and
 #'   those kept because `outputDir` already holds a file of that name.
 #' @keywords internal
@@ -2298,9 +2299,13 @@ projectStatus <- function(project, silent = FALSE) {
       next
     }
     to <- fs::path(outputDir, file)
+    # Absolute, because `.pathEscapesRoot()` resolves a relative path against
+    # the folder it is compared with, not against the working directory a
+    # relative `outputDir` is spelled from.
+    absoluteTo <- as.character(fs::path_abs(to))
     inCopiedDir <- any(vapply(
       copiedDirs,
-      function(dir) !.pathEscapesRoot(to, dir),
+      function(dir) !.pathEscapesRoot(absoluteTo, dir),
       logical(1)
     ))
     if (inCopiedDir) {

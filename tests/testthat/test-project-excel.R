@@ -3468,6 +3468,34 @@ test_that("a data file inside a copied folder is not reported as kept", {
   expect_true(file.exists(file.path(out, "Models", "Values.xlsx")))
 })
 
+# An `outputDir` given relative to the working directory names the same folders
+# as its absolute spelling, so the check for a file inside a copied folder must
+# not take every observed-data file for one and leave it behind (#1409).
+test_that("importProjectFromExcel copies the observed-data files into a relative outputDir", {
+  projectDir <- localExcelProjectWithRootData()
+  workDir <- withr::local_tempdir()
+  withr::local_dir(workDir)
+
+  suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = "out",
+    silent = TRUE
+  ))
+
+  expect_true(all(file.exists(file.path(
+    workDir,
+    "out",
+    c("TestProject_TimeValuesData.xlsx", "esqlabs_dataImporter_configuration.xml")
+  ))))
+  # The models folder traveled too, so the data files were compared against a
+  # folder this import copied.
+  expect_true(dir.exists(file.path(workDir, "out", "Models", "Simulations")))
+  # The fixture's workbooks carry an unresolved PI reference, which the load
+  # warns about; it has nothing to do with the observed-data source.
+  project <- suppressWarnings(loadProject(file.path(workDir, "out")))
+  expect_gt(length(loadObservedData(project)), 0L)
+})
+
 # The observed-data parser anchors a relative expansion at the project file it
 # is writing, not at the Excel source it is reading, so import and load agree
 # on which folder the stored `${VAR}` names (#1182).
