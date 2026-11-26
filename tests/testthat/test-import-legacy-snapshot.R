@@ -329,6 +329,59 @@ test_that("importProjectFromExcel reads a snapshot's data workbook when the data
   }
 })
 
+# The data files the snapshot's data folder `"."` names travel into a separate
+# `outputDir`, as for a workbook import with the same data folder, and nothing
+# else from the 5.x project folder does (#1409).
+test_that("importProjectFromExcel copies a snapshot's data files when the data folder is the project folder", {
+  src <- localExcelProjectWithRootData()
+  outputDir <- withr::local_tempdir()
+
+  expect_snapshot(
+    importProjectFromExcel(
+      file.path(src, "ProjectConfiguration.json"),
+      outputDir = outputDir
+    ),
+    transform = .redactTmpDir
+  )
+
+  expect_setequal(
+    list.files(outputDir),
+    c(
+      "Configurations",
+      "definitions",
+      "esqlabs_dataImporter_configuration.xml",
+      "Models",
+      "Project.json",
+      "TestProject_TimeValuesData.xlsx"
+    )
+  )
+  observedData <- loadObservedData(loadProject(outputDir))
+  expect_gt(length(observedData), 0L)
+
+  # A data file already in a fresh `outputDir` is kept and named.
+  otherDir <- withr::local_tempdir()
+  curated <- file.path(otherDir, "esqlabs_dataImporter_configuration.xml")
+  writeLines("hand-curated", curated)
+  expect_warning(
+    suppressMessages(importProjectFromExcel(
+      file.path(src, "ProjectConfiguration.json"),
+      outputDir = otherDir
+    )),
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  expect_identical(readLines(curated), "hand-curated")
+  expect_true(file.exists(file.path(
+    otherDir,
+    "TestProject_TimeValuesData.xlsx"
+  )))
+
+  # In place, the data files are already where the project reads them.
+  suppressMessages(importProjectFromExcel(
+    file.path(src, "ProjectConfiguration.json")
+  ))
+  expect_gt(length(loadObservedData(loadProject(src))), 0L)
+})
+
 # In place, a folder that exists may still lack files the snapshot carries:
 # they are added one by one, and no file already there is replaced.
 test_that("importProjectFromExcel adds a snapshot's missing population file to an existing folder in place", {

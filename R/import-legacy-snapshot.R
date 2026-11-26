@@ -119,6 +119,10 @@
   # does for an Excel project imported into another folder. Folders the snapshot
   # carries itself (the population csv files) are already in `scratch` and win,
   # since `overwrite = FALSE` leaves a target that already holds files alone.
+  # A data folder that is the snapshot's own folder (a value such as `"."`) is
+  # never copied whole: only the data workbook and its importer configuration
+  # are brought in, and a file the rebuild wrote under the same name keeps its
+  # place for the same reason.
   # An asset folder is therefore copied twice on its way to `outputDir`, which is
   # the price of reusing the one asset copy rather than teaching it a second
   # source directory to resolve every folder against.
@@ -137,9 +141,8 @@
     scratchProps[c("simulationsFolder", "modelFolder")] <- NULL
   }
   .copyExcelProjectAssets(scratchProps, snapshotDir, scratch, overwrite = FALSE)
-  .stageDataFilesFromProjectFolder(props, snapshotDir, scratch)
 
-  # The observed data is read from the data folder copied in above. When the
+  # The observed data is read from the data files copied in above. When the
   # data workbook is not there, the bridge warns and names it, exactly as for a
   # workbook import, and that warning is the only thing the user hears about
   # observed data.
@@ -172,7 +175,9 @@
   # a folder the scratch project holds but the copy skipped is one `outputDir`
   # already holds files in, exactly the case a workbook import warns about. A
   # folder the scratch project lacks was not beside the snapshot either, and
-  # the missing-folders notice below names it.
+  # the missing-folders notice below names it. A data file is reported as it
+  # comes: the copy leaves one out in silence when the scratch project lacks it,
+  # and names it only when `outputDir` already holds a file of that name.
   notCopied <- character()
   if (!inPlace) {
     inScratch <- vapply(
@@ -202,6 +207,8 @@
       assets = list(
         copied = assets$copied,
         notCopied = unname(notCopied),
+        copiedFiles = assets$copiedFiles,
+        notCopiedFiles = assets$notCopiedFiles,
         added = assets$added
       )
     )
@@ -248,9 +255,10 @@
 # folder already there, each file it lacks is added and no file is replaced.
 # Folder values are resolved as `.copyExcelProjectAssets()` resolves them, and
 # the ones it skips (absolute, outside the project, the project folder itself)
-# are skipped here too. Returns `list(copied, notCopied, added)`: the folder
-# values copied whole, none left out, and the added files as paths relative to
-# `outputDir`.
+# are skipped here too; a data folder that is the project folder already holds
+# its data files in place. Returns the `.noAssetsCopied` fields plus `added`:
+# the folder values copied whole, nothing left out, and the added files as
+# paths relative to `outputDir`.
 #
 # @keywords internal
 # @noRd
@@ -295,50 +303,6 @@
   result$copied <- unique(result$copied)
   result$added <- unique(result$added)
   result
-}
-
-# Copy the data workbook and its importer configuration from beside the
-# snapshot into `scratch`, when the snapshot's `dataFolder` is the folder that
-# holds the snapshot (a value such as `"."`). `.copyExcelProjectAssets()` never
-# copies that folder, since it is the whole project, so without this the bridge
-# would look for the data workbook in `scratch` and report it missing although
-# it sits beside the snapshot. Only the files the bridge reads are staged, each
-# under the same relative path; what reaches `outputDir` is decided later, as
-# for a workbook import with the same `dataFolder`.
-#
-# @keywords internal
-# @noRd
-.stageDataFilesFromProjectFolder <- function(props, snapshotDir, scratch) {
-  dataFolder <- props[["dataFolder"]]
-  if (
-    is.null(dataFolder) ||
-      .declaresEnvVarPath(dataFolder) ||
-      fs::is_absolute_path(dataFolder) ||
-      !.samePath(fs::path(snapshotDir, dataFolder), snapshotDir)
-  ) {
-    return(invisible(NULL))
-  }
-  files <- c(props[["dataFile"]], props[["dataImporterConfigurationFile"]])
-  for (file in files) {
-    # A name that climbs out of the folder is not staged; the bridge reports
-    # it as out of the project.
-    if (.pathEscapesRoot(file, snapshotDir)) {
-      next
-    }
-    from <- fs::path(snapshotDir, file)
-    if (!fs::file_exists(from)) {
-      next
-    }
-    to <- fs::path(scratch, file)
-    # A file already in `scratch` is one the rebuild wrote (a configuration
-    # workbook); a data file of the same name must not replace it.
-    if (fs::file_exists(to)) {
-      next
-    }
-    fs::dir_create(fs::path_dir(to))
-    fs::file_copy(from, to)
-  }
-  invisible(NULL)
 }
 
 # The file name the rebuilt property-sheet workbook is written under. A 5.x
