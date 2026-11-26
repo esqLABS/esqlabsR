@@ -395,6 +395,14 @@ messages$importCopiedAssetFolders <- function(folders) {
   )
 }
 
+# The data workbook and importer configuration copied from a data folder that
+# is the project folder itself, which is never copied whole.
+messages$importCopiedAssetFiles <- function(files) {
+  ospsuite.utils::cliFormat(
+    "Copied {length(files)} referenced data file{?s} into the new project: {.file {files}}."
+  )
+}
+
 # Files added, one by one, to folders an in-place import found already there.
 messages$importAddedAssetFiles <- function(files) {
   ospsuite.utils::cliFormat(
@@ -407,6 +415,13 @@ messages$importUncopiedAssetFolders <- function(folders) {
     "{length(folders)} folder{?s} named by the project configuration {cli::qty(length(folders))}{?was/were} not copied: {.file {folders}}.",
     "Each is absent from the Excel project, points outside it, or already holds files in the new project (pass {.code overwrite = TRUE} to replace those).",
     "A definition pointing into one will not resolve until you place the folder in the new project."
+  )
+}
+
+messages$importUncopiedAssetFiles <- function(files) {
+  ospsuite.utils::cliFormat(
+    "{length(files)} data file{?s} named by the project configuration {cli::qty(length(files))}{?was/were} not copied: {.file {files}}.",
+    "The new project already holds a file of {cli::qty(length(files))}{?that/each} name and reads {?it/those} instead (pass {.code overwrite = TRUE} to replace {?it/them})."
   )
 }
 

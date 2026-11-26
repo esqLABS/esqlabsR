@@ -2633,6 +2633,74 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
   expect_match(added[added != "Project.json"], "^definitions/", all = TRUE)
 })
 
+# A data folder of `"."` is the project folder itself, which is never copied as
+# a folder: that would bring every workbook along. The data workbook and the
+# importer configuration the observed-data definition names have to travel
+# anyway, or the imported project cannot read its observed data (#1409).
+test_that("importProjectFromExcel copies the data files when the data folder is the project folder", {
+  projectDir <- localExcelProjectWithRootData()
+  outputDir <- withr::local_tempdir()
+
+  expect_snapshot(
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = outputDir
+    ),
+    transform = .redactTmpDir
+  )
+
+  # The two data files and nothing else from the project folder: no workbook,
+  # no 5.x configuration JSON.
+  expect_setequal(
+    list.files(outputDir),
+    c(
+      "Configurations",
+      "definitions",
+      "esqlabs_dataImporter_configuration.xml",
+      "Models",
+      "Project.json",
+      "TestProject_TimeValuesData.xlsx"
+    )
+  )
+  # The fixture's workbooks carry an unresolved PI reference, which the load
+  # warns about; it has nothing to do with the observed-data source.
+  observedData <- loadObservedData(suppressWarnings(loadProject(outputDir)))
+  expect_gt(length(observedData), 0L)
+})
+
+test_that("importProjectFromExcel keeps a data file already in outputDir and says so", {
+  projectDir <- localExcelProjectWithRootData()
+  outputDir <- withr::local_tempdir()
+  curated <- file.path(outputDir, "TestProject_TimeValuesData.xlsx")
+  writeLines("hand-curated", curated)
+
+  expect_snapshot(
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = outputDir
+    ),
+    transform = .redactTmpDir
+  )
+  expect_identical(readLines(curated), "hand-curated")
+  expect_true(file.exists(file.path(
+    outputDir,
+    "esqlabs_dataImporter_configuration.xml"
+  )))
+
+  # With overwrite = TRUE the data workbook replaces the file.
+  suppressMessages(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    overwrite = TRUE
+  ))
+  expect_identical(
+    tools::md5sum(curated)[[1]],
+    tools::md5sum(file.path(projectDir, "TestProject_TimeValuesData.xlsx"))[[
+      1
+    ]]
+  )
+})
+
 # An observed DataCombined row may name a scenario just as a simulated row does.
 # Both are the same kind of reference, so both must land on the canonical id;
 # leaving the observed one at its Excel spelling puts two casings of one scenario
@@ -3332,6 +3400,44 @@ test_that("a ${VAR} folder is skipped when absolute and reported when unset", {
     overwrite = TRUE
   )
   expect_identical(unset$notCopied, "${ESQLABSR_TEST_NEVER_SET}")
+})
+
+# From a data folder that is the project folder, only the files the project
+# configuration names travel, and a name that climbs out of the project is not
+# followed: copying it would read outside the source and write outside
+# `outputDir` (#1409).
+test_that("a data folder that is the project folder copies only its named files inside the project", {
+  base <- withr::local_tempdir()
+  src <- file.path(base, "Project")
+  dir.create(src)
+  writeLines("observed values", file.path(src, "Values.xlsx"))
+  writeLines("unrelated", file.path(src, "Other.xlsx"))
+  writeLines("<importer/>", file.path(base, "Importer.xml"))
+  out <- file.path(withr::local_tempdir(), "Output")
+  dir.create(out)
+
+  result <- .copyExcelProjectAssets(
+    list(
+      dataFolder = ".",
+      dataFile = "Values.xlsx",
+      dataImporterConfigurationFile = "../Importer.xml"
+    ),
+    src,
+    out,
+    overwrite = TRUE
+  )
+
+  expect_identical(
+    result,
+    list(
+      copied = character(),
+      notCopied = character(),
+      copiedFiles = "Values.xlsx",
+      notCopiedFiles = character()
+    )
+  )
+  expect_identical(list.files(out), "Values.xlsx")
+  expect_false(file.exists(file.path(dirname(out), "Importer.xml")))
 })
 
 # The observed-data parser anchors a relative expansion at the project file it

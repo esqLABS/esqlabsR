@@ -140,6 +140,55 @@
       x The name "../Project.json" contains a path separator or is "." / "..", so it could write outside `outputDir`.
       i Pass a single filename segment, for example "Project.json" (the default) or "MyStudy"; a .json extension is appended when the name does not already end in one.
 
+# importProjectFromExcel copies the data files when the data folder is the project folder
+
+    Code
+      importProjectFromExcel(file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = outputDir)
+    Message
+      Imported '<tmp-path>' into the JSON project '<tmp-path>'.
+      -- Definitions -----------------------------------------------------------------
+        * Scenarios: 8
+        * Individuals: 1
+        * Populations: 2
+        * Parameter Sets: 8
+        * Applications: 3
+        * Output Paths: 2
+        * Observed Data: 1
+        * Data Combined: 2
+        * Plots: 4
+        * Plot Grids: 3
+        * Parameter Identification: 3
+      1 section imported no definitions: initialConditions.
+      Copied 2 referenced folders into the new project: 'Models/Simulations/' and 'Configurations/PopulationsCSV'.
+      Copied 2 referenced data files into the new project: 'TestProject_TimeValuesData.xlsx' and 'esqlabs_dataImporter_configuration.xml'.
+
+# importProjectFromExcel keeps a data file already in outputDir and says so
+
+    Code
+      importProjectFromExcel(file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = outputDir)
+    Message
+      Imported '<tmp-path>' into the JSON project '<tmp-path>'.
+      -- Definitions -----------------------------------------------------------------
+        * Scenarios: 8
+        * Individuals: 1
+        * Populations: 2
+        * Parameter Sets: 8
+        * Applications: 3
+        * Output Paths: 2
+        * Observed Data: 1
+        * Data Combined: 2
+        * Plots: 4
+        * Plot Grids: 3
+        * Parameter Identification: 3
+      1 section imported no definitions: initialConditions.
+      Copied 2 referenced folders into the new project: 'Models/Simulations/' and 'Configurations/PopulationsCSV'.
+      Copied 1 referenced data file into the new project: 'esqlabs_dataImporter_configuration.xml'.
+    Condition
+      Warning:
+      1 data file named by the project configuration was not copied: 'TestProject_TimeValuesData.xlsx'. The new project already holds a file of that name and reads it instead (pass `overwrite = TRUE` to replace it).
+
 # importProjectFromExcel warns naming each renamed duplicate parameter set
 
     Code

@@ -572,14 +572,24 @@ importProjectFromExcel <- function(
     msg <- messages$importCopiedAssetFolders(assets$copied)
     cli::cli_inform("{msg}")
   }
+  # Single files are copied only from a data folder that is the project folder
+  # itself, which is never copied whole.
+  if (length(assets$copiedFiles) > 0L) {
+    msg <- messages$importCopiedAssetFiles(assets$copiedFiles)
+    cli::cli_inform("{msg}")
+  }
   # Only an in-place upgrade of a 5.x snapshot adds single files to folders
-  # that are already there; a workbook import copies whole folders.
+  # that are already there.
   if (length(assets$added) > 0L) {
     msg <- messages$importAddedAssetFiles(assets$added)
     cli::cli_inform("{msg}")
   }
   if (length(assets$notCopied) > 0L) {
     msg <- messages$importUncopiedAssetFolders(assets$notCopied)
+    cli::cli_warn("{msg}")
+  }
+  if (length(assets$notCopiedFiles) > 0L) {
+    msg <- messages$importUncopiedAssetFiles(assets$notCopiedFiles)
     cli::cli_warn("{msg}")
   }
   invisible(NULL)
@@ -2087,7 +2097,12 @@ projectStatus <- function(project, silent = FALSE) {
 
 # The result of an asset copy that copied nothing and skipped nothing, as
 # `.copyExcelProjectAssets()` returns it.
-.noAssetsCopied <- list(copied = character(), notCopied = character())
+.noAssetsCopied <- list(
+  copied = character(),
+  notCopied = character(),
+  copiedFiles = character(),
+  notCopiedFiles = character()
+)
 
 #' Copy an Excel project's referenced input folders next to the imported project
 #'
@@ -2103,6 +2118,12 @@ projectStatus <- function(project, silent = FALSE) {
 #' configuration, a population csv chosen at run time, a model a scenario is
 #' added for later).
 #'
+#' The one exception is a folder value that resolves to the project folder
+#' itself (such as `"."`): copying it would bring the whole Excel project,
+#' workbooks included, so it is never copied. For `dataFolder`, the data
+#' workbook and the importer configuration the observed-data definition names
+#' are copied on their own instead (`.copyProjectFolderDataFiles()`).
+#'
 #' @param filePathProps The project's raw `filePaths` properties (folder values
 #'   exactly as the Excel file spells them).
 #' @param sourceDir Absolute path to the Excel project's folder.
@@ -2110,11 +2131,13 @@ projectStatus <- function(project, silent = FALSE) {
 #' @param overwrite Whether the import was allowed to replace existing content.
 #'   With `FALSE`, a target folder that already holds files is left as it is and
 #'   reported, so the flag governs the assets as well as the definition tree.
-#' @returns `list(copied, notCopied)`: the folder values copied, and those a
-#'   definition may reference but that could not be copied (absent from the
-#'   source project, naming a location outside it, or already present in the
-#'   output when `overwrite` is `FALSE`). Both empty when the project was
-#'   imported in place (nothing to copy).
+#' @returns `list(copied, notCopied, copiedFiles, notCopiedFiles)`: the folder
+#'   values copied, and those a definition may reference but that could not be
+#'   copied (absent from the source project, naming a location outside it, or
+#'   already present in the output when `overwrite` is `FALSE`); then the data
+#'   files copied from the project folder, and those kept because the output
+#'   already holds a file of that name. All empty when the project was imported
+#'   in place (nothing to copy).
 #' @keywords internal
 #' @noRd
 .copyExcelProjectAssets <- function(
@@ -2162,7 +2185,19 @@ projectStatus <- function(project, silent = FALSE) {
     from <- fs::path_norm(fs::path(sourceDir, copyAs))
     # A folder value of `"."` resolves to the project folder itself; copying that
     # would drag the whole Excel project (workbooks included) into the output.
+    # A data folder there still holds the files the observed data is read from,
+    # so those two travel on their own.
     if (.samePath(from, sourceDir)) {
+      if (identical(field, "dataFolder")) {
+        files <- .copyProjectFolderDataFiles(
+          filePathProps,
+          sourceDir,
+          outputDir,
+          overwrite
+        )
+        result$copiedFiles <- files$copied
+        result$notCopiedFiles <- files$notCopied
+      }
       next
     }
     if (!fs::dir_exists(from)) {
@@ -2190,6 +2225,56 @@ projectStatus <- function(project, silent = FALSE) {
   # project carrying both would report it twice.
   result$copied <- unique(result$copied)
   result$notCopied <- unique(result$notCopied)
+  result
+}
+
+#' Copy the data files of a data folder that is the project folder itself
+#'
+#' The data workbook (`dataFile`) and its importer configuration
+#' (`dataImporterConfigurationFile`) are copied from `sourceDir` to the same
+#' relative path under `outputDir`, and no other file of the project folder is.
+#' A file name that is absolute (it resolves the same from the new project),
+#' climbs out of the project folder, or names no file is left out without a
+#' word: the observed-data import already reports a data workbook it cannot
+#' read, and writes no definition that would need either file.
+#'
+#' @param filePathProps The project's raw `filePaths` properties.
+#' @param sourceDir Absolute path to the project folder the files are read from.
+#' @param outputDir Directory the files are copied to.
+#' @param overwrite With `FALSE`, a file `outputDir` already holds is kept and
+#'   reported rather than replaced.
+#' @returns `list(copied, notCopied)`: the file names copied, and those kept
+#'   because `outputDir` already holds a file of that name.
+#' @keywords internal
+#' @noRd
+.copyProjectFolderDataFiles <- function(
+  filePathProps,
+  sourceDir,
+  outputDir,
+  overwrite
+) {
+  result <- list(copied = character(), notCopied = character())
+  for (field in c("dataFile", "dataImporterConfigurationFile")) {
+    file <- filePathProps[[field]]
+    if (is.null(file) || is.na(file) || !nzchar(file)) {
+      next
+    }
+    if (fs::is_absolute_path(file) || .pathEscapesRoot(file, sourceDir)) {
+      next
+    }
+    from <- fs::path(sourceDir, file)
+    if (!fs::is_file(from)) {
+      next
+    }
+    to <- fs::path(outputDir, file)
+    if (!overwrite && fs::file_exists(to)) {
+      result$notCopied <- c(result$notCopied, file)
+      next
+    }
+    fs::dir_create(fs::path_dir(to))
+    fs::file_copy(from, to, overwrite = TRUE)
+    result$copied <- c(result$copied, file)
+  }
   result
 }
 
