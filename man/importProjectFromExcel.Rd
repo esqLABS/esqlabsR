@@ -14,9 +14,9 @@ importProjectFromExcel(
 )
 }
 \arguments{
-\item{projectConfigPath}{Path to the \code{Project.xlsx} file, or to the single
-JSON file that \code{snapshotProjectConfiguration()} wrote in esqlabsR 5
-(usually \code{ProjectConfiguration.json}). Defaults to \code{"Project.xlsx"}.}
+\item{projectConfigPath}{Path to the \code{Project.xlsx} file, or to the JSON
+file that \code{snapshotProjectConfiguration()} saved in esqlabsR 5 (usually
+\code{ProjectConfiguration.json}). Defaults to \code{"Project.xlsx"}.}
 
 \item{outputDir}{Directory where the JSON project is created. If \code{NULL}
 (default), it is created in the same directory as the source file.}
@@ -24,10 +24,10 @@ JSON file that \code{snapshotProjectConfiguration()} wrote in esqlabsR 5
 \item{overwrite}{Logical. Guards against silently replacing an existing JSON
 project. With \code{overwrite = FALSE} (default), the import aborts when a
 project file or a non-empty \verb{definitions/} tree already exists in
-\code{outputDir}, because re-importing replaces the JSON project with the Excel
-state and deletes any definitions authored only on the JSON side. Pass
-\code{overwrite = TRUE} to replace the existing JSON project with the Excel
-state.}
+\code{outputDir}, because importing again replaces the JSON project with what
+the import reads and deletes every definition the source does not contain,
+including one you added to the JSON project since. Pass \code{overwrite = TRUE}
+to replace the existing JSON project.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
 written, its per-section definition counts, and the folders copied or
@@ -37,8 +37,8 @@ missing). Defaults to \code{FALSE}.}
 references (models, data, csv populations) into \code{outputDir}, which is what
 makes the imported project runnable where it was written. Defaults to
 \code{TRUE}. Set it to \code{FALSE} when only the definitions are wanted and the
-assets would be wasted work, as when the import feeds a throwaway
-comparison snapshot.}
+assets would be wasted work, as when the import is only used for a
+comparison.}
 
 \item{projectFileName}{Name of the project file the import writes in
 \code{outputDir}. Defaults to \code{"Project.json"}, the same name \code{\link[=initProject]{initProject()}}
@@ -58,10 +58,11 @@ first project rather than sitting alongside it. Give each project its own
 Invisibly returns the path to the created project file.
 }
 \description{
-Reads all Excel configuration files in an esqlabsR project and
+Reads all Excel configuration files in an esqlabsR project, or
+the JSON file that \code{snapshotProjectConfiguration()} saved in esqlabsR 5, and
 converts them to the JSON project format: a \code{Project.json} project file plus
 one file per definition in the \verb{definitions/} folder. The result is a
-ready-to-use project — \code{loadProject("<outputDir>/Project.json")} can open it
+ready-to-use project: \code{loadProject("<outputDir>/Project.json")} can open it
 directly. This is the migration path from Excel-based projects to the
 JSON-primary workflow.
 
@@ -78,16 +79,16 @@ setting named in two rows, or a value with no setting beside it stops the
 import and names the sheet. A workbook without the sheet gives a project
 without \code{defaultSolverSettings}.
 
-A project from esqlabsR 5 that was saved as a single JSON file with
-\code{snapshotProjectConfiguration()} (usually \code{ProjectConfiguration.json}) is
-imported the same way: pass that file as \code{projectConfigPath}. The model,
-data, and population folders that sit beside it are copied into \code{outputDir},
-and the import summary names each folder the new project still lacks, so you
-know what to place there before you run it. A working folder in the file
+The JSON file that \code{snapshotProjectConfiguration()} saved in esqlabsR 5
+(usually \code{ProjectConfiguration.json}) is imported the same way: pass it as
+\code{projectConfigPath}. The model, data, and population folders that sit
+beside it are copied into \code{outputDir}, and the import summary names each
+folder the new project still lacks, so you know what to place there before
+you run it. A working folder in the file
 that points outside the project stops the import before anything is written.
-Observed data comes along only when the data workbook the file names sits in
-the data folder beside it; otherwise add it with \code{\link[=addObservedData]{addObservedData()}} if a
-plot or a parameter identification needs it. The project file is never
+Observed data is imported from the data workbook the file names, in the
+data folder beside it; when that workbook is missing, the import warns and
+names it, as for a \code{Project.xlsx}. The project file is never
 written over the file being imported, whatever \code{overwrite} says.
 }
 \seealso{
