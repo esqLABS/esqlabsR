@@ -323,14 +323,16 @@
 #'   including one you added to the JSON project since. Pass `overwrite = TRUE`
 #'   to replace the existing JSON project.
 #' @param silent Logical. If `TRUE`, suppresses the import summary (the project
-#'   written, its per-section definition counts, and the folders copied or
-#'   missing). Defaults to `FALSE`.
+#'   written, its per-section definition counts, and the folders and files
+#'   copied or missing). Defaults to `FALSE`.
 #' @param copyAssets Logical. Whether to copy the input folders the project
 #'   references (models, data, csv populations) into `outputDir`, which is what
 #'   makes the imported project runnable where it was written. Defaults to
-#'   `TRUE`. Set it to `FALSE` when only the definitions are wanted and the
-#'   assets would be wasted work, as when the import is only used for a
-#'   comparison.
+#'   `TRUE`. When the data folder is the project folder itself (`dataFolder` is
+#'   `"."`), only the data workbook and its importer configuration are copied
+#'   from it, so the Excel workbooks stay behind. Set it to `FALSE` when only
+#'   the definitions are wanted and the assets would be wasted work, as when
+#'   the import is only used for a comparison.
 #' @param projectFileName Name of the project file the import writes in
 #'   `outputDir`. Defaults to `"Project.json"`, the same name [initProject()]
 #'   and [loadProject()] use, so an imported project opens like any other. Pass
