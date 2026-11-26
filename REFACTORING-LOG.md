@@ -374,3 +374,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-26 11:58: The addObservedData() help page is regenerated, so it no longer carries the paragraph its documentation dropped with the script source.
 - 2026-11-26 14:06: The test helper that hides temp paths in snapshots also recognizes the macOS temp folder, whose path carries a double slash. (#1399)
 - 2026-11-26 14:37: Importing a 5.x JSON whose data folder is the project folder itself reads the data workbook beside it instead of warning that it is missing. (#1399)
+- 2026-11-26 14:45: An in-place import of a 5.x JSON adds the files a folder already there lacks, such as a population CSV beside a README, without replacing any file, and names them in the summary. (#1399)

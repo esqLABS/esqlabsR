@@ -151,18 +151,20 @@
   )
 
   # Imported in place, the folders are already where the project expects them.
-  # Nothing there is replaced, whatever `overwrite` says, so the copy below only
-  # adds what the folder lacks, such as the population csv files the snapshot
-  # carries itself.
-  assets <- if (copyAssets) {
+  # Nothing there is replaced, whatever `overwrite` says: only what the folders
+  # lack is added, file by file, such as the population csv files the snapshot
+  # carries itself when their folder holds only a README.
+  assets <- if (!copyAssets) {
+    .noAssetsCopied
+  } else if (inPlace) {
+    .addMissingAssetFiles(imported$filePathProps, imported$pcDir, outputDir)
+  } else {
     .copyExcelProjectAssets(
       imported$filePathProps,
       imported$pcDir,
       outputDir,
-      overwrite = overwrite && !inPlace
+      overwrite = overwrite
     )
-  } else {
-    .noAssetsCopied
   }
 
   # Of the folders the copy left alone, report only those the user has to act
@@ -197,7 +199,11 @@
       imported$project,
       sourcePath = snapshotPath,
       outputPath = outputPath,
-      assets = list(copied = assets$copied, notCopied = unname(notCopied))
+      assets = list(
+        copied = assets$copied,
+        notCopied = unname(notCopied),
+        added = assets$added
+      )
     )
     # Read back from `outputPath` rather than taken from `imported$project`,
     # which was parsed from a throwaway container elsewhere: only the written
@@ -235,6 +241,60 @@
     return(character())
   }
   as.character(fs::path_rel(missing, fs::path_abs(dir)))
+}
+
+# Bring the asset folders of the scratch project into the snapshot's own
+# folder, for an in-place upgrade. A folder missing there is copied whole; in a
+# folder already there, each file it lacks is added and no file is replaced.
+# Folder values are resolved as `.copyExcelProjectAssets()` resolves them, and
+# the ones it skips (absolute, outside the project, the project folder itself)
+# are skipped here too. Returns `list(copied, notCopied, added)`: the folder
+# values copied whole, none left out, and the added files as paths relative to
+# `outputDir`.
+#
+# @keywords internal
+# @noRd
+.addMissingAssetFiles <- function(filePathProps, sourceDir, outputDir) {
+  result <- c(.noAssetsCopied, list(added = character()))
+  for (field in .excelProjectAssetFolders) {
+    value <- filePathProps[[field]]
+    if (is.null(value) || is.na(value) || !nzchar(value)) {
+      next
+    }
+    copyAs <- if (.declaresEnvVarPath(value)) {
+      .replaceEnvVarPath(value)
+    } else {
+      value
+    }
+    if (fs::is_absolute_path(copyAs) || .pathEscapesRoot(copyAs, sourceDir)) {
+      next
+    }
+    from <- fs::path(sourceDir, copyAs)
+    if (.samePath(from, sourceDir) || !fs::dir_exists(from)) {
+      next
+    }
+    to <- fs::path(outputDir, copyAs)
+    if (!fs::dir_exists(to)) {
+      fs::dir_create(fs::path_dir(to))
+      fs::dir_copy(from, to)
+      result$copied <- c(result$copied, value)
+      next
+    }
+    files <- fs::dir_ls(from, recurse = TRUE, type = "file", all = TRUE)
+    for (file in files) {
+      relative <- fs::path_rel(file, from)
+      target <- fs::path(to, relative)
+      if (fs::file_exists(target)) {
+        next
+      }
+      fs::dir_create(fs::path_dir(target))
+      fs::file_copy(file, target)
+      result$added <- c(result$added, as.character(fs::path(copyAs, relative)))
+    }
+  }
+  result$copied <- unique(result$copied)
+  result$added <- unique(result$added)
+  result
 }
 
 # Copy the data workbook and its importer configuration from beside the

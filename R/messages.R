@@ -395,6 +395,13 @@ messages$importCopiedAssetFolders <- function(folders) {
   )
 }
 
+# Files added, one by one, to folders an in-place import found already there.
+messages$importAddedAssetFiles <- function(files) {
+  ospsuite.utils::cliFormat(
+    "Added {length(files)} file{?s} the project folders lacked: {.file {files}}."
+  )
+}
+
 messages$importUncopiedAssetFolders <- function(folders) {
   ospsuite.utils::cliFormat(
     "{length(folders)} folder{?s} named by the project configuration {cli::qty(length(folders))}{?was/were} not copied: {.file {folders}}.",

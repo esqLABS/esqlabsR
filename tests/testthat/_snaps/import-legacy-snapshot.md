@@ -45,6 +45,28 @@
       i The JSON file holds only the configuration, so a model, data or population folder is found only when it sits beside the file at that relative path.
       i Nothing that reads from one of them will resolve until you place the folder in the project.
 
+# importProjectFromExcel adds a snapshot's missing population file to an existing folder in place
+
+    Code
+      importProjectFromExcel(snapshot, silent = FALSE)
+    Message
+      Imported '<tmp-path>' into the JSON project '<tmp-path>'.
+      -- Definitions -----------------------------------------------------------------
+        * Scenarios: 8
+        * Individuals: 1
+        * Populations: 2
+        * Parameter Sets: 8
+        * Applications: 3
+        * Output Paths: 2
+        * Observed Data: 1
+        * Data Combined: 2
+        * Plots: 4
+        * Plot Grids: 3
+        * Parameter Identification: 3
+      1 section imported no definitions: initialConditions.
+      Added 1 file the project folders lacked: 'Configurations/PopulationsCSV/TestPopulation.csv'.
+      i Upgraded the project configuration that `snapshotProjectConfiguration()` saved in esqlabsR 5 to the current project format.
+
 # importProjectFromExcel refuses to import a snapshot over an existing project unless overwrite
 
     Code

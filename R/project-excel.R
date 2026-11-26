@@ -572,6 +572,12 @@ importProjectFromExcel <- function(
     msg <- messages$importCopiedAssetFolders(assets$copied)
     cli::cli_inform("{msg}")
   }
+  # Only an in-place upgrade of a 5.x snapshot adds single files to folders
+  # that are already there; a workbook import copies whole folders.
+  if (length(assets$added) > 0L) {
+    msg <- messages$importAddedAssetFiles(assets$added)
+    cli::cli_inform("{msg}")
+  }
   if (length(assets$notCopied) > 0L) {
     msg <- messages$importUncopiedAssetFolders(assets$notCopied)
     cli::cli_warn("{msg}")

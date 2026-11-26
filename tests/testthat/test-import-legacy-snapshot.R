@@ -326,6 +326,36 @@ test_that("importProjectFromExcel reads a snapshot's data workbook when the data
   )
 })
 
+# In place, a folder that exists may still lack files the snapshot carries:
+# they are added one by one, and no file already there is replaced.
+test_that("importProjectFromExcel adds a snapshot's missing population file to an existing folder in place", {
+  src <- withr::local_tempdir()
+  file.copy(
+    list.files(test_path("data", "TestProjectExcel"), full.names = TRUE),
+    src,
+    recursive = TRUE
+  )
+  csvDir <- file.path(src, "Configurations", "PopulationsCSV")
+  unlink(file.path(csvDir, "TestPopulation.csv"))
+  readme <- tools::md5sum(file.path(csvDir, "README.md"))
+  snapshot <- file.path(src, "ProjectConfiguration.json")
+
+  expect_snapshot(
+    importProjectFromExcel(snapshot, silent = FALSE),
+    transform = .redactTmpDir
+  )
+  expect_true(file.exists(file.path(csvDir, "TestPopulation.csv")))
+  expect_identical(tools::md5sum(file.path(csvDir, "README.md")), readme)
+
+  # A file already there stays, even with `overwrite = TRUE`.
+  writeLines("curated", file.path(csvDir, "TestPopulation.csv"))
+  suppressMessages(importProjectFromExcel(snapshot, overwrite = TRUE))
+  expect_identical(
+    readLines(file.path(csvDir, "TestPopulation.csv")),
+    "curated"
+  )
+})
+
 test_that("importProjectFromExcel recognizes an in-place import whatever the folder's spelling", {
   # `outputDir` given relative to the working directory, the snapshot by its
   # absolute path: still the snapshot's own folder. Not recognized, the folders
