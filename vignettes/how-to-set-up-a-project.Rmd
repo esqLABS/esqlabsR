@@ -234,7 +234,7 @@ If you only want to change an option, you do not need Excel: assign the new valu
 
 ## Share or archive a project
 
-To share or archive a project, copy or zip the whole project folder. It holds `Project.json`, the `definitions/` folder, and the model, data, and population files the definitions point at, so a colleague can open it with `loadProject()` and run it. A folder the project reaches through an environment variable, such as `${SHARED_DATA}`, is not inside the project folder; your colleague sets that variable to their own copy. The project files are plain text, so the folder also works under version control such as Git, where every saved change shows up as a change to the definition files it touched.
+To share or archive a project, first save it with `saveProject()` so the folder holds your latest edits, then copy or zip the whole project folder. It holds `Project.json`, the `definitions/` folder, and the model, data, and population files the definitions point at, so a colleague can open it with `loadProject()` and run it. A folder the project reaches through an environment variable, such as `${SHARED_DATA}`, is not inside the project folder; your colleague sets that variable to their own copy. The project files are plain text, so the folder also works under version control such as Git, where every saved change shows up as a change to the definition files it touched.
 
 ## Where to go next
 
