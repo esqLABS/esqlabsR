@@ -1034,8 +1034,8 @@
 }
 
 # The id of an observed-data declaration: its own `id` field, else (for a
-# declaration that stores none) the file basename for `excel`/`pkml`/`script`
-# and the DataSet name a `programmatic` declaration stored under `name`. This is
+# declaration that stores none) the file basename for `excel`/`pkml` and
+# the DataSet name a `programmatic` declaration stored under `name`. This is
 # the id `removeObservedData()` matches on and the stem of the definition file.
 #
 # @keywords internal

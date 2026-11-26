@@ -32,7 +32,7 @@ Each table's **If omitted** column is the one to read when you are deciding what
 Two conventions run through all of it:
 
 - Every `add*`, `set*`, and `remove*` function takes `project` first and the definition's `id` second. Only the fields after those are listed below.
-- Every `add*` function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused, so remove the existing source with `removeObservedData()` first. Adding a `DataSet` reads none of the project's sources, so it is refused at add time only when its name is the id of another source (such as a `DataSet` of that name saved earlier), when another source reads its data from `<name>.pkml`, or when it is the name of a data set loaded since the observed data last changed; any other clash with a data set inside an Excel, PKML or script source is reported the next time the observed data is loaded.
+- Every `add*` function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused, so remove the existing source with `removeObservedData()` first. Adding a `DataSet` reads none of the project's sources, so it is refused at add time only when its name is the id of another source (such as a `DataSet` of that name saved earlier), when another source reads its data from `<name>.pkml`, or when it is the name of a data set loaded since the observed data last changed; any other clash with a data set inside an Excel or PKML source is reported the next time the observed data is loaded.
 
 For why definitions are shaped this way, see `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")`. For the project file and folder layout, see `vignette("reference-project-file")`.
 
@@ -228,13 +228,12 @@ Required fields by `type`:
 | --- | --- | --- |
 | `excel` | `file`, `importerConfiguration`, `sheets` | Sheets of a workbook through an OSPS data-importer configuration. |
 | `pkml` | `file` | A `DataSet` saved to a PKML file. |
-| `script` | `file` | An R script returning a `DataSet` or a list of them. |
 | `programmatic` | none | A `DataSet` built in the session. |
 
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
-| `type` | **yes** | one of the four above | Critical error. |
-| `file` | per type | string | Critical error for `excel`, `pkml`, `script`. Relative to the project's data folder. |
+| `type` | **yes** | one of the three above | Critical error. |
+| `file` | per type | string | Critical error for `excel`, `pkml`. Relative to the project's data folder. |
 | `importerConfiguration` | `excel` only | string | Critical error for an `excel` source. |
 | `sheets` | `excel` only | character vector | Critical error for an `excel` source. An empty but present `sheets` counts as missing. |
 | `id` | no | string | Taken from the source: the file basename for a file-based source, the `DataSet` name for a programmatic one. Stored as the definition's `id` either way. |

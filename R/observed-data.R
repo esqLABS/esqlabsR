@@ -7,10 +7,9 @@
 #   - users via the public addObservedData / removeObservedData
 #     functions.
 #
-# The four declared source types in v2.0 Project.json are:
+# The three declared source types in v2.0 Project.json are:
 #   - excel  : ospsuite::loadDataSetsFromExcel via importer config
 #   - pkml   : ospsuite::loadDataSetFromPKML
-#   - script : R script sourced; must return DataSet or list of DataSets
 #   - programmatic : DataSets added at runtime via addObservedData(project).
 #                    The DataSet itself is not JSON-serializable, so it
 #                    is held on the Project's private slot
@@ -57,20 +56,19 @@ print.ObservedDataSource <- function(x, ...) {
 # can never disagree about which fields a source type requires.
 #
 # The rule an Excel source carries `sheets` (the sheet names to import), while
-# `pkml` / `script` sources are a single file and `programmatic` is a runtime
+# a `pkml` source is a single file and `programmatic` is a runtime
 # sentinel with no source fields at all. `sheets` is a required field for
 # `excel` in BOTH entry points.
 #
 # @keywords internal
 # @noRd
-.observedDataValidTypes <- c("excel", "pkml", "script", "programmatic")
+.observedDataValidTypes <- c("excel", "pkml", "programmatic")
 
 .observedDataRequiredFields <- function(type) {
   switch(
     type,
     "excel" = c("file", "importerConfiguration", "sheets"),
     "pkml" = "file",
-    "script" = "file",
     "programmatic" = character(0),
     character(0)
   )
@@ -90,7 +88,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' Validate the `observedData` section of a Project
 #'
 #' Per-entry checks: `type` is set and is one of `excel`, `pkml`,
-#' `script`, `programmatic`; per-type required fields are present;
+#' `programmatic`; per-type required fields are present;
 #' referenced files exist on disk (warnings only — missing files do
 #' not block parsing).
 #'
@@ -209,7 +207,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' @description
 #' Reads the `observedData` declarations from a [Project][loadProject()]
 #' and returns the corresponding [`ospsuite::DataSet`] objects. Source
-#' types: `excel` (via importer configuration), `pkml`, `script`, and
+#' types: `excel` (via importer configuration), `pkml`, and
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
 #' `DataSet` added at runtime with [addObservedData()]; its data lives in
 #' the session until you save, and [saveProject()] persists it to a PKML
@@ -222,25 +220,14 @@ print.ObservedDataSource <- function(x, ...) {
 #' @param sources Character vector of the ids of the observed-data sources to
 #'   load, or `NULL` (default) to load every source. Only the sources you name
 #'   are read, so a source you leave out cannot stop the load with a missing
-#'   file or a data-set name another source also uses (and see the Security
-#'   section). An id is matched as in [removeObservedData()]. An id that names
-#'   no source is an error listing the project's source ids. `character(0)`
-#'   returns an empty list.
+#'   file or a data-set name another source also uses. An id is matched as in
+#'   [removeObservedData()]. An id that names no source is an error listing the
+#'   project's source ids. `character(0)` returns an empty list.
 #' @returns A named list of [`ospsuite::DataSet`] objects: those of the
-#'   `excel`, `pkml` and `script` sources in the order the project declares
+#'   `excel` and `pkml` sources in the order the project declares
 #'   them, followed by the `DataSet`s added in this session with
 #'   [addObservedData()]. Empty list when `observedData` definitions is empty
 #'   or `NULL`.
-#'
-#' @section Security:
-#'   A `script` observed-data source runs the R file it names, with
-#'   `source()`, on your machine when the data is resolved. Any R code in
-#'   that file executes, so treat a project the same way you would treat a
-#'   script someone sends you: only load and resolve observed data from a
-#'   project you trust. This applies to `loadObservedData()` and to anything
-#'   that resolves observed data for you, such as [createDataCombined()].
-#'   `loadObservedData(project, sources = )` runs only the `script` sources
-#'   you select.
 #'
 #' @examples
 #' \dontrun{
@@ -297,11 +284,6 @@ loadObservedData <- function(project, sources = NULL) {
       entry$type,
       "excel" = .loadObservedExcel(entry, self$paths$dataFolder),
       "pkml" = .loadObservedPkml(entry, self$paths$dataFolder),
-      "script" = .loadObservedScript(
-        entry,
-        self$paths$dataFolder,
-        projectKey = .projectWarningKey(self)
-      ),
       "programmatic" = NULL
     )
     if (!is.null(dataSets)) {
@@ -442,11 +424,9 @@ getObservedDataNames <- function(project) {
 #' | --- | --- | --- |
 #' | `"excel"` | `file`, `importerConfiguration`, `sheets` | `id` |
 #' | `"pkml"` | `file` | `id` |
-#' | `"script"` | `file` | `id` |
 #'
 #' Paths are relative to the project's data folder: `"observed.xlsx"`, not
-#' `"Data/observed.xlsx"`. A `script` source runs the R file it names (see the
-#' Security section of [loadObservedData()]).
+#' `"Data/observed.xlsx"`.
 #'
 #' `id` names the source: it is the name of its definition file and what
 #' [removeObservedData()] takes. It is lowercased and made a safe file name,
@@ -464,12 +444,12 @@ getObservedDataNames <- function(project) {
 #' `<name>.pkml` in the data folder. Saving therefore needs a data folder. From
 #' then on it is a `pkml` source that keeps its name as id.
 #'
-#' Adding a `DataSet` reads no source and runs no script. Its name is refused
-#' at once when the project already knows it, for example from a `DataSet` of
-#' that name added or saved earlier. A clash with a data set inside an Excel,
-#' PKML or script source that has not been loaded yet stops the next
-#' [loadObservedData()] with an error naming the duplicate. Then remove the
-#' `DataSet` with [removeObservedData()], rename it, and add it again.
+#' Adding a `DataSet` reads no source. Its name is refused at once when the
+#' project already knows it, for example from a `DataSet` of that name added or
+#' saved earlier. A clash with a data set inside an Excel or PKML source that
+#' has not been loaded yet stops the next [loadObservedData()] with an error
+#' naming the duplicate. Then remove the `DataSet` with [removeObservedData()],
+#' rename it, and add it again.
 #'
 #' @param project A `Project` object.
 #' @param entry An [`ospsuite::DataSet`], or a list with a `type` and that
@@ -510,7 +490,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     .validateObservedDataId(name, call = .call)
     # Check only the names known without reading a source: the names cache, when
     # a lookup has filled it, and the session's DataSets. Reading the sources
-    # would run every `script` source and stop on any unreadable file. A clash
+    # would import every file and stop on any unreadable one. A clash
     # with a name inside a source not read yet aborts the next load instead
     # (`.mergeObservedDataSets()`).
     namesCache <- private$.observedDataNamesCache
@@ -585,7 +565,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       private$.programmaticDataSets[[replacedId]] <- NULL
       observedData[[replaceIdx[[1]]]] <- sentinel
     } else if (overwrite && clashes) {
-      # The name collides with a file-based (pkml/excel/script) source, not a
+      # The name collides with a file-based (pkml/excel) source, not a
       # programmatic one, so there is no programmatic entry to replace. Appending
       # would leave two sources resolving to the same name and only fail later,
       # at the next load/save. Abort now, naming the fix. This is best effort:
@@ -625,11 +605,11 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     if (is.null(entry$type)) {
       cli::cli_abort("observedData entry must include a {.field type} field")
     }
-    validTypes <- c("excel", "pkml", "script")
+    validTypes <- c("excel", "pkml")
     if (!(entry$type %in% validTypes)) {
-      cli::cli_abort(c(
-        "Invalid observedData entry type {.val {entry$type}}.",
-        "i" = "Must be one of: {.val {validTypes}}."
+      cli::cli_abort(messages$observedDataInvalidEntryType(
+        entry$type,
+        validTypes
       ))
     }
     # Validate the full entry shape (per-type required fields), not just the
@@ -848,11 +828,10 @@ removeObservedData <- function(project, id) {
 # A declaration's id names the declaration; what a parameter-identification
 # output mapping references is the name of a data set INSIDE the source, which
 # only the source knows, so answering means loading it. Reading an Excel or PKML
-# source is the same kind of filesystem access the section validators already do,
-# but a `script` source is arbitrary R and validating a project must never run
-# it: a section holding one returns `NULL`, and so does a load that fails, since
-# an unreadable source is the observedData section's own finding rather than a
-# dangling reference. `NULL` therefore means "unresolved", not "nothing defined".
+# source is the same kind of filesystem access the section validators already
+# do. A load that fails returns `NULL`, since an unreadable source is the
+# observedData section's own finding rather than a dangling reference. `NULL`
+# therefore means "unresolved", not "nothing defined".
 #
 # @keywords internal
 # @noRd
@@ -860,14 +839,6 @@ removeObservedData <- function(project, id) {
   declarations <- project$definitions$observedData %||% list()
   if (length(declarations) == 0L) {
     return(character(0))
-  }
-  types <- vapply(
-    declarations,
-    function(e) as.character(e$type %||% NA_character_),
-    character(1)
-  )
-  if (any(types == "script", na.rm = TRUE)) {
-    return(NULL)
   }
   tryCatch(
     suppressMessages(suppressWarnings(project$getObservedDataNames())),
@@ -1047,40 +1018,6 @@ removeObservedData <- function(project, id) {
   filePath <- .resolveDataPath(entry$file, dataFolder)
   ds <- ospsuite::loadDataSetFromPKML(filePath = filePath)
   stats::setNames(list(ds), ds$name)
-}
-
-.loadObservedScript <- function(entry, dataFolder, projectKey = "") {
-  filePath <- .resolveDataPath(entry$file, dataFolder)
-  # A script source executes arbitrary R (see the loadObservedData() Security
-  # section). Warn the user that this is happening, once per session per project
-  # so a project with several script sources, or a repeated resolve, stays quiet
-  # after the first. The per-project key means a second, untrusted project in the
-  # same session still gets its own warning rather than being silenced by a
-  # trusted project that already tripped a global gate.
-  cli::cli_warn(
-    messages$observedDataScriptSecurityWarn(),
-    .frequency = "once",
-    .frequency_id = paste0("esqlabsR_observed_data_script_source_", projectKey)
-  )
-  cli::cli_inform(messages$observedDataScriptSourcing(filePath))
-  result <- source(filePath, local = TRUE)$value
-  if (inherits(result, "DataSet")) {
-    return(stats::setNames(list(result), result$name))
-  }
-  if (
-    is.list(result) &&
-      length(result) > 0 &&
-      all(vapply(result, inherits, logical(1), "DataSet"))
-  ) {
-    # Re-key by each DataSet's own name so a list return is keyed the same
-    # way as a single-DataSet return (the script's own list names, if any,
-    # are ignored in favour of the authoritative `$name`).
-    names(result) <- vapply(result, function(ds) ds$name, character(1))
-    return(result)
-  }
-  cli::cli_abort(
-    messages$observedDataScriptWrongReturnType(filePath, class(result)[[1]])
-  )
 }
 
 # Persist every session-added programmatic DataSet to a PKML file next to the

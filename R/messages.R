@@ -2142,7 +2142,7 @@ messages$runningPITask <- function(piTaskName) {
 messages$observedDataInvalidEntryType <- function(badType, validTypes) {
   cliBullets(
     "x" = "Invalid {.field type} {.val {badType}} in {.code observedData} entry.",
-    "i" = "Must be one of: {.val {validTypes}}."
+    "i" = "Must be one of: {.or {.val {validTypes}}}."
   )
 }
 
@@ -2162,30 +2162,11 @@ messages$observedDataFileNotFound <- function(filePath) {
   )
 }
 
-messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
-  cliBullets(
-    "x" = "Script {.path {filePath}} did not return a {.cls DataSet} or list of {.cls DataSet}.",
-    "i" = "Got an object of class {.cls {klass}}."
-  )
-}
-
-messages$observedDataScriptSourcing <- function(filePath) {
-  ospsuite.utils::cliFormat("Sourcing observed-data script: {.path {filePath}}")
-}
-
-messages$observedDataScriptSecurityWarn <- function() {
-  cliBullets(
-    "!" = "This project runs an R script to build observed data, executing arbitrary R code on your machine.",
-    "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details.",
-    "i" = "This warning is shown once per session."
-  )
-}
-
 messages$observedDataProgrammaticUnresolved <- function(names) {
   cliBullets(
     "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
     "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code script} or {.code pkml} source to persist across a reload."
+    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
   )
 }
 
