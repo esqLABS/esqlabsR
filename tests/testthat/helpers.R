@@ -433,7 +433,8 @@ importLegacyExcelProject <- function(
 #' path elsewhere is left intact, so a meaningful assertion on a real path is
 #' never silently hidden. Separators are normalized to `/` first (so a Windows
 #' backslash path matches), and both a Unix (`/tmp/...`) and a drive-prefixed
-#' Windows (`C:/...`) temp path are matched.
+#' Windows (`C:/...`) temp path are matched, whether a separator is written as
+#' one slash or doubled (macOS `tempdir()` carries a `//`).
 .redactTmpDir <- function(lines) {
   # Normalize backslashes to forward slashes so a Windows path (in the message
   # or in `tempdir()`) matches the same pattern as a Unix one.
@@ -444,7 +445,13 @@ importLegacyExcelProject <- function(
   # already carries the drive letter (`C:/...`), so escaping it verbatim also
   # matches the drive-prefixed form a message reports; a Unix path starts with
   # `/tmp/...`. Either way, an unrelated absolute path is left intact.
-  prefix <- .escapeRegex(tmp)
+  #
+  # Every separator in the prefix matches one or more slashes. On macOS
+  # `TMPDIR` ends in `/`, so `tempdir()` reads `/var/folders/.../T//RtmpXXXX`,
+  # while a message prints the path made absolute with `fs::path_abs()`, which
+  # collapses the double slash; the other way round must match too.
+  tmp <- gsub("/+", "/", tmp)
+  prefix <- gsub("/", "/+", .escapeRegex(tmp), fixed = TRUE)
   gsub(paste0("'", prefix, "[^']*'"), "'<tmp-path>'", lines)
 }
 
