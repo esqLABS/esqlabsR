@@ -1,9 +1,9 @@
 # Plot generation ----
 #
-# Public createPlots / createPlotsFromExcel plus the parsing, validation,
-# and configuration helpers they use. Stateless: pulls a Project's
-# dataCombined / plots / plotGrids sections and returns a named list of
-# rendered plot-grid (and optionally standalone plot) objects keyed by id.
+# Public createPlots plus the parsing, validation, and configuration
+# helpers it uses. Stateless: pulls a Project's dataCombined / plots /
+# plotGrids sections and returns a named list of rendered plot-grid (and
+# optionally standalone plot) objects keyed by id.
 
 #' Generate plots from a Project
 #'
@@ -137,18 +137,6 @@ createPlots <- function(
     standalonePlotIds = selectedPlotIds,
     dataCombinedList = dataCombinedList
   )
-}
-
-#' @rdname createPlots
-#' @param ... Passed on to [createPlots()].
-#' @export
-createPlotsFromExcel <- function(...) {
-  lifecycle::deprecate_soft(
-    what = "createPlotsFromExcel()",
-    with = "createPlots()",
-    when = "6.0.0"
-  )
-  createPlots(...)
 }
 
 #' Parse and validate comma-separated Excel field

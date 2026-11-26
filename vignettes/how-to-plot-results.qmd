@@ -140,7 +140,7 @@ names(both)
 
 ## Observed data
 
-Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and loads the data when a figure needs it. `vignette("how-to-use-observed-data")` shows how observed data enters a project: the four source types, the source definitions, and `loadObservedData()`. For plotting, you need one name: the **DataSet name** that a DataCombined uses. `getObservedDataNames()` lists the names of all `DataSet` that are available in the project.
+Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and loads the data when a figure needs it. `vignette("how-to-use-observed-data")` shows how observed data enters a project: the three source types, the source definitions, and `loadObservedData()`. For plotting, you need one name: the **DataSet name** that a DataCombined uses. `getObservedDataNames()` lists the names of all `DataSet` that are available in the project.
 
 ```{r observed}
 getObservedDataNames(project)
