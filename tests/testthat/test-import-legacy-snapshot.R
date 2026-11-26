@@ -216,30 +216,32 @@ test_that("importProjectFromExcel names the asset folders a lone snapshot could 
 })
 
 test_that("importProjectFromExcel refuses an out-of-project folder in a snapshot before writing anything", {
-  # The value makes the finished project unopenable, so it is refused up front
-  # rather than after a complete definitions tree is on disk (#1213).
-  fixture <- jsonlite::fromJSON(
-    .legacySnapshotFixture(),
-    simplifyVector = FALSE
-  )
-  elsewhere <- withr::local_tempdir()
-  pc <- fixture$projectConfiguration
-  for (i in seq_along(pc$rows)) {
-    if (identical(pc$rows[[i]][["Property"]], "modelFolder")) {
-      pc$rows[[i]][["Value"]] <- elsewhere
+  # The value makes the finished project unusable, so it is refused up front
+  # rather than after a complete definitions tree is on disk (#1213). Both ways
+  # out of the project are refused: an absolute folder and a `../` climb.
+  for (outside in c(withr::local_tempdir(), "../Models/Simulations")) {
+    fixture <- jsonlite::fromJSON(
+      .legacySnapshotFixture(),
+      simplifyVector = FALSE
+    )
+    pc <- fixture$projectConfiguration
+    for (i in seq_along(pc$rows)) {
+      if (identical(pc$rows[[i]][["Property"]], "modelFolder")) {
+        pc$rows[[i]][["Value"]] <- outside
+      }
     }
+    fixture$projectConfiguration <- pc
+
+    snapshot <- file.path(withr::local_tempdir(), "outside.json")
+    jsonlite::write_json(fixture, snapshot, auto_unbox = TRUE, null = "null")
+
+    dir <- withr::local_tempdir()
+    expect_error(
+      importProjectFromExcel(snapshot, outputDir = dir),
+      "resolves outside the project folder"
+    )
+    expect_length(list.files(dir, all.files = TRUE, no.. = TRUE), 0L)
   }
-  fixture$projectConfiguration <- pc
-
-  snapshot <- file.path(withr::local_tempdir(), "absolute.json")
-  jsonlite::write_json(fixture, snapshot, auto_unbox = TRUE, null = "null")
-
-  dir <- withr::local_tempdir()
-  expect_error(
-    importProjectFromExcel(snapshot, outputDir = dir),
-    "resolves outside the project folder"
-  )
-  expect_length(list.files(dir, all.files = TRUE, no.. = TRUE), 0L)
 })
 
 test_that("importProjectFromExcel writes the upgraded project beside the snapshot by default", {
@@ -281,6 +283,33 @@ test_that("importProjectFromExcel writes the upgraded project beside the snapsho
   # folders it was made from: the population csv files rebuilt from the
   # snapshot would otherwise replace the originals beside it.
   suppressMessages(importProjectFromExcel(snapshot, overwrite = TRUE))
+  expect_identical(tools::md5sum(file.path(src, before)), checksumsBefore)
+})
+
+test_that("importProjectFromExcel recognizes an in-place import whatever the folder's spelling", {
+  # `outputDir` given relative to the working directory, the snapshot by its
+  # absolute path: still the snapshot's own folder. Not recognized, the folders
+  # already there would be reported as not copied, and `overwrite = TRUE` would
+  # replace them.
+  parent <- withr::local_tempdir()
+  src <- file.path(parent, "Study")
+  dir.create(src)
+  file.copy(
+    list.files(test_path("data", "TestProjectExcel"), full.names = TRUE),
+    src,
+    recursive = TRUE
+  )
+  snapshot <- normalizePath(file.path(src, "ProjectConfiguration.json"))
+  before <- list.files(src, recursive = TRUE, all.files = TRUE)
+  checksumsBefore <- tools::md5sum(file.path(src, before))
+  withr::local_dir(parent)
+
+  expect_no_warning(suppressMessages(
+    importProjectFromExcel(snapshot, outputDir = "Study")
+  ))
+  suppressMessages(
+    importProjectFromExcel(snapshot, outputDir = "Study", overwrite = TRUE)
+  )
   expect_identical(tools::md5sum(file.path(src, before)), checksumsBefore)
 })
 
