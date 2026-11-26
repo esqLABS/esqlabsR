@@ -245,8 +245,13 @@ localExcelProjectDir <- function(envir = parent.frame()) {
 #' The data workbook and its importer configuration sit beside
 #' `ProjectConfiguration.xlsx` instead of in `Data/`, and both the workbook and
 #' the 5.x configuration JSON say `dataFolder = "."`, so the same folder serves
-#' a workbook import and a 5.x JSON import. Returns the project directory.
-localExcelProjectWithRootData <- function(envir = parent.frame()) {
+#' a workbook import and a 5.x JSON import. `dataFile` renames the data
+#' workbook, in the folder and in both configurations. Returns the project
+#' directory.
+localExcelProjectWithRootData <- function(
+  dataFile = "TestProject_TimeValuesData.xlsx",
+  envir = parent.frame()
+) {
   projectDir <- localExcelProjectDir(envir = envir)
   dataDir <- file.path(projectDir, "Data")
   file.rename(
@@ -254,18 +259,26 @@ localExcelProjectWithRootData <- function(envir = parent.frame()) {
     file.path(projectDir, list.files(dataDir))
   )
   unlink(dataDir, recursive = TRUE)
+  file.rename(
+    file.path(projectDir, "TestProject_TimeValuesData.xlsx"),
+    file.path(projectDir, dataFile)
+  )
+  values <- c(dataFolder = ".", dataFile = dataFile)
 
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
   config <- readExcel(configPath)
-  config$Value[config$Property == "dataFolder"] <- "."
+  for (property in names(values)) {
+    config$Value[config$Property == property] <- values[[property]]
+  }
   .writeExcel(config, configPath)
 
   jsonPath <- file.path(projectDir, "ProjectConfiguration.json")
   snapshot <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
   rows <- snapshot$projectConfiguration$rows
   for (i in seq_along(rows)) {
-    if (identical(rows[[i]][["Property"]], "dataFolder")) {
-      rows[[i]][["Value"]] <- "."
+    property <- rows[[i]][["Property"]]
+    if (property %in% names(values)) {
+      rows[[i]][["Value"]] <- values[[property]]
     }
   }
   snapshot$projectConfiguration$rows <- rows
@@ -277,6 +290,28 @@ localExcelProjectWithRootData <- function(envir = parent.frame()) {
     digits = NA
   )
   projectDir
+}
+
+#' The lines of an import summary about copied and not copied assets.
+#'
+#' Evaluates `expr` (an `importProjectFromExcel()` call), muffling its messages
+#' and warnings, and returns those that report a folder or file as copied or
+#' not copied, a warning prefixed with `Warning:`. Snapshotting only these
+#' lines keeps a change in the fixture's definition counts out of the snapshot.
+importAssetLines <- function(expr) {
+  shown <- character()
+  withCallingHandlers(
+    expr,
+    message = function(cnd) {
+      shown <<- c(shown, conditionMessage(cnd))
+      invokeRestart("muffleMessage")
+    },
+    warning = function(cnd) {
+      shown <<- c(shown, paste("Warning:", conditionMessage(cnd)))
+      invokeRestart("muffleWarning")
+    }
+  )
+  trimws(grep("copied", shown, value = TRUE, ignore.case = TRUE))
 }
 
 #' Export a project to Excel and read it back, returning the re-imported one.

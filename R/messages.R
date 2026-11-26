@@ -395,11 +395,11 @@ messages$importCopiedAssetFolders <- function(folders) {
   )
 }
 
-# The data workbook and importer configuration copied from a data folder that
-# is the project folder itself, which is never copied whole.
+# Files copied on their own from a data folder that is the project folder
+# (`.copyProjectFolderDataFiles()`).
 messages$importCopiedAssetFiles <- function(files) {
   ospsuite.utils::cliFormat(
-    "Copied {length(files)} referenced data file{?s} into the new project: {.file {files}}."
+    "Copied {length(files)} observed-data file{?s} into the new project: {.file {files}}."
   )
 }
 
@@ -418,9 +418,11 @@ messages$importUncopiedAssetFolders <- function(folders) {
   )
 }
 
+# Files from a data folder that is the project folder, kept because the new
+# project already holds a file of the same name.
 messages$importUncopiedAssetFiles <- function(files) {
   ospsuite.utils::cliFormat(
-    "{length(files)} data file{?s} named by the project configuration {cli::qty(length(files))}{?was/were} not copied: {.file {files}}.",
+    "{length(files)} observed-data file{?s} {cli::qty(length(files))}{?was/were} not copied: {.file {files}}.",
     "The new project already holds a file of {cli::qty(length(files))}{?that/each} name and reads {?it/those} instead (pass {.code overwrite = TRUE} to replace {?it/them})."
   )
 }

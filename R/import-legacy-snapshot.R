@@ -119,10 +119,8 @@
   # does for an Excel project imported into another folder. Folders the snapshot
   # carries itself (the population csv files) are already in `scratch` and win,
   # since `overwrite = FALSE` leaves a target that already holds files alone.
-  # A data folder that is the snapshot's own folder (a value such as `"."`) is
-  # never copied whole: only the data workbook and its importer configuration
-  # are brought in, and a file the rebuild wrote under the same name keeps its
-  # place for the same reason.
+  # A data folder that is the snapshot's own folder brings only its
+  # observed-data files (`.copyProjectFolderDataFiles()`).
   # An asset folder is therefore copied twice on its way to `outputDir`, which is
   # the price of reusing the one asset copy rather than teaching it a second
   # source directory to resolve every folder against.
@@ -175,9 +173,8 @@
   # a folder the scratch project holds but the copy skipped is one `outputDir`
   # already holds files in, exactly the case a workbook import warns about. A
   # folder the scratch project lacks was not beside the snapshot either, and
-  # the missing-folders notice below names it. A data file is reported as it
-  # comes: the copy leaves one out in silence when the scratch project lacks it,
-  # and names it only when `outputDir` already holds a file of that name.
+  # the missing-folders notice below names it. Observed-data files need no
+  # filter: the copy names one only when `outputDir` already holds it.
   notCopied <- character()
   if (!inPlace) {
     inScratch <- vapply(
@@ -195,6 +192,8 @@
     notCopied <- assets$notCopied[inScratch]
   }
 
+  assets$notCopied <- unname(notCopied)
+
   if (!silent) {
     # The workbooks the bridge read are the ones rebuilt from the snapshot, so
     # the summary names the snapshot and leaves out the workbooks read under
@@ -204,13 +203,7 @@
       imported$project,
       sourcePath = snapshotPath,
       outputPath = outputPath,
-      assets = list(
-        copied = assets$copied,
-        notCopied = unname(notCopied),
-        copiedFiles = assets$copiedFiles,
-        notCopiedFiles = assets$notCopiedFiles,
-        added = assets$added
-      )
+      assets = assets
     )
     # Read back from `outputPath` rather than taken from `imported$project`,
     # which was parsed from a throwaway container elsewhere: only the written
@@ -255,15 +248,14 @@
 # folder already there, each file it lacks is added and no file is replaced.
 # Folder values are resolved as `.copyExcelProjectAssets()` resolves them, and
 # the ones it skips (absolute, outside the project, the project folder itself)
-# are skipped here too; a data folder that is the project folder already holds
-# its data files in place. Returns the `.noAssetsCopied` fields plus `added`:
-# the folder values copied whole, nothing left out, and the added files as
-# paths relative to `outputDir`.
+# are skipped here too. Returns a `.noAssetsCopied`-shaped list: the folder
+# values copied whole, nothing left out, and the added files as paths relative
+# to `outputDir`.
 #
 # @keywords internal
 # @noRd
 .addMissingAssetFiles <- function(filePathProps, sourceDir, outputDir) {
-  result <- c(.noAssetsCopied, list(added = character()))
+  result <- .noAssetsCopied
   for (field in .excelProjectAssetFolders) {
     value <- filePathProps[[field]]
     if (is.null(value) || is.na(value) || !nzchar(value)) {

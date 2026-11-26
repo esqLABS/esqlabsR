@@ -288,40 +288,19 @@ test_that("importProjectFromExcel writes the upgraded project beside the snapsho
 
 # A data folder of `"."` is the project folder itself, which is never copied as
 # a folder; the data workbook beside the snapshot still has to be read. The
-# second name is the one the import rebuilds the 5.x workbooks under, which the
-# data workbook must not replace.
+# second name is the conventional name of a project's property sheet: the one
+# the import rebuilds from the JSON is written under a name of its own
+# (`.legacyEntrypointName`), so a data workbook called `Project.xlsx` is read
+# as data and not as the project configuration.
 test_that("importProjectFromExcel reads a snapshot's data workbook when the data folder is the project folder", {
-  dataDir <- test_path("data", "TestProjectExcel", "Data")
   for (dataFile in c("TestProject_TimeValuesData.xlsx", "Project.xlsx")) {
-    fixture <- jsonlite::fromJSON(
-      .legacySnapshotFixture(),
-      simplifyVector = FALSE
-    )
-    pc <- fixture$projectConfiguration
-    for (i in seq_along(pc$rows)) {
-      property <- pc$rows[[i]][["Property"]]
-      if (identical(property, "dataFolder")) {
-        pc$rows[[i]][["Value"]] <- "."
-      }
-      if (identical(property, "dataFile")) {
-        pc$rows[[i]][["Value"]] <- dataFile
-      }
-    }
-    fixture$projectConfiguration <- pc
-
-    src <- withr::local_tempdir()
-    snapshot <- file.path(src, "ProjectConfiguration.json")
-    jsonlite::write_json(fixture, snapshot, auto_unbox = TRUE, null = "null")
-    file.copy(
-      file.path(dataDir, "TestProject_TimeValuesData.xlsx"),
-      file.path(src, dataFile)
-    )
-    file.copy(file.path(dataDir, "esqlabs_dataImporter_configuration.xml"), src)
+    src <- localExcelProjectWithRootData(dataFile = dataFile)
 
     dir <- withr::local_tempdir()
-    expect_no_warning(suppressMessages(
-      importProjectFromExcel(snapshot, outputDir = dir)
-    ))
+    expect_no_warning(suppressMessages(importProjectFromExcel(
+      file.path(src, "ProjectConfiguration.json"),
+      outputDir = dir
+    )))
     project <- loadProject(dir)
     expect_length(project$definitions$scenarios, 8)
     expect_length(project$definitions$parameterIdentification, 3)
@@ -329,20 +308,17 @@ test_that("importProjectFromExcel reads a snapshot's data workbook when the data
   }
 })
 
-# The data files the snapshot's data folder `"."` names travel into a separate
-# `outputDir`, as for a workbook import with the same data folder, and nothing
-# else from the 5.x project folder does (#1409).
-test_that("importProjectFromExcel copies a snapshot's data files when the data folder is the project folder", {
+# The observed-data files the snapshot's data folder `"."` names travel into a
+# separate `outputDir`, as for a workbook import with the same data folder, and
+# nothing else from the 5.x project folder does (#1409).
+test_that("importProjectFromExcel copies a snapshot's observed-data files when the data folder is the project folder", {
   src <- localExcelProjectWithRootData()
   outputDir <- withr::local_tempdir()
 
-  expect_snapshot(
-    importProjectFromExcel(
-      file.path(src, "ProjectConfiguration.json"),
-      outputDir = outputDir
-    ),
-    transform = .redactTmpDir
-  )
+  expect_snapshot(writeLines(importAssetLines(importProjectFromExcel(
+    file.path(src, "ProjectConfiguration.json"),
+    outputDir = outputDir
+  ))))
 
   expect_setequal(
     list.files(outputDir),
@@ -358,7 +334,7 @@ test_that("importProjectFromExcel copies a snapshot's data files when the data f
   observedData <- loadObservedData(loadProject(outputDir))
   expect_gt(length(observedData), 0L)
 
-  # A data file already in a fresh `outputDir` is kept and named.
+  # An observed-data file already in a fresh `outputDir` is kept and named.
   otherDir <- withr::local_tempdir()
   curated <- file.path(otherDir, "esqlabs_dataImporter_configuration.xml")
   writeLines("hand-curated", curated)
@@ -367,7 +343,8 @@ test_that("importProjectFromExcel copies a snapshot's data files when the data f
       file.path(src, "ProjectConfiguration.json"),
       outputDir = otherDir
     )),
-    "esqlabs_dataImporter_configuration.xml"
+    "esqlabs_dataImporter_configuration.xml",
+    fixed = TRUE
   )
   expect_identical(readLines(curated), "hand-curated")
   expect_true(file.exists(file.path(

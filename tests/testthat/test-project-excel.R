@@ -2637,17 +2637,14 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
 # a folder: that would bring every workbook along. The data workbook and the
 # importer configuration the observed-data definition names have to travel
 # anyway, or the imported project cannot read its observed data (#1409).
-test_that("importProjectFromExcel copies the data files when the data folder is the project folder", {
+test_that("importProjectFromExcel copies the observed-data files when the data folder is the project folder", {
   projectDir <- localExcelProjectWithRootData()
   outputDir <- withr::local_tempdir()
 
-  expect_snapshot(
-    importProjectFromExcel(
-      file.path(projectDir, "ProjectConfiguration.xlsx"),
-      outputDir = outputDir
-    ),
-    transform = .redactTmpDir
-  )
+  expect_snapshot(writeLines(importAssetLines(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir
+  ))))
 
   # The two data files and nothing else from the project folder: no workbook,
   # no 5.x configuration JSON.
@@ -2668,19 +2665,16 @@ test_that("importProjectFromExcel copies the data files when the data folder is 
   expect_gt(length(observedData), 0L)
 })
 
-test_that("importProjectFromExcel keeps a data file already in outputDir and says so", {
+test_that("importProjectFromExcel keeps an observed-data file already in outputDir and says so", {
   projectDir <- localExcelProjectWithRootData()
   outputDir <- withr::local_tempdir()
   curated <- file.path(outputDir, "TestProject_TimeValuesData.xlsx")
   writeLines("hand-curated", curated)
 
-  expect_snapshot(
-    importProjectFromExcel(
-      file.path(projectDir, "ProjectConfiguration.xlsx"),
-      outputDir = outputDir
-    ),
-    transform = .redactTmpDir
-  )
+  expect_snapshot(writeLines(importAssetLines(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir
+  ))))
   expect_identical(readLines(curated), "hand-curated")
   expect_true(file.exists(file.path(
     outputDir,
@@ -3433,11 +3427,45 @@ test_that("a data folder that is the project folder copies only its named files 
       copied = character(),
       notCopied = character(),
       copiedFiles = "Values.xlsx",
-      notCopiedFiles = character()
+      notCopiedFiles = character(),
+      added = character()
     )
   )
   expect_identical(list.files(out), "Values.xlsx")
   expect_false(file.exists(file.path(dirname(out), "Importer.xml")))
+})
+
+# A data file inside a folder the same import copies whole has already
+# travelled with it, so it is neither copied again nor reported as one the
+# output already held.
+test_that("a data file inside a copied folder is not reported as kept", {
+  src <- withr::local_tempdir()
+  dir.create(file.path(src, "Models"))
+  writeLines("observed values", file.path(src, "Models", "Values.xlsx"))
+  out <- withr::local_tempdir()
+
+  result <- .copyExcelProjectAssets(
+    list(
+      simulationsFolder = "Models",
+      dataFolder = ".",
+      dataFile = "Models/Values.xlsx"
+    ),
+    src,
+    out,
+    overwrite = FALSE
+  )
+
+  expect_identical(
+    result,
+    list(
+      copied = "Models",
+      notCopied = character(),
+      copiedFiles = character(),
+      notCopiedFiles = character(),
+      added = character()
+    )
+  )
+  expect_true(file.exists(file.path(out, "Models", "Values.xlsx")))
 })
 
 # The observed-data parser anchors a relative expansion at the project file it
