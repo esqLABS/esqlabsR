@@ -109,7 +109,11 @@ sensitivityCalculation <- function(
 
   # Validate customOutputFunctions
   .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
-  ospsuite.utils::validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(
+    customOutputFunctions,
+    "function",
+    nullAllowed = TRUE
+  )
 
   # Fail early to avoid costly failure after analysis is already carried out.
   if (!is.null(saOutputFilePath)) {
