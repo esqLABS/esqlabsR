@@ -297,13 +297,13 @@
 #' import and names the sheet. A workbook without the sheet gives a project
 #' without `defaultSolverSettings`.
 #'
-#' Only Excel files are read. The JSON file that
+#' Only Excel files are read: any other file stops the import before anything
+#' is written. This includes the JSON file that
 #' `snapshotProjectConfiguration()` saved in esqlabsR 5 (usually
-#' `ProjectConfiguration.json`) is refused before anything is written. When the
-#' Excel files it was saved from are still beside it, as in a usual esqlabsR 5
-#' project folder, import those. If that file is all you have of a project,
-#' restore its Excel files first with
-#' `restoreProjectConfiguration()` in esqlabsR 5.7.0, the last esqlabsR 5
+#' `ProjectConfiguration.json`). When the Excel files it was saved from are
+#' still beside it, as in a usual esqlabsR 5 project folder, import those. If
+#' the JSON file is all you have of a project, restore its Excel files first
+#' with `restoreProjectConfiguration()` in esqlabsR 5.7.0, the last esqlabsR 5
 #' release, then import the restored workbook (`ProjectConfiguration.xlsx` for
 #' `ProjectConfiguration.json`) with this function in the current version.
 #'
