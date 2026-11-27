@@ -1778,6 +1778,10 @@ convertProjectToV6 <- function(
     )
   }
 
+  # A sheet without the column is reported by the import, which requires it.
+  if (!("Scenario_name" %in% names(df))) {
+    return(df)
+  }
   ids <- as.character(df[["Scenario_name"]])
   labelCells <- if ("Label" %in% names(df)) {
     as.character(df[["Label"]])

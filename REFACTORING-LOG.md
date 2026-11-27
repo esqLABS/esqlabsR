@@ -412,3 +412,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 21:33: Tests cover a converted project's sync with its workbooks, a workbook carried over unchanged, the workbooks named and dropped, the DefaultSolverSettings sheet, a restore that cannot move a file back, and the esqlabsR 5 boolean and PI configuration readers. (#1426)
 - 2026-11-27 21:36: convertProjectToV6() converts the workbooks in the order the import reads them, scenarios first. (#1426)
 - 2026-11-27 21:36: The migration article describes three steps (convert with convertProjectToV6(), edit the v6 workbooks, import them), the reference lists the converter, and NEWS describes it, the ${NAME} rewrite and the content it does not carry over. (#1426)
+- 2026-11-27 21:43: convertProjectToV6() leaves a Scenarios sheet without its Scenario_name column for the import to report, instead of stopping on an R error, and puts the folder back. (#1426)

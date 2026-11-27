@@ -121,18 +121,17 @@ test_that("convertProjectToV6() refuses a folder that holds a v6 project or an e
 # every warning the conversion and the load raised, collected rather than
 # suppressed, as `importLegacyExcelProject()` does, so a test can say which
 # warnings are about its subject.
-convertExcelProject <- function(
-  projectDir,
-  configFile = "ProjectConfiguration.xlsx",
-  silent = TRUE
-) {
+convertExcelProject <- function(projectDir, silent = TRUE) {
   warnings <- character()
   collect <- function(w) {
     warnings <<- c(warnings, conditionMessage(w))
     invokeRestart("muffleWarning")
   }
   jsonPath <- withCallingHandlers(
-    convertProjectToV6(file.path(projectDir, configFile), silent = silent),
+    convertProjectToV6(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      silent = silent
+    ),
     warning = collect
   )
   project <- withCallingHandlers(loadProject(jsonPath), warning = collect)
@@ -218,6 +217,27 @@ test_that("convertProjectToV6() puts the folder back when the import fails", {
       silent = TRUE
     )),
     "collide after canonicalization"
+  )
+  expect_identical(.folderState(projectDir), before)
+})
+
+test_that("a sheet the import cannot read stops the conversion, and the folder is put back", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$Scenarios$Scenario_name <- NULL
+      sheets
+    }
+  )
+  before <- .folderState(projectDir)
+
+  expect_error(
+    suppressWarnings(convertProjectToV6(
+      legacyExcelProjectPath(projectDir),
+      silent = TRUE
+    )),
+    "Scenario_name"
   )
   expect_identical(.folderState(projectDir), before)
 })
