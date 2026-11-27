@@ -65,6 +65,37 @@
   )
 }
 
+.esqlabsR5Messages$foldersOutside <- function(properties, values) {
+  n <- length(properties)
+  example <- "${SHARED}/Data"
+  cliBullets(
+    "x" = "{cli::qty(n)}{?A folder/Folders} of the project {?points/point} \\
+    outside the project folder:",
+    stats::setNames(
+      sprintf(
+        "{.field {properties[[%1$d]]}}: {.file {values[[%1$d]]}}",
+        seq_len(n)
+      ),
+      rep("*", n)
+    ),
+    "i" = "A v6 project keeps its folders inside the project folder, or names \\
+    them through an environment variable. Move the folder into the project \\
+    and give its path from the project folder, or write the value with the \\
+    variable, such as {.val {example}}, then convert again."
+  )
+}
+
+.esqlabsR5Messages$configurationsFolderOutside <- function(value) {
+  cliBullets(
+    "x" = "{.field configurationsFolder} points outside the project folder: \\
+    {.file {value}}.",
+    "i" = "The esqlabsR 5 workbooks move into the {.file esqlabsR5} folder of \\
+    the project, so they have to be inside it. Move the configurations folder \\
+    into the project and give its path from the project folder, then convert \\
+    again."
+  )
+}
+
 .esqlabsR5Messages$folderHoldsProject <- function(dir, found) {
   cliBullets(
     "x" = "{.file {dir}} already holds a v6 project or an earlier conversion: \\
@@ -233,17 +264,24 @@ convertProjectToV6 <- function(
   # section workbooks are normalized too.
   projectConfigPath <- normalizePath(projectConfigPath)
   projectDir <- dirname(projectConfigPath)
-  props <- .v5PropertyLookup(properties)
+  propertyTable <- .v5PropertyTable(properties)
 
-  configsFolder <- NULL
-  if (!.isBlankCell(props("configurationsFolder"))) {
-    configsFolder <- .resolveProjectPath(
-      props("configurationsFolder"),
-      projectDir,
-      "configurationsFolder"
-    )
-  }
-  sections <- .v5ReadableWorkbooks(props, configsFolder)
+  configsFolder <- .v5ConfigurationsFolder(
+    .v5PropertyLookup(propertyTable)("configurationsFolder"),
+    projectDir,
+    .call
+  )
+  propertyTable <- .v5WorkingFolders(
+    propertyTable,
+    projectDir,
+    configsFolder,
+    .call
+  )
+  sections <- .v5ReadableWorkbooks(
+    .v5PropertyLookup(propertyTable),
+    configsFolder,
+    .call
+  )
 
   outputs <- list()
   for (section in sections) {
@@ -253,12 +291,21 @@ convertProjectToV6 <- function(
     )
   }
 
+  propertyTable <- .v5DeclareWorkbooks(propertyTable, sections)
+  propertySheets <- list(Project = .v5PropertySheet(propertyTable))
+  # Only a workbook written since 6.0.0 has the sheet, but the import reads it
+  # from any property workbook, so it is carried over unchanged.
+  if (
+    .defaultSolverSettingsSheet %in% readxl::excel_sheets(projectConfigPath)
+  ) {
+    propertySheets[[.defaultSolverSettingsSheet]] <- as.data.frame(readExcel(
+      projectConfigPath,
+      sheet = .defaultSolverSettingsSheet
+    ))
+  }
   v6Workbook <- file.path(projectDir, "Project.xlsx")
   outputs <- c(
-    list(list(
-      path = v6Workbook,
-      sheets = list(Project = .v5PropertySheet(properties))
-    )),
+    list(list(path = v6Workbook, sheets = propertySheets)),
     outputs
   )
 
@@ -280,6 +327,157 @@ convertProjectToV6 <- function(
     outputs = outputs,
     v6Workbook = v6Workbook
   )
+}
+
+# The property sheet as a `Property` / `Value` / `Description` table of
+# character columns, without the rows that name no property.
+#
+# @keywords internal
+# @noRd
+.v5PropertyTable <- function(properties) {
+  table <- data.frame(
+    Property = as.character(properties$Property),
+    Value = as.character(properties$Value),
+    Description = if ("Description" %in% names(properties)) {
+      as.character(properties$Description)
+    } else {
+      NA_character_
+    },
+    stringsAsFactors = FALSE
+  )
+  table[!vapply(table$Property, .isBlankCell, logical(1)), , drop = FALSE]
+}
+
+# The working folders of an esqlabsR 5 project. `modelFolder` is the esqlabsR 5
+# name of `simulationsFolder`.
+.v5FolderProperties <- c(
+  "dataFolder",
+  "modelFolder",
+  "simulationsFolder",
+  "populationsFolder",
+  "outputFolder"
+)
+
+# Resolve the configurations folder, which has to be inside the project folder:
+# the esqlabsR 5 workbooks in it move into `esqlabsR5/`, keeping their path
+# inside the project.
+#
+# @returns The absolute, normalized folder, or NULL when the project names none.
+# @keywords internal
+# @noRd
+.v5ConfigurationsFolder <- function(value, projectDir, .call) {
+  rlang::local_error_call(.call)
+  if (is.null(value)) {
+    return(NULL)
+  }
+  if (.declaresEnvVarPath(value) || .pathEscapesRoot(value, projectDir)) {
+    cli::cli_abort(.esqlabsR5Messages$configurationsFolderOutside(value))
+  }
+  normalizePath(.absoluteAgainstRoot(value, projectDir), mustWork = FALSE)
+}
+
+# Give the working folders the values a v6 project reads them by, and refuse a
+# folder outside the project folder, which a v6 project cannot name except
+# through an environment variable.
+#
+# @keywords internal
+# @noRd
+.v5WorkingFolders <- function(table, projectDir, configsFolder, .call) {
+  rlang::local_error_call(.call)
+  populations <- which(table$Property == "populationsFolder")
+  if (length(populations) > 0L) {
+    table$Value[populations] <- vapply(
+      table$Value[populations],
+      .v5ResolvePopulationsFolder,
+      character(1),
+      projectDir = projectDir,
+      configsFolder = configsFolder,
+      USE.NAMES = FALSE
+    )
+  }
+
+  outside <- vapply(
+    seq_len(nrow(table)),
+    function(i) {
+      value <- table$Value[[i]]
+      table$Property[[i]] %in%
+        .v5FolderProperties &&
+        !.isBlankCell(value) &&
+        !.declaresEnvVarPath(value) &&
+        .pathEscapesRoot(value, projectDir)
+    },
+    logical(1)
+  )
+  if (any(outside)) {
+    cli::cli_abort(.esqlabsR5Messages$foldersOutside(
+      table$Property[outside],
+      table$Value[outside]
+    ))
+  }
+  table
+}
+
+# Point `populationsFolder` at the folder that holds the csv files.
+#
+# esqlabsR 5 reads `populationsFolder` as a folder under the configurations
+# folder (`PopulationsCSV`), while a v6 project reads every working folder from
+# the project folder. A folder of that name in the project folder is taken as
+# written; otherwise, when the folder is under the configurations folder, the
+# value becomes its path from the project folder. A `${VAR}` value, an absolute
+# value, and a folder found in neither place are kept as written.
+#
+# @param value The `populationsFolder` value.
+# @param projectDir The project folder.
+# @param configsFolder The resolved configurations folder, or NULL.
+# @returns The value the v6 property sheet holds.
+# @keywords internal
+# @noRd
+.v5ResolvePopulationsFolder <- function(value, projectDir, configsFolder) {
+  if (
+    .isBlankCell(value) ||
+      is.null(configsFolder) ||
+      .declaresEnvVarPath(value) ||
+      fs::is_absolute_path(value)
+  ) {
+    return(value)
+  }
+  root <- normalizePath(projectDir, mustWork = FALSE)
+  if (fs::dir_exists(fs::path(root, value))) {
+    return(value)
+  }
+  underConfigs <- fs::path(configsFolder, value)
+  if (!fs::dir_exists(underConfigs)) {
+    return(value)
+  }
+  relative <- as.character(fs::path_rel(underConfigs, root))
+  if (.pathEscapesRoot(relative, root)) {
+    return(value)
+  }
+  relative
+}
+
+# Add a property row for each section workbook the project reads under its
+# usual name without naming it, so the v6 property sheet names every workbook
+# the conversion writes.
+#
+# @keywords internal
+# @noRd
+.v5DeclareWorkbooks <- function(table, sections) {
+  for (section in sections) {
+    if (section$property %in% table$Property) {
+      next
+    }
+    table <- rbind(
+      table,
+      data.frame(
+        Property = section$property,
+        Value = section$name,
+        Description = NA_character_,
+        stringsAsFactors = FALSE
+      )
+    )
+  }
+  table
 }
 
 # A `Property -> Value` lookup over the property sheet, returning NULL for a
@@ -308,15 +506,25 @@ convertProjectToV6 <- function(
 #
 # @keywords internal
 # @noRd
-.v5ReadableWorkbooks <- function(props, configsFolder) {
+.v5ReadableWorkbooks <- function(props, configsFolder, .call) {
+  rlang::local_error_call(.call)
   if (is.null(configsFolder)) {
     return(list())
   }
   sections <- list()
   for (property in names(.v5SectionWorkbooks)) {
     name <- props(property) %||% .v5SectionWorkbooks[[property]]
-    path <- .resolveProjectPath(name, configsFolder, property)
-    path <- normalizePath(path, mustWork = FALSE)
+    if (.pathEscapesRoot(name, configsFolder)) {
+      cli::cli_abort(messages$projectPathEscapesRoot(
+        property,
+        name,
+        configsFolder
+      ))
+    }
+    path <- normalizePath(
+      .absoluteAgainstRoot(name, configsFolder),
+      mustWork = FALSE
+    )
     if (!file.exists(path)) {
       next
     }
@@ -325,21 +533,30 @@ convertProjectToV6 <- function(
   sections
 }
 
-# The v6 property sheet: the esqlabsR 5 rows, under a `schemaVersion` row.
+# The v6 property sheet: a `schemaVersion` and an `esqlabsRVersion` row, then
+# the esqlabsR 5 rows with `modelFolder` under its v6 name, `simulationsFolder`.
+# esqlabsR 5 reads only `modelFolder`, so its value wins over a
+# `simulationsFolder` row the sheet may also have.
 #
 # @keywords internal
 # @noRd
-.v5PropertySheet <- function(properties) {
-  description <- if ("Description" %in% names(properties)) {
-    as.character(properties$Description)
-  } else {
-    rep(NA_character_, nrow(properties))
+.v5PropertySheet <- function(table) {
+  if ("modelFolder" %in% table$Property) {
+    table <- table[table$Property != "simulationsFolder", , drop = FALSE]
+    table$Property[table$Property == "modelFolder"] <- "simulationsFolder"
   }
-  data.frame(
-    Property = c("schemaVersion", as.character(properties$Property)),
-    Value = c("2.0", as.character(properties$Value)),
-    Description = c("Project structure schema version", description),
-    stringsAsFactors = FALSE
+  table <- table[table$Property != "esqlabsRVersion", , drop = FALSE]
+  rbind(
+    data.frame(
+      Property = c("schemaVersion", "esqlabsRVersion"),
+      Value = c("2.0", as.character(utils::packageVersion("esqlabsR"))),
+      Description = c(
+        "Project structure schema version",
+        "esqlabsR version used to generate this file"
+      ),
+      stringsAsFactors = FALSE
+    ),
+    table
   )
 }
 

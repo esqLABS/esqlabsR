@@ -59,3 +59,126 @@
       x '<tmp-path>' already holds a v6 project or an earlier conversion: 'Project.xlsx' and 'esqlabsR5'.
       i Load the v6 project with `loadProject()`. To convert the esqlabsR 5 workbooks again, first move these out of the folder.
 
+# convertProjectToV6() writes the v6 workbooks
+
+    Code
+      cat(.writtenWorkbookLayout(projectDir), sep = "\n")
+    Output
+      Project.xlsx [Project] 16 rows: Property | Value | Description
+      Configurations/Applications.xlsx [Aciclovir_iv_250mg] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/Applications.xlsx [Protocol_250mg] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/Applications.xlsx [Protocol_500mg] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/Individuals.xlsx [IndividualBiometrics] 1 rows: IndividualId | Species | Population | Gender | Weight [kg] | Height [cm] | Age [year(s)] | Protein Ontogenies | Individual Parameter Sets
+      Configurations/Individuals.xlsx [Indiv1] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [Global] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [Sheet, with comma] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [MissingParam] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [Aciclovir] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ParameterIdentification.xlsx [PIOutputMappings] 4 rows: PITaskName | Scenarios | OutputPath | ObservedDataSheet | DataSet | Scaling | xOffset | yOffset | xFactor | yFactor | Weight
+      Configurations/ParameterIdentification.xlsx [PIParameters] 6 rows: PITaskName | Scenarios | Container Path | Parameter Name | Units | MinValue | MaxValue | StartValue | Group
+      Configurations/ParameterIdentification.xlsx [PIConfiguration] 1 rows: PITaskName | Algorithm | CIMethod | PrintEvaluationFeedback | AutoEstimateCI | numberOfCores | checkForNegativeValues | ObjectiveFunctionType | ResidualWeightingMethod | RobustMethod | ScaleVar | LinScaleCV | LogScaleSD
+      Configurations/ParameterIdentification.xlsx [AlgorithmOptions] 2 rows: PITaskName | OptionName | OptionValue
+      Configurations/ParameterIdentification.xlsx [CIOptions] 1 rows: PITaskName | OptionName | OptionValue
+      Configurations/Plots.xlsx [DataCombined] 4 rows: DataCombinedName | dataType | label | scenario | path | dataSet | group | xOffsets | xOffsetsUnits | yOffsets | yOffsetsUnits | xScaleFactors | yScaleFactors
+      Configurations/Plots.xlsx [plotConfiguration] 4 rows: plotID | DataCombinedName | plotType | title | xUnit | yUnit | xAxisScale | yAxisScale | xValuesLimits | yValuesLimits | aggregation | quantiles | nsd | foldDistance | subtitle
+      Configurations/Plots.xlsx [plotGrids] 3 rows: name | plotIDs | title | subtitle
+      Configurations/Plots.xlsx [exportConfiguration] 0 rows: plotGridName | outputName | width
+      Configurations/Plots.xlsx [dataTypes] 2 rows: dataType
+      Configurations/Plots.xlsx [plotTypes] 5 rows: plotType
+      Configurations/Plots.xlsx [ObservedDataNames] 0 rows: 
+      Configurations/Populations.xlsx [Demographics] 2 rows: PopulationName | species | population | numberOfIndividuals | proportionOfFemales | weightMin | weightMax | weightUnit | heightMin | heightMax | heightUnit | ageMin | ageMax | BMIMin | BMIMax | BMIUnit | Protein Ontogenies
+      Configurations/Populations.xlsx [UserDefinedVariability] 0 rows: Container Path | Parameter Name | Mean | SD | Distribution
+      Configurations/Scenarios.xlsx [OutputPaths] 2 rows: OutputPathId | OutputPath
+      Configurations/Scenarios.xlsx [Scenarios] 8 rows: Scenario_name | IndividualId | PopulationId | ReadPopulationFromCSV | ModelParameterSheets | ApplicationProtocol | SimulationTime | SimulationTimeUnit | SteadyState | SteadyStateTime | SteadyStateTimeUnit | OverwriteFormulasInSS | ModelFile | OutputPathsIds
+
+# convertProjectToV6() writes the v6 property sheet
+
+    Code
+      print(.convertedProperties(projectDir))
+    Output
+                              Property                                  Value
+      1                  schemaVersion                                    2.0
+      2                esqlabsRVersion                              <version>
+      3              simulationsFolder                    Models/Simulations/
+      4           configurationsFolder                        Configurations/
+      5                modelParamsFile                   ModelParameters.xlsx
+      6                individualsFile                       Individuals.xlsx
+      7                populationsFile                       Populations.xlsx
+      8              populationsFolder          Configurations/PopulationsCSV
+      9                  scenariosFile                         Scenarios.xlsx
+      10              applicationsFile                      Applications.xlsx
+      11                     plotsFile                             Plots.xlsx
+      12   parameterIdentificationFile           ParameterIdentification.xlsx
+      13                    dataFolder                                  Data/
+      14                      dataFile        TestProject_TimeValuesData.xlsx
+      15 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
+      16                  outputFolder                               Results/
+      17         initialConditionsFile                 InitialConditions.xlsx
+
+# convertProjectToV6() refuses a workbook file name outside the configurations folder
+
+    Code
+      convertProjectToV6(configPath)
+    Condition
+      Error in `convertProjectToV6()`:
+      x plotsFile "../Plots.xlsx" resolves outside the project folder.
+      i It must stay under '<tmp-path>'. A project file cannot reference a path outside the project.
+
+# convertProjectToV6() refuses a folder outside the project folder
+
+    Code
+      convertProjectToV6(configPath)
+    Condition
+      Error in `convertProjectToV6()`:
+      x A folder of the project points outside the project folder:
+      * dataFolder: '<tmp-path>'
+      i A v6 project keeps its folders inside the project folder, or names them through an environment variable. Move the folder into the project and give its path from the project folder, or write the value with the variable, such as "${SHARED}/Data", then convert again.
+
+---
+
+    Code
+      convertProjectToV6(configPath)
+    Condition
+      Error in `convertProjectToV6()`:
+      x A folder of the project points outside the project folder:
+      * dataFolder: '../elsewhere'
+      i A v6 project keeps its folders inside the project folder, or names them through an environment variable. Move the folder into the project and give its path from the project folder, or write the value with the variable, such as "${SHARED}/Data", then convert again.
+
+---
+
+    Code
+      convertProjectToV6(configPath)
+    Condition
+      Error in `convertProjectToV6()`:
+      x A folder of the project points outside the project folder:
+      * modelFolder: '../Models/Simulations'
+      i A v6 project keeps its folders inside the project folder, or names them through an environment variable. Move the folder into the project and give its path from the project folder, or write the value with the variable, such as "${SHARED}/Data", then convert again.
+
+---
+
+    Code
+      convertProjectToV6(configPath)
+    Condition
+      Error in `convertProjectToV6()`:
+      x A folder of the project points outside the project folder:
+      * outputFolder: 'Results/../../Results'
+      i A v6 project keeps its folders inside the project folder, or names them through an environment variable. Move the folder into the project and give its path from the project folder, or write the value with the variable, such as "${SHARED}/Data", then convert again.
+
+---
+
+    Code
+      convertProjectToV6(configPath)
+    Condition
+      Error in `convertProjectToV6()`:
+      x configurationsFolder points outside the project folder: '../Configurations'.
+      i The esqlabsR 5 workbooks move into the 'esqlabsR5' folder of the project, so they have to be inside it. Move the configurations folder into the project and give its path from the project folder, then convert again.
+
+---
+
+    Code
+      convertProjectToV6(configPath)
+    Condition
+      Error in `convertProjectToV6()`:
+      x configurationsFolder points outside the project folder: '${ESQLABSR_TEST_CONFIGURATIONS}'.
+      i The esqlabsR 5 workbooks move into the 'esqlabsR5' folder of the project, so they have to be inside it. Move the configurations folder into the project and give its path from the project folder, then convert again.
+

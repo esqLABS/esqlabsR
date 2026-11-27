@@ -248,3 +248,122 @@ test_that("convertProjectToV6() puts the folder back when it is interrupted", {
   expect_identical(result, "interrupted")
   expect_identical(.folderState(projectDir), before)
 })
+
+# The v6 workbooks ----
+
+# One line per sheet of each workbook the conversion wrote: the workbook, the
+# sheet, its row count and its columns.
+.writtenWorkbookLayout <- function(projectDir) {
+  files <- c(
+    "Project.xlsx",
+    file.path(
+      "Configurations",
+      list.files(file.path(projectDir, "Configurations"), pattern = "\\.xlsx$")
+    )
+  )
+  unlist(lapply(files, function(file) {
+    path <- file.path(projectDir, file)
+    vapply(
+      readxl::excel_sheets(path),
+      function(sheet) {
+        df <- readExcel(path, sheet = sheet)
+        sprintf(
+          "%s [%s] %d rows: %s",
+          file,
+          sheet,
+          nrow(df),
+          paste(names(df), collapse = " | ")
+        )
+      },
+      character(1),
+      USE.NAMES = FALSE
+    )
+  }))
+}
+
+# The property table of a converted project's `Project.xlsx`, with the
+# esqlabsR version a snapshot cannot pin.
+.convertedProperties <- function(projectDir) {
+  table <- as.data.frame(readExcel(file.path(projectDir, "Project.xlsx")))
+  table$Value[table$Property == "esqlabsRVersion"] <- "<version>"
+  table[, c("Property", "Value")]
+}
+
+test_that("convertProjectToV6() writes the v6 workbooks", {
+  projectDir <- localExcelProjectDir()
+  suppressWarnings(convertProjectToV6(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    silent = TRUE
+  ))
+
+  expect_snapshot(cat(.writtenWorkbookLayout(projectDir), sep = "\n"))
+})
+
+test_that("convertProjectToV6() writes the v6 property sheet", {
+  projectDir <- localLegacyExcelProject()
+  # A workbook the esqlabsR 5 property sheet does not name is read under its
+  # usual name, and the v6 property sheet names it.
+  .writeExcel(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism|Liver",
+        `Molecule Name` = "Aciclovir",
+        `Is Present` = TRUE,
+        Value = 1,
+        Units = "\u00b5mol/l",
+        `Scale Divisor` = 1,
+        `Neg. Values Allowed` = FALSE,
+        check.names = FALSE
+      )
+    ),
+    file.path(projectDir, "Configurations", "InitialConditions.xlsx")
+  )
+  converted <- convertExcelProject(projectDir)
+
+  expect_snapshot(print(.convertedProperties(projectDir)))
+  expect_true(dir.exists(converted$project$paths$simulationsFolder))
+  expect_length(converted$project$definitions$initialConditions, 1L)
+})
+
+test_that("convertProjectToV6() refuses a workbook file name outside the configurations folder", {
+  projectDir <- localExcelProjectDir()
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  properties <- readExcel(configPath)
+  properties$Value[properties$Property == "plotsFile"] <- "../Plots.xlsx"
+  .writeExcel(properties, configPath)
+  before <- .folderState(projectDir)
+
+  expect_snapshot(
+    convertProjectToV6(configPath),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(.folderState(projectDir), before)
+})
+
+test_that("convertProjectToV6() refuses a folder outside the project folder", {
+  shared <- withr::local_tempdir()
+  cases <- list(
+    dataFolder = shared,
+    dataFolder = "../elsewhere",
+    modelFolder = "../Models/Simulations",
+    outputFolder = "Results/../../Results",
+    configurationsFolder = "../Configurations",
+    configurationsFolder = "${ESQLABSR_TEST_CONFIGURATIONS}"
+  )
+  for (i in seq_along(cases)) {
+    projectDir <- localExcelProjectDir()
+    configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+    properties <- readExcel(configPath)
+    properties$Value[properties$Property == names(cases)[[i]]] <- cases[[i]]
+    .writeExcel(properties, configPath)
+    before <- .folderState(projectDir)
+
+    expect_snapshot(
+      convertProjectToV6(configPath),
+      error = TRUE,
+      transform = .redactTmpDir
+    )
+    expect_identical(.folderState(projectDir), before)
+  }
+})
