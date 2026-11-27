@@ -244,12 +244,8 @@ localExcelProjectDir <- function(envir = parent.frame()) {
 #'
 #' The data workbook and its importer configuration sit beside
 #' `ProjectConfiguration.xlsx` instead of in `Data/`, and the workbook says
-#' `dataFolder = "."`. `dataFile` renames the data workbook, in the folder and
-#' in the workbook. Returns the project directory.
-localExcelProjectWithRootData <- function(
-  dataFile = "TestProject_TimeValuesData.xlsx",
-  envir = parent.frame()
-) {
+#' `dataFolder = "."`. Returns the project directory.
+localExcelProjectWithRootData <- function(envir = parent.frame()) {
   projectDir <- localExcelProjectDir(envir = envir)
   dataDir <- file.path(projectDir, "Data")
   file.rename(
@@ -257,17 +253,10 @@ localExcelProjectWithRootData <- function(
     file.path(projectDir, list.files(dataDir))
   )
   unlink(dataDir, recursive = TRUE)
-  file.rename(
-    file.path(projectDir, "TestProject_TimeValuesData.xlsx"),
-    file.path(projectDir, dataFile)
-  )
-  values <- c(dataFolder = ".", dataFile = dataFile)
 
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
   config <- readExcel(configPath)
-  for (property in names(values)) {
-    config$Value[config$Property == property] <- values[[property]]
-  }
+  config$Value[config$Property == "dataFolder"] <- "."
   .writeExcel(config, configPath)
   projectDir
 }
