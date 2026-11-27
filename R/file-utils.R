@@ -102,7 +102,7 @@ readExcel <- function(path, sheet = NULL, ...) {
 
 #' Resolve a project-controlled path and require it to stay under its root
 #'
-#' @details A project file (`Project.json`, a scenario, an observed-data entry)
+#' @details A project file (`Project.json`, a scenario, an observed-data source)
 #'   carries author-controlled path strings that are joined with a project
 #'   folder and handed to a file loader. Without a check, a value such as
 #'   `"../../../../etc/passwd"` resolves outside the project and the loader

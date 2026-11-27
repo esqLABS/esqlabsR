@@ -686,7 +686,7 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
     "individuals",
     "populations",
     "applications",
-    "observedData",
+    "observedDataSources",
     "dataCombined",
     "plots",
     "plotGrids"

@@ -386,6 +386,20 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 19:55: The addObservedData() help is shorter: the add-time name check is described once, in Details, without the full list of checks. (#1367)
 - 2026-11-23 19:21: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in, with the help saying that a source stores its id and keeps it across a save. (#1368)
 - 2026-11-23 19:22: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in with loading selected observed-data sources. (#1370)
+- 2026-11-23 18:20: addObservedData() and removeObservedData() are renamed addObservedDataSource() and removeObservedDataSource(), with the matching Project methods. (#1369)
+- 2026-11-23 18:31: The observed-data section is renamed observedDataSources, in the project, in Project.json and snapshots, and as the definitions/observed-data-sources folder, and its messages say observed-data source. (#1369)
+- 2026-11-23 18:33: Loading or restoring a project saved with the earlier observedData key or observed-data folder stops and says what to rename. (#1369)
+- 2026-11-23 18:33: NEWS, the definition-fields reference and the glossary call it an observed-data source. (#1369)
+- 2026-11-23 18:45: The parent branch's DataSet save wording and saveProject() error attribution are merged in under the renamed observed-data source names. (#1369)
+- 2026-11-23 19:14: The help pages and exports are regenerated for addObservedDataSource(), removeObservedDataSource() and the observedDataSources section. (#1369)
+- 2026-11-23 19:30: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in, with the help naming addObservedDataSource(), removeObservedDataSource() and observedDataSources. (#1369)
+- 2026-11-23 19:31: The observed-data definition-file and export messages say source instead of declaration. (#1369)
+- 2026-11-23 19:31: validateProject() messages about an observed-data source start with a capital letter. (#1369)
+- 2026-11-23 19:31: A test comment about the earlier observed-data names says why they are held in variables without recounting the rename. (#1369)
+- 2026-11-23 19:33: A project carrying both the earlier and the current observed-data key or folder is told to move its sources over rather than rename, and the key is described as used rather than listing sources. (#1369)
+- 2026-11-23 19:34: restoreProject() checks a snapshot for the earlier observed-data key before creating the target folder, so a refused restore leaves nothing behind. (#1369)
+- 2026-11-23 20:18: A project whose earlier observedData key lists sources next to the current observed-data-sources folder is told to save them as definition files in that folder, since the folder is read instead of the key. (#1369)
+- 2026-11-23 20:18: The restoreProject() help says that a single-file project must list its observed-data sources under observedDataSources and that one using the earlier observedData key is refused. (#1369)
 - 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
 - 2026-11-25 16:24: Formatted the message catalog with Air.
 - 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
@@ -413,6 +427,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-26 11:58: The addObservedData() help page is regenerated, so it no longer carries the paragraph its documentation dropped with the script source.
 - 2026-11-26 12:48: The parent branch's removal of the script source is merged in; one save test uses a PKML source in its place, and NEWS no longer advises a script source. (#1368)
 - 2026-11-26 12:51: The parent branch's removal of the script source is merged in; the tests for loading selected sources use PKML sources instead of a script, and the help, vignette and NEWS no longer mention script sources. (#1370)
+- 2026-11-26 12:59: The parent branch's removal of the script source is merged in by taking the parent's side of each conflict and running the rename script again; the glossary no longer lists a script among the source kinds. (#1369)
 - 2026-11-26 14:06: The test helper that hides temp paths in snapshots also recognizes the macOS temp folder, whose path carries a double slash. (#1399)
 - 2026-11-26 14:37: Importing a 5.x JSON whose data folder is the project folder itself reads the data workbook beside it instead of warning that it is missing. (#1399)
 - 2026-11-26 14:45: An in-place import of a 5.x JSON adds the files a folder already there lacks, such as a population CSV beside a README, without replacing any file, and names them in the summary. (#1399)
@@ -442,3 +457,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 17:47: The new base branch, which removes snapshotProject() and restoreProject(), is merged in; the help pages are regenerated. (#1367)
 - 2026-11-27 17:50: The parent branch's new base, which removes snapshotProject() and restoreProject(), is merged in; the test that checked the array shape of observed data in a snapshot checks it in an inline project file instead. (#1368)
 - 2026-11-27 17:52: The parent branch's new base, which removes snapshotProject() and restoreProject(), is merged in; nothing in loading selected sources depended on them. (#1370)
+- 2026-11-27 17:56: The parent branch's new base, which removes snapshotProject() and restoreProject(), is merged in by taking the parent's side of each conflict and running the rename script again; the check for the earlier observed-data names runs only when a project is loaded, and its test for a single-file project uses an inline project file. (#1369)

@@ -99,25 +99,25 @@
       x id is "differentname" but the file is "populationscenario".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
 
-# an observedData file whose id disagrees with its filename aborts
+# an observed-data source file whose id disagrees with its filename aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
       Error in `.assertObservedDataTreeRecordId()`:
-      ! An observedData definition file has an id that disagrees with its filename.
-      x The declaration's id is "elsewhere" but the file is "mismatch".json.
-      i The filename stem is the declaration's id; rename the file, or the id it declares (or the file it derives one from), so they match. Check '<project>/definitions/observed-data/mismatch.json'.
+      ! An observed-data source definition file has an id that disagrees with its filename.
+      x The source's id is "elsewhere" but the file is "mismatch".json.
+      i The filename stem is the source's id; rename the file, or the id it declares (or the file it derives one from), so they match. Check '<project>/definitions/observed-data-sources/mismatch.json'.
 
-# an observedData file whose id is not a string aborts
+# an observed-data source file whose id is not a string aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
       Error in `.assertObservedDataTreeRecordId()`:
-      ! An observedData definition file has an unusable id.
-      x id must be a single non-empty string (it names the declaration and its file).
-      i Check '<project>/definitions/observed-data/obs.pkml.json'.
+      ! An observed-data source definition file has an unusable id.
+      x id must be a single non-empty string (it names the source and its file).
+      i Check '<project>/definitions/observed-data-sources/obs.pkml.json'.
 
 # a non-scalar scalar field fails load naming the scenario and field
 
@@ -139,7 +139,7 @@
       x id is "myset" but the file is "otherset".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
 
-# observedData declarations whose ids differ only in case cannot be saved
+# observed-data sources whose ids differ only in case cannot be saved
 
     Code
       .serializeObservedDataSet(entries)
@@ -147,17 +147,17 @@
       Error in `.serializeObservedDataSet()`:
       x Two observed-data sources would be saved to the same definition file 'laskin 1982.pkml.json'.
       i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      i Give the sources distinct ids, or remove one with `removeObservedDataSource()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedDataSource()`.
 
-# a programmatic observedData id that escapes its directory aborts
+# a programmatic observed-data source id that escapes its directory aborts
 
     Code
       .serializeObservedDataSet(entries)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! observedData id "../escape" is not a single safe filename segment.
+      ! Observed-data source id "../escape" is not a single safe filename segment.
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
-      i Give the declaration an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
+      i Give the source an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
 
 # saveProject aborts when a definition file cannot be renamed to its id's new spelling
 
@@ -165,10 +165,10 @@
       saveProject(project)
     Condition
       Warning in `file.rename()`:
-      cannot rename file '<project>/definitions/observed-data/Laskin 1982.pkml.json' to '<project>/definitions/observed-data/laskin 1982.pkml.json', reason 'Permission denied'
+      cannot rename file '<project>/definitions/observed-data-sources/Laskin 1982.pkml.json' to '<project>/definitions/observed-data-sources/laskin 1982.pkml.json', reason 'Permission denied'
       Error in `.writeDefinitionTree()`:
       ! Failed to rename 1 definition file in the 'definitions' folder to the new spelling of its id.
-      x '<project>/definitions/observed-data/Laskin 1982.pkml.json'
+      x '<project>/definitions/observed-data-sources/Laskin 1982.pkml.json'
       i Check the file permissions, then save again.
 
 # a full-tree write aborts when a stale file cannot be removed

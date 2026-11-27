@@ -31,7 +31,7 @@
 #'   when `containerOnly` is `TRUE` (every section is emptied then).
 #' @param containerOnly Logical. When `TRUE`, every tree-owned section
 #'   (scenarios, individuals, populations, parameterSets, initialConditions,
-#'   applications, outputPaths, observedData, dataCombined, plots, plotGrids,
+#'   applications, outputPaths, observedDataSources, dataCombined, plots, plotGrids,
 #'   parameterIdentification) is emitted in its canonical empty shape rather
 #'   than serialized, leaving only the container itself (metadata, filePaths,
 #'   defaultSolverSettings, excel). This is the on-disk `Project.json`
@@ -72,7 +72,7 @@
     .emptyTreeSectionsJson()
   } else {
     list(
-      observedData = .observedDataToJson(project),
+      observedDataSources = .observedDataToJson(project),
       outputPaths = .outputPathsToJson(project),
       scenarios = if (includeScenarios) .scenariosToJson(project) else list(),
       parameterSets = .parameterSetsToJson(project),
@@ -125,7 +125,7 @@
 # path so a `Project.json` container holds only the container itself, the
 # `definitions/<kind>/` tree owning the sections. Each value matches what the
 # section's serializer returns for an empty project: the array-shaped sections
-# (`observedData`, `scenarios`, `individuals`, `populations`) emit `[]`; the
+# (`observedDataSources`, `scenarios`, `individuals`, `populations`) emit `[]`; the
 # map-shaped sections (`outputPaths`, `parameterSets`, `initialConditions`,
 # `applications`) emit `{}`; the sections that round-trip an absent key
 # (`dataCombined`, `plots`, `plotGrids`, `parameterIdentification`) emit `NULL`.
@@ -136,7 +136,7 @@
   emptyArray <- list()
   emptyObject <- structure(list(), names = character(0L))
   list(
-    observedData = emptyArray,
+    observedDataSources = emptyArray,
     outputPaths = emptyObject,
     scenarios = emptyArray,
     parameterSets = emptyObject,
@@ -456,7 +456,7 @@
 # its own `id`. Strips the `ObservedDataSource` class wrapper from each entry
 # (carried only for the print method) so it never reaches JSON.
 .observedDataToJson <- function(project) {
-  unname(lapply(project$definitions$observedData, unclass))
+  unname(lapply(project$definitions$observedDataSources, unclass))
 }
 
 # The three plots-section serializers (`.dataCombinedSectionToJson`,

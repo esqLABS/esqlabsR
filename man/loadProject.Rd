@@ -40,7 +40,7 @@ function: assign them on the project instead, \code{project$info$name <- "..."}
 for the name and description, and \code{project$paths$populationsFolder <- "..."}
 for a working folder (see \link{Project} for the full field list). An
 observed-data source's \code{file} and \code{importerConfiguration} are fields of the
-declaration, so they are authored with \code{\link[=addObservedData]{addObservedData()}}. Every such
+declaration, so they are authored with \code{\link[=addObservedDataSource]{addObservedDataSource()}}. Every such
 assignment is an in-memory edit like any other, saved by \code{\link[=saveProject]{saveProject()}}.
 
 Write your changes to the project files with \code{\link[=saveProject]{saveProject()}}. Discard

@@ -877,7 +877,7 @@ messages$exportUndeclaredObservedData <- function(ids) {
   list(
     bullets = c(
       "!" = "{cli::qty(n)}The Excel project configuration can name a single \\
-      experimental-data workbook, so {n} observed-data declaration{?s} \\
+      experimental-data workbook, so {n} observed-data source{?s} \\
       {?was/were} not written: {.val {ids}}.",
       "i" = "{cli::qty(n)}Anything that reads {?it/them} resolves only in the \\
       JSON project, not in a project re-imported from these workbooks."
@@ -2103,7 +2103,7 @@ messages$runningPITask <- function(piTaskName) {
 # Observed data (Chapter 5) ####
 messages$observedDataInvalidEntryType <- function(badType, validTypes) {
   cliBullets(
-    "x" = "Invalid {.field type} {.val {badType}} in {.code observedData} entry.",
+    "x" = "Invalid {.field type} {.val {badType}} in an observed-data source.",
     "i" = "Must be one of: {.or {.val {validTypes}}}."
   )
 }
@@ -2113,7 +2113,7 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
 # to fix as it had gaps.
 messages$observedDataMissingFields <- function(entryIndex, type, fields) {
   ospsuite.utils::cliFormat(
-    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing \\
+    "Observed-data source {entryIndex} (type {.val {type}}) is missing \\
     {cli::qty(length(fields))}required field{?s} {.field {fields}}."
   )
 }
@@ -2128,7 +2128,7 @@ messages$observedDataProgrammaticUnresolved <- function(names) {
   cliBullets(
     "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
     "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
+    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedDataSource} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
   )
 }
 
@@ -2153,14 +2153,14 @@ messages$observedDataProgrammaticAdded <- function(name, hasDataFolder = TRUE) {
 messages$observedDataPersistNoDataFolder <- function(name) {
   cliBullets(
     "x" = "Cannot save the {.cls DataSet} {.val {name}} added in this session: {.field dataFolder} is not declared in {.code filePaths}.",
-    "i" = "A {.cls DataSet} added with {.fn addObservedData} is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
+    "i" = "A {.cls DataSet} added with {.fn addObservedDataSource} is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
   )
 }
 
 messages$observedDataProgrammaticOverwriteClash <- function(name, replaced) {
   cliBullets(
     "x" = "Cannot replace the observed-data source {.val {replaced}} with the {.cls DataSet} {.val {name}}: another source already provides a data set of that name or reads its data from {.file {paste0(name, '.pkml')}}.",
-    "i" = "Remove the other source first with {.fn removeObservedData} by its id, or give the {.cls DataSet} another name."
+    "i" = "Remove the other source first with {.fn removeObservedDataSource} by its id, or give the {.cls DataSet} another name."
   )
 }
 
@@ -2176,7 +2176,7 @@ messages$observedDataDefinitionFileCollision <- function(id) {
   cliBullets(
     "x" = "Two observed-data sources would be saved to the same definition file {.file {id}.json}.",
     "i" = "Each source is saved to a file named after its id: the {.field id} it was given, the name of its {.cls DataSet}, or else its {.field file} basename. Ids that differ only in case are the same file on Windows and macOS.",
-    "i" = "Give the sources distinct {.field id}s, or remove one with {.fn removeObservedData}. For a {.cls DataSet}, remove its source by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedData}."
+    "i" = "Give the sources distinct {.field id}s, or remove one with {.fn removeObservedDataSource}. For a {.cls DataSet}, remove its source by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedDataSource}."
   )
 }
 
@@ -2184,7 +2184,7 @@ messages$observedDataPersistFileCollision <- function(files) {
   cliBullets(
     "x" = "Saving a {.cls DataSet} added in this session would overwrite the data file of another source: {.file {files}}.",
     "i" = "The {.cls DataSet} would be written to {.file <name>.pkml} in the data folder, a file another source already reads or another {.cls DataSet} is written to. File names that differ only in case are the same file on Windows and macOS.",
-    "i" = "Before saving, remove the {.cls DataSet} with {.fn removeObservedData} by its name, rename it, and add it again with {.fn addObservedData}."
+    "i" = "Before saving, remove the {.cls DataSet} with {.fn removeObservedDataSource} by its name, rename it, and add it again with {.fn addObservedDataSource}."
   )
 }
 
@@ -2251,6 +2251,59 @@ messages$duplicateSimulationsFolderKey <- function() {
     "!" = "{.code filePaths} carries both the legacy {.field modelFolder} and \\
     the current {.field simulationsFolder}; using {.field simulationsFolder}.",
     "i" = "Remove the legacy {.field modelFolder} key to silence this warning."
+  )
+}
+
+# `keyChange` and `folderChange` are "rename" (only the earlier name is
+# there), "move" (the current name is there too) or `NULL` (nothing to change).
+# `keyChange` is "toFolder" when the earlier key lists sources and the current
+# folder, which is read instead of the key, exists.
+messages$observedDataEarlierLayout <- function(
+  container,
+  keyChange,
+  folderChange,
+  definitionsFolder
+) {
+  cliBullets(
+    "{.file {container}} was saved by an earlier development version of \\
+    esqlabsR, which used other names for observed-data sources.",
+    switch(
+      keyChange %||% "none",
+      rename = c(
+        "x" = "The file uses the key {.field observedData}.",
+        "i" = "Rename the key to {.field observedDataSources}."
+      ),
+      toFolder = c(
+        "x" = "The file lists sources under the key {.field observedData}, \\
+        but the project's {.file {definitionsFolder}} folder already has the \\
+        subfolder {.file observed-data-sources}, which is read instead.",
+        "i" = "Save each source listed under {.field observedData} as its own \\
+        definition file {.file <id>.json} in {.file observed-data-sources}, \\
+        then delete the key {.field observedData}."
+      ),
+      move = c(
+        "x" = "The file uses both the key {.field observedData} and the key \\
+        {.field observedDataSources}.",
+        "i" = "Move the sources listed under {.field observedData} to \\
+        {.field observedDataSources}, then delete the key \\
+        {.field observedData}."
+      )
+    ),
+    switch(
+      folderChange %||% "none",
+      rename = c(
+        "x" = "The project's {.file {definitionsFolder}} folder has the \\
+        subfolder {.file observed-data}.",
+        "i" = "Rename the subfolder to {.file observed-data-sources}."
+      ),
+      move = c(
+        "x" = "The project's {.file {definitionsFolder}} folder has both the \\
+        subfolder {.file observed-data} and the subfolder \\
+        {.file observed-data-sources}.",
+        "i" = "Move the definition files from {.file observed-data} to \\
+        {.file observed-data-sources}, then delete {.file observed-data}."
+      )
+    )
   )
 }
 

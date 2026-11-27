@@ -371,7 +371,7 @@ validationSummary <- function(validationResults) {
   applications = .applicationsValidatorAdapter,
   plots = .plotsValidatorAdapter,
   dataCombined = .dataCombinedValidatorAdapter,
-  observedData = .observedDataValidatorAdapter,
+  observedDataSources = .observedDataSourcesValidatorAdapter,
   parameterIdentification = .parameterIdentificationValidatorAdapter
 )
 

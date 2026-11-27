@@ -17,7 +17,7 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "description",
       "definitionsFolder",
       "filePaths",
-      "observedData",
+      "observedDataSources",
       "outputPaths",
       "scenarios",
       "parameterSets",
@@ -179,8 +179,8 @@ test_that("round-trip is structurally identical for the bundled example", {
     project$definitions$applications
   )
   expect_identical(
-    reloaded$definitions$observedData,
-    project$definitions$observedData
+    reloaded$definitions$observedDataSources,
+    project$definitions$observedDataSources
   )
 
   # Scenarios are R6 objects; plots has a non-trivial in-memory shape
@@ -340,7 +340,7 @@ test_that("empty map sections serialize as JSON objects, not arrays", {
   expect_match(text, '"scenarios":\\s*\\[\\s*\\]')
   expect_match(text, '"individuals":\\s*\\[\\s*\\]')
   expect_match(text, '"populations":\\s*\\[\\s*\\]')
-  expect_match(text, '"observedData":\\s*\\[\\s*\\]')
+  expect_match(text, '"observedDataSources":\\s*\\[\\s*\\]')
 })
 
 test_that("empty map sections survive a round-trip as empty named lists", {
@@ -622,7 +622,7 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
     "schemaVersion": "2.0",
     "esqlabsRVersion": "6.0.0",
     "filePaths": {},
-    "observedData": [],
+    "observedDataSources": [],
     "outputPaths": {
       "primary": "Organism|Brain|Drug",
       "alias":   "Organism|Brain|Drug"

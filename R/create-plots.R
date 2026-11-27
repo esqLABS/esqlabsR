@@ -72,7 +72,7 @@ createPlots <- function(
         "plots",
         "dataCombined",
         "scenarios",
-        "observedData",
+        "observedDataSources",
         "crossReferences"
       ),
       opName = "createPlots"

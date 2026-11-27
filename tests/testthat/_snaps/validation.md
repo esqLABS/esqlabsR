@@ -6,6 +6,17 @@
       Error in `validateProject()`:
       ! `project` must be a <Project> object; got <character>.
 
+# .validateObservedData flags unknown type and missing required fields
+
+    Code
+      msgs
+    Output
+      [1] "Observed-data source 1 has invalid type 'weird'. Must be one of: \"excel\", \"pkml\", or \"programmatic\""
+      [2] "Observed-data source 2 (excel) is missing required field 'file'"                                          
+      [3] "Observed-data source 2 (excel) is missing required field 'importerConfiguration'"                         
+      [4] "Observed-data source 2 (excel) is missing required field 'sheets'"                                        
+      [5] "Observed-data source 3 is missing required field 'type'"                                                  
+
 # .validatePlots warns on plotType-irrelevant fields (non-blocking)
 
     Code
@@ -59,13 +70,13 @@
       x [scenarios] Scenario S{1} also broken
       i Run `validateProject(project)` for a full report.
 
-# removeObservedData warns when a dataCombined still references it
+# removeObservedDataSource warns when a dataCombined still references it
 
     Code
-      removeObservedData(project, "MyObs")
+      removeObservedDataSource(project, "MyObs")
     Condition
       Warning:
-      Removed observedData "MyObs" is still referenced by 1 dataCombined entry:
+      Removed observed-data source "MyObs" is still referenced by 1 dataCombined entry:
       * dc1
       i These dataCombined entries now have a dangling reference. Update or remove them.
 

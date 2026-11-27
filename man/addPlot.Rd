@@ -116,7 +116,7 @@ Two families of authoring functions sit outside this id-sets-\code{N} rule.
 entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
 vectors) within a single named set, a different axis than the id-sets-\code{N}
 rule described here. \code{renameScenario()}, \code{duplicateScenario()},
-\code{addObservedData()}, \code{addPITask()}, \code{setPITask()}, and the per-task
+\code{addObservedDataSource()}, \code{addPITask()}, \code{setPITask()}, and the per-task
 parameter-identification sub-definition helpers act on a single definition per
 call.
 }

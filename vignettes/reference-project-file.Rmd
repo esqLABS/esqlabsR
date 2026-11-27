@@ -34,7 +34,7 @@ MyProject/
 │   ├── initial-conditions/
 │   ├── applications/
 │   ├── output-paths/
-│   ├── observed-data/
+│   ├── observed-data-sources/
 │   ├── data-combined/
 │   ├── plots/
 │   ├── plot-grids/
@@ -64,7 +64,7 @@ Twelve sections. Each is a folder under `definitions/` holding one JSON file per
 | `project$definitions$initialConditions` | `initial-conditions/` |
 | `project$definitions$applications` | `applications/` |
 | `project$definitions$outputPaths` | `output-paths/` |
-| `project$definitions$observedData` | `observed-data/` |
+| `project$definitions$observedDataSources` | `observed-data-sources/` |
 | `project$definitions$dataCombined` | `data-combined/` |
 | `project$definitions$plots` | `plots/` |
 | `project$definitions$plotGrids` | `plot-grids/` |
@@ -72,7 +72,7 @@ Twelve sections. Each is a folder under `definitions/` holding one JSON file per
 
 Every section is read-only: assigning to one aborts. A section changes only through an `add*`, `set*`, or `remove*` function, or by editing the definition's file on disk. Printing a section shows how many definitions it holds and their ids.
 
-Every section is a named list keyed by id, so one definition is `project$definitions$scenarios[["aciclovir_iv"]]`, and one observed-data source is `project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]`. The id printed next to each source is the one `removeObservedData()` takes.
+Every section is a named list keyed by id, so one definition is `project$definitions$scenarios[["aciclovir_iv"]]`, and one observed-data source is `project$definitions$observedDataSources[["Aciclovir_TimeValuesData.xlsx"]]`. The id printed next to each source is the one `removeObservedDataSource()` takes.
 
 ## `Project.json` fields
 

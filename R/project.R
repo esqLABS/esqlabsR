@@ -36,7 +36,7 @@
 #'   `sc <- project$definitions$scenarios[["my_scenario"]]`) hands you an independent
 #'   copy, so changing `sc` does not change the project until you re-submit
 #'   it with the matching set function. The one exception is observed data
-#'   added as a `DataSet` object via [addObservedData()]: the `DataSet` is
+#'   added as a `DataSet` object via [addObservedDataSource()]: the `DataSet` is
 #'   shared, so changes to that object are seen by the project too.
 #'
 #'   The public authoring methods (`project$addScenario(...)`,
@@ -72,7 +72,7 @@
 #'   initial-condition entry fields. See [addParameterEntry()] /
 #'   [addInitialConditionEntry()].
 #' @param entry An observed-data source: a `DataSet` or a configuration list.
-#'   See [addObservedData()].
+#'   See [addObservedDataSource()].
 #' @param sources Character ids of the observed-data sources to load, or `NULL`
 #'   for all of them. See [loadObservedData()].
 #' @param simulated,observed Simulated / observed inputs to a `DataCombined`.
@@ -200,13 +200,13 @@ Project <- R6::R6Class(
     #' @field definitions The project's definition sections, as a read-only
     #'   field group. Each section is one field: `outputPaths`, `scenarios`,
     #'   `parameterSets`, `initialConditions`, `individuals`, `populations`,
-    #'   `applications`, `observedData`, `dataCombined`, `plots`, `plotGrids`,
+    #'   `applications`, `observedDataSources`, `dataCombined`, `plots`, `plotGrids`,
     #'   `parameterIdentification`. Read a section with
     #'   `project$definitions$scenarios` (returned as a printable, read-only
     #'   named list keyed by id). An observed-data source is read by its id
     #'   like any other definition
-    #'   (`project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]`),
-    #'   the id [removeObservedData()] takes.
+    #'   (`project$definitions$observedDataSources[["Aciclovir_TimeValuesData.xlsx"]]`),
+    #'   the id [removeObservedDataSource()] takes.
     #'   The group is read-only from the handle: every assignment form aborts.
     #'   The only sanctioned way to change a section is
     #'   an authoring function ([addScenario()] / [setScenario()] /
@@ -515,14 +515,15 @@ Project <- R6::R6Class(
       private$.impl(.removeDataCombined_impl, id)
     },
 
-    #' @description Add observed data. See [addObservedData()].
-    addObservedData = function(entry, overwrite = FALSE) {
-      private$.impl(.addObservedData_impl, entry, overwrite)
+    #' @description Add an observed-data source. See [addObservedDataSource()].
+    addObservedDataSource = function(entry, overwrite = FALSE) {
+      private$.impl(.addObservedDataSource_impl, entry, overwrite)
     },
 
-    #' @description Remove observed data. See [removeObservedData()].
-    removeObservedData = function(id) {
-      private$.impl(.removeObservedData_impl, id)
+    #' @description Remove observed-data sources. See
+    #'   [removeObservedDataSource()].
+    removeObservedDataSource = function(id) {
+      private$.impl(.removeObservedDataSource_impl, id)
     },
 
     #' @description Load the project's observed data. See [loadObservedData()].
@@ -765,7 +766,7 @@ Project <- R6::R6Class(
     .individuals = NULL,
     .populations = NULL,
     .applications = NULL,
-    .observedData = NULL,
+    .observedDataSources = NULL,
     .dataCombined = NULL,
     .plots = NULL,
     .plotGrids = NULL,
@@ -1130,7 +1131,7 @@ Project <- R6::R6Class(
         "Initial Conditions" = length(private$.initialConditions),
         "Applications" = length(private$.applications),
         "Output Paths" = length(private$.outputPaths),
-        "Observed Data" = length(private$.observedData),
+        "Observed Data Sources" = length(private$.observedDataSources),
         "Data Combined" = length(private$.dataCombined),
         "Plots" = length(private$.plots),
         "Plot Grids" = length(private$.plotGrids),
@@ -1245,13 +1246,13 @@ Project <- R6::R6Class(
         value <- .storeScenarioOutputPathIds(value)
       }
       # Observed-data declarations are stored with their id and named by it.
-      if (identical(kind, "observedData")) {
+      if (identical(kind, "observedDataSources")) {
         value <- .observedDataSectionById(value)
       }
       private[[field]] <- value
       # Writing observed data invalidates the cached observed-data names, as the
       # active-binding setter did.
-      if (identical(kind, "observedData")) {
+      if (identical(kind, "observedDataSources")) {
         private$.observedDataNamesCache <- NULL
       }
       private$.modified <- TRUE
@@ -1421,7 +1422,7 @@ Project <- R6::R6Class(
       }
 
       # Session-only observed-data state (runtime programmatic DataSets added via
-      # `addObservedData(project, <DataSet>)`, and the observed-data names cache)
+      # `addObservedDataSource(project, <DataSet>)`, and the observed-data names cache)
       # is not part of the on-disk tree, so a freshly loaded project starts
       # without it.
       private$.programmaticDataSets <- list()

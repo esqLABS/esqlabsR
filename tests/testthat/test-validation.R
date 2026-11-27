@@ -750,7 +750,7 @@ test_that(".validateApplications warns on empty section but emits no critical er
   expect_length(result$warnings, 1)
 })
 
-# Section adapter: observedData ----
+# Section adapter: observedDataSources ----
 
 test_that(".validateObservedData flags unknown type and missing required fields", {
   observedData <- list(
@@ -760,9 +760,8 @@ test_that(".validateObservedData flags unknown type and missing required fields"
   )
   result <- .validateObservedData(observedData, NULL)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "invalid type 'weird'", all = FALSE)
-  expect_match(msgs, "file", all = FALSE)
-  expect_match(msgs, "type", all = FALSE)
+  # Each message starts a sentence in the validation report with the source.
+  expect_snapshot(msgs)
 })
 
 test_that(".validateObservedData warns on missing files when dataFolder set", {
@@ -1355,17 +1354,17 @@ test_that("validateProject() flags a scenario referencing a removed outputPath",
   expect_match(msgs, "aciclovir_fat_cell", all = FALSE)
 })
 
-test_that("removeObservedData warns when a dataCombined still references it", {
+test_that("removeObservedDataSource warns when a dataCombined still references it", {
   project <- .fakeProject()
   ds <- ospsuite::DataSet$new(name = "MyObs")
   ds$setValues(c(1, 2, 3), c(10, 20, 30))
-  suppressMessages(addObservedData(project, ds))
+  suppressMessages(addObservedDataSource(project, ds))
   addDataCombined(
     project,
     id = "dc1",
     observed = list(list(label = "obs", dataSet = "MyObs"))
   )
-  expect_snapshot(removeObservedData(project, "MyObs"))
+  expect_snapshot(removeObservedDataSource(project, "MyObs"))
 })
 
 # Section adapter: plots, plotType enum ----
