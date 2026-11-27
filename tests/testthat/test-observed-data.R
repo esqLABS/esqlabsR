@@ -1496,14 +1496,15 @@ test_that("a programmatic name in a project snapshot loads as its id", {
   )
 })
 
-test_that("snapshotProject writes observed data as an array of records with ids", {
+test_that("an inline project file stores observed data as an array of records with ids", {
   project <- testProject()
   suppressMessages(addObservedData(
     project,
     ospsuite::DataSet$new(name = "Scratch measurement")
   ))
 
-  path <- snapshotProject(project, dir = withr::local_tempdir(), name = "obs")
+  path <- file.path(withr::local_tempdir(), "Project.json")
+  .saveProjectJson(project, path)
   written <- jsonlite::read_json(path)
 
   # An array: no names, each record carrying its own `id`.
