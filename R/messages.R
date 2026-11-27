@@ -2202,6 +2202,13 @@ messages$observedDataPersistFileCollision <- function(files) {
   )
 }
 
+messages$observedDataAddFileCollision <- function(file) {
+  cliBullets(
+    "x" = "The {.cls DataSet} would be saved to {.file {file}}, the data file of another source.",
+    "i" = "Pass another {.arg id}."
+  )
+}
+
 messages$populationProgrammaticAdded <- function(
   id,
   hasPopulationsFolder = TRUE

@@ -544,7 +544,7 @@ test_that("addObservedData compares data files by where they lie", {
   for (name in names(sameFile)) {
     expect_error(
       addObservedData(project, ospsuite::DataSet$new(name = name)),
-      "overwrite the data file of another source",
+      "would be saved to .*, the data file of another source",
       info = name
     )
   }

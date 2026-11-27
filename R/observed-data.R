@@ -537,7 +537,7 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
       dataFolder
     )
     if (.observedDataResolvedFiles(savedFile, dataFolder) %in% sourceFiles) {
-      cli::cli_abort(messages$observedDataPersistFileCollision(savedFile))
+      cli::cli_abort(messages$observedDataAddFileCollision(savedFile))
     }
 
     # Update the in-memory section and the runtime store together: under

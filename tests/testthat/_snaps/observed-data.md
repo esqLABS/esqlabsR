@@ -131,16 +131,14 @@
       addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"))
     Condition
       Error in `addObservedData()`:
-      x Saving a <DataSet> added in this session would overwrite the data file of another source: 'cohort_b.pkml'.
-      i The <DataSet> would be written to '<id>.pkml' in the data folder, a file another source already reads.
-      i Remove the <DataSet>'s source with `removeObservedData()` and add it again under another `id`.
+      x The <DataSet> would be saved to 'cohort_b.pkml', the data file of another source.
+      i Pass another `id`.
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"), overwrite = TRUE)
     Condition
       Error in `addObservedData()`:
-      x Saving a <DataSet> added in this session would overwrite the data file of another source: 'cohort_b.pkml'.
-      i The <DataSet> would be written to '<id>.pkml' in the data folder, a file another source already reads.
-      i Remove the <DataSet>'s source with `removeObservedData()` and add it again under another `id`.
+      x The <DataSet> would be saved to 'cohort_b.pkml', the data file of another source.
+      i Pass another `id`.
 
 # a DataSet name inside a PKML source not loaded yet aborts the next load
 
@@ -423,9 +421,8 @@
       addObservedData(project, lower, overwrite = TRUE)
     Condition
       Error in `addObservedData()`:
-      x Saving a <DataSet> added in this session would overwrite the data file of another source: 'cohort_b.pkml'.
-      i The <DataSet> would be written to '<id>.pkml' in the data folder, a file another source already reads.
-      i Remove the <DataSet>'s source with `removeObservedData()` and add it again under another `id`.
+      x The <DataSet> would be saved to 'cohort_b.pkml', the data file of another source.
+      i Pass another `id`.
 
 # print.ObservedDataSource renders the source declaration
 
