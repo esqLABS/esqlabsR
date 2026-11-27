@@ -470,12 +470,10 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
   isDataSet <- inherits(entry, "DataSet")
   if (!isDataSet) {
     if (!is.list(entry)) {
-      cli::cli_abort(
-        "observedData entry must be a {.cls DataSet} or a configuration list"
-      )
+      cli::cli_abort(messages$observedDataEntryNotDataSetOrList())
     }
     if (is.null(entry$type)) {
-      cli::cli_abort("observedData entry must include a {.field type} field")
+      cli::cli_abort(messages$observedDataEntryMissingType())
     }
     validTypes <- c("excel", "pkml")
     if (!(entry$type %in% validTypes)) {
@@ -577,13 +575,7 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
     # the runtime store: nothing would write it at save and nothing would warn
     # that it vanished. Refuse, as the mirror case (a `DataSet` replacing a
     # file source) does.
-    cli::cli_abort(c(
-      "observedData entry with id {.val {id}} is a programmatic source \\
-      holding a {.cls DataSet} in this session, so it cannot be overwritten \\
-      with a configuration entry.",
-      "i" = "Remove it first with {.code removeObservedData()}, then add the \\
-      configuration entry."
-    ))
+    cli::cli_abort(messages$observedDataNotReplaceableByEntry(id))
   }
   # The data-set names inside a config source are known only by reading it, so
   # the observedData setter leaves the names cache unset, and the next lookup
@@ -981,9 +973,7 @@ removeObservedData <- function(project, id) {
   persistedIds <- unname(sectionIds[toPersist])
   dataFolder <- self$paths$dataFolder
   if (is.null(dataFolder)) {
-    cli::cli_abort(messages$observedDataPersistNoDataFolder(
-      private$.programmaticDataSets[[persistedIds[[1]]]]$name
-    ))
+    cli::cli_abort(messages$observedDataPersistNoDataFolder(persistedIds[[1]]))
   }
 
   # Rewrite the whole section in memory and validate it clean BEFORE writing any

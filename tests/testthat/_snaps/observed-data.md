@@ -190,7 +190,7 @@
       saveProject(project)
     Condition
       Error in `saveProject()`:
-      x Cannot save the <DataSet> "NoFolderSet" added in this session: dataFolder is not declared in `filePaths`.
+      x Cannot save the <DataSet> of observed-data source "nofolderset" added in this session: dataFolder is not declared in `filePaths`.
       i A <DataSet> added with `addObservedData()` is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
 
 # saveProject refuses a DataSet that shares its id with another source before writing it

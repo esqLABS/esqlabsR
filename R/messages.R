@@ -869,8 +869,8 @@ messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
 }
 
 messages$exportUndeclaredObservedData <- function(ids) {
-  # Unglued: an observed-data id is a user-chosen name (typically a data-file
-  # basename), so it is free text.
+  # Unglued: an observed-data id is canonical, but canonicalization keeps `{`
+  # and `}`, so it is free text.
   envir <- new.env(parent = parent.frame())
   assign("ids", ids, envir = envir)
   assign("n", length(ids), envir = envir)
@@ -2116,11 +2116,30 @@ messages$observedDataFileNotFound <- function(filePath) {
   )
 }
 
-messages$observedDataProgrammaticUnresolved <- function(names) {
+messages$observedDataProgrammaticUnresolved <- function(ids) {
   cliBullets(
-    "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
-    "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
+    "!" = "{length(ids)} programmatic observed-data source{?s} resolved to no data: {.val {ids}}.",
+    "i" = "A programmatic source holds its {.cls DataSet} in the session that added it until {.fn saveProject} writes the {.cls DataSet} to a PKML file.",
+    "i" = "Re-add {cli::qty(ids)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
+  )
+}
+
+messages$observedDataEntryNotDataSetOrList <- function() {
+  ospsuite.utils::cliFormat(
+    "observedData entry must be a {.cls DataSet} or a configuration list"
+  )
+}
+
+messages$observedDataEntryMissingType <- function() {
+  ospsuite.utils::cliFormat(
+    "observedData entry must include a {.field type} field"
+  )
+}
+
+messages$observedDataNotReplaceableByEntry <- function(id) {
+  cliBullets(
+    "observedData entry with id {.val {id}} is a programmatic source holding a {.cls DataSet} in this session, so it cannot be overwritten with a configuration entry.",
+    "i" = "Remove it first with {.fn removeObservedData}, then add the configuration entry."
   )
 }
 
@@ -2146,9 +2165,9 @@ messages$observedDataProgrammaticAdded <- function(
   )
 }
 
-messages$observedDataPersistNoDataFolder <- function(name) {
+messages$observedDataPersistNoDataFolder <- function(id) {
   cliBullets(
-    "x" = "Cannot save the {.cls DataSet} {.val {name}} added in this session: {.field dataFolder} is not declared in {.code filePaths}.",
+    "x" = "Cannot save the {.cls DataSet} of observed-data source {.val {id}} added in this session: {.field dataFolder} is not declared in {.code filePaths}.",
     "i" = "A {.cls DataSet} added with {.fn addObservedData} is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
   )
 }
