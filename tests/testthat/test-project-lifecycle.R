@@ -150,6 +150,18 @@ test_that("loadProject() on a folder holding only the esqlabsR 5 snapshot JSON g
   expect_snapshot(loadProject(dir), error = TRUE, transform = .redactTmpDir)
 })
 
+# The usual esqlabsR 5 project folder also holds the Excel files the snapshot
+# JSON was saved from, so the advice is to import those (#1417).
+test_that("loadProject() on an esqlabsR 5 project folder points at its workbook", {
+  projectDir <- localExcelProjectDir()
+
+  expect_snapshot(
+    loadProject(projectDir),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+})
+
 test_that("loadProject() warns on a dangling cross-reference", {
   path <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(

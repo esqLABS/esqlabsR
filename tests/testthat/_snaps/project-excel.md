@@ -79,6 +79,16 @@
       i In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the project's Excel files from it with `restoreProjectConfiguration()`.
       i Then, in this version, import the restored 'ProjectConfiguration.xlsx', written beside the JSON file, with `importProjectFromExcel()`.
 
+# importProjectFromExcel points the snapshot JSON at the workbook beside it
+
+    Code
+      importProjectFromExcel(file.path(projectDir, "ProjectConfiguration.json"))
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5. `importProjectFromExcel()` reads the Excel files of a project, not this file.
+      i Import the 'ProjectConfiguration.xlsx' beside it with `importProjectFromExcel()`.
+      i If those Excel files are older than the JSON file, restore them from it first with `restoreProjectConfiguration()` in esqlabsR 5.7.0.
+
 # importProjectFromExcel refuses any other JSON file and writes nothing
 
     Code

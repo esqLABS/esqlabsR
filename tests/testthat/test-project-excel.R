@@ -1009,6 +1009,24 @@ test_that("importProjectFromExcel refuses the esqlabsR 5 snapshot JSON and write
   )
 })
 
+# The usual esqlabsR 5 project folder holds the snapshot JSON beside the Excel
+# files it was saved from. Restoring them first could replace newer edits, so
+# the advice is to import the workbook that is already there (#1417).
+test_that("importProjectFromExcel points the snapshot JSON at the workbook beside it", {
+  projectDir <- localExcelProjectDir()
+  before <- list.files(projectDir, recursive = TRUE, all.files = TRUE)
+
+  expect_snapshot(
+    importProjectFromExcel(file.path(projectDir, "ProjectConfiguration.json")),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(
+    list.files(projectDir, recursive = TRUE, all.files = TRUE),
+    before
+  )
+})
+
 # Any other `.json` file is told what the import reads, and a project file of
 # the current format is pointed at `loadProject()`, the call that opens it.
 test_that("importProjectFromExcel refuses any other JSON file and writes nothing", {

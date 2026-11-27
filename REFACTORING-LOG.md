@@ -392,3 +392,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 13:45: importProjectFromExcel() given a .json file that does not parse also says it could not be read as JSON. (#1417)
 - 2026-11-27 13:45: loadProject() on a folder holding no project but the esqlabsR 5 snapshot JSON gives the advice to restore its Excel files and import them, instead of saying no project was found. (#1417)
 - 2026-11-27 13:45: The test helper that moves the observed data into the project folder no longer takes a data file name nobody passes. (#1417)
+- 2026-11-27 14:26: When the Excel files sit beside the esqlabsR 5 snapshot JSON, importProjectFromExcel() and loadProject() advise importing them, and restoring them first only if they are older than the JSON file, instead of advising a restore that could replace newer edits. (#1417)

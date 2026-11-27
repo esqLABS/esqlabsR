@@ -341,15 +341,26 @@ messages$importWouldOverwriteProject <- function(outputDir) {
   )
 }
 
-# The two steps that turn the JSON file `snapshotProjectConfiguration()` saved
-# in esqlabsR 5 at `path` into a project of the current format, as bullets
-# ready for the raising call. Only esqlabsR 5.7.0 restores the
+# The steps that turn the JSON file `snapshotProjectConfiguration()` saved in
+# esqlabsR 5 at `path` into a project of the current format, as bullets ready
+# for the raising call. `restoreProjectConfiguration()` writes the
+# property-sheet workbook beside the JSON file, named after it with a lowercase
+# `.json` swapped for `.xlsx`. When that workbook is already there, the project
+# still has its Excel files, and restoring them first would replace any edit
+# made to them since the JSON was saved, so the advice is to import them and to
+# restore only if they are older. Only esqlabsR 5.7.0 restores the
 # parameter-identification workbook, so an earlier esqlabsR 5 is not offered.
-# `restoreProjectConfiguration()` writes the property-sheet workbook beside the
-# JSON file, named after it with a lowercase `.json` swapped for `.xlsx`.
 # `importLegacySnapshot` and `legacySnapshotNotLoadable` give the same advice.
 .restoreLegacySnapshotSteps <- function(path) {
   workbook <- sub("\\.json$", ".xlsx", basename(path))
+  if (fs::file_exists(file.path(dirname(path), workbook))) {
+    return(cliBullets(
+      "i" = "Import the {.file {workbook}} beside it with \\
+      {.fn importProjectFromExcel}.",
+      "i" = "If those Excel files are older than the JSON file, restore them \\
+      from it first with {.fn restoreProjectConfiguration} in esqlabsR 5.7.0."
+    ))
+  }
   cliBullets(
     "i" = "In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the \\
     project's Excel files from it with {.fn restoreProjectConfiguration}.",
