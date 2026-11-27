@@ -2983,20 +2983,13 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   importerConfig <- prop("dataImporterConfigurationFile")
-  # The declaration states its own `id`, the canonicalized basename of the data
-  # file with its extension dropped, rather than leaving one to be derived: a
-  # derived id is the basename verbatim, which makes the definition file
-  # `<name>.xlsx.json` and keeps whatever spaces, commas and casing the data
-  # file's name carried, so the declaration is not addressable by a
-  # `removeObservedData()` id the authoring API could ever produce.
+  # The id is taken from the data file the way `addObservedData()` takes it.
   #
   # `file` / `importerConfiguration` are stored as given (relative to
   # `dataFolder`), not truncated to a basename: the loader resolves them under
   # `dataFolder` (`.resolveDataPath()`), so a file in a subfolder would be lost
   # if only its basename were kept.
-  id <- .canonicalizeOneId(
-    tools::file_path_sans_ext(basename(dataFile))
-  )
+  id <- .observedDataIdFromFile(dataFile)
   entry <- list(
     id = id,
     type = "excel",

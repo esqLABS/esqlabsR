@@ -245,6 +245,16 @@ test_that("loadObservedData errors when dataFolder is not declared", {
   expect_snapshot(error = TRUE, loadObservedData(project))
 })
 
+test_that(".observedDataIdFromFile takes the canonical file stem without a warning", {
+  expect_no_warning(
+    ids <- c(
+      .observedDataIdFromFile("Aciclovir_TimeValuesData.xlsx"),
+      .observedDataIdFromFile("sub/My Data, v2.xlsx")
+    )
+  )
+  expect_identical(ids, c("aciclovir_timevaluesdata", "my_data__v2"))
+})
+
 test_that("addObservedData appends a valid config entry", {
   project <- testProject()
   before <- length(project$definitions$observedData)

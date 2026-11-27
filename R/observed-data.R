@@ -851,6 +851,15 @@ removeObservedData <- function(project, id) {
   )
 }
 
+# The id an observed-data source takes from its data file: the basename without
+# its extension, canonicalized without a warning, since the user typed no id.
+#
+# @keywords internal
+# @noRd
+.observedDataIdFromFile <- function(file) {
+  .canonicalizeOneId(tools::file_path_sans_ext(basename(file)))
+}
+
 # The `file` of every entry in the section as written (relative to the data
 # folder, or absolute), `NA` for one that names none (a programmatic entry).
 #
