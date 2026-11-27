@@ -166,8 +166,8 @@
   cliBullets(
     "i" = "{cli::qty(n)}{?A folder names/Folders name} an environment \\
     variable the esqlabsR 5 way, as a part of the path. A v6 project writes \\
-    it as {.code ${{NAME}}}, so {cli::qty(n)}{?the value was/the values were} \\
-    rewritten:",
+    {cli::qty(n)}{?it/them} as {.code ${{NAME}}}, so {cli::qty(n)}{?the value \\
+    was/the values were} rewritten:",
     stats::setNames(
       sprintf(
         "{.field {properties[[%1$d]]}}: {.val {from[[%1$d]]}} -> {.val {to[[%1$d]]}}",
@@ -206,7 +206,7 @@
   cliBullets(
     "!" = "{cli::qty(n)}{n} individual{?s} in {.file {filePath}} {?is/are} \\
     converted without the parameter set {?it/they} declare{?s/}, because the \\
-    sheet did not parse as a parameter sheet:",
+    sheet is not laid out as a parameter sheet:",
     stats::setNames(
       sprintf(
         "Individual {.val {ids[[%1$d]]}}: sheet {.val {sheets[[%1$d]]}}.",
@@ -214,9 +214,9 @@
       ),
       rep("x", length(ids))
     ),
-    "i" = "Nothing else reports this: the individual has no parametrization \\
-    and the project still validates, so every scenario using it runs on the \\
-    unmodified model. Add the set to the v6 model-parameters workbook and \\
+    "i" = "Nothing else reports this: no parameter set is applied to the \\
+    individual, and the project still validates, so every scenario using it \\
+    runs on the unmodified model. Add the set to the v6 model-parameters workbook and \\
     to the individual's {.field ParameterSets} cell, then import again."
   )
 }
@@ -313,8 +313,8 @@
   }
   cliBullets(
     "x" = where,
-    "i" = "Use {.val TRUE} / {.val FALSE}, {.val 1} / {.val 0} or \\
-    {.val Yes} / {.val No}, then convert again."
+    "i" = "Use {.code TRUE} / {.code FALSE}, {.code 1} / {.code 0} or \\
+    {.code Yes} / {.code No}, then convert again."
   )
 }
 
@@ -391,9 +391,9 @@
 .esqlabsR5Messages$missingPIObservedDataSheets <- function(sheets) {
   n <- length(sheets)
   cliBullets(
-    "!" = "{cli::qty(n)}{n} {.field ObservedDataSheet} {?sheet/sheets} named \\
-    by the {.field PIOutputMappings} sheet {?is/are} not in the data \\
-    workbook: {.val {sheets}}.",
+    "!" = "{cli::qty(n)}{?A sheet/Sheets} named in the \\
+    {.field ObservedDataSheet} column of the {.field PIOutputMappings} sheet \\
+    {?is/are} not in the data workbook: {.val {sheets}}.",
     "i" = "A v6 project imports every sheet of the data workbook and finds a \\
     mapping's data set by its name, so the column is not carried over. A \\
     data set on a sheet the workbook does not have is not in the project: \\
@@ -1449,7 +1449,7 @@ convertProjectToV6 <- function(
     cli::cli_warn(
       .esqlabsR5Messages$renamedParameterSets(rendered$bullets),
       .envir = rendered$envir,
-      class = "esqlabsR_importRenamedParameterSets"
+      class = "esqlabsR_convertRenamedParameterSets"
     )
   }
 
@@ -1716,7 +1716,7 @@ convertProjectToV6 <- function(
   }
   cli::cli_warn(
     .esqlabsR5Messages$unparametrizedIndividuals(file, lostIds, lostSheets),
-    class = "esqlabsR_importUnparametrizedIndividuals"
+    class = "esqlabsR_convertUnparametrizedIndividuals"
   )
 }
 
@@ -1759,7 +1759,7 @@ convertProjectToV6 <- function(
   }
   cli::cli_warn(
     .esqlabsR5Messages$undefinedIndividualSheets(file, dropped),
-    class = "esqlabsR_importUndefinedIndividualSheets"
+    class = "esqlabsR_convertUndefinedIndividualSheets"
   )
 }
 
@@ -2055,7 +2055,7 @@ convertProjectToV6 <- function(
       nrow(exportDf),
       grids[!is.na(grids)]
     ),
-    class = "esqlabsR_importSkippedPlotExportConfiguration"
+    class = "esqlabsR_convertSkippedPlotExportConfiguration"
   )
 }
 
@@ -2086,7 +2086,7 @@ convertProjectToV6 <- function(
       idColumn,
       paste0(used[rows], " / ", other[rows])
     ),
-    class = "esqlabsR_importConflictingPlotIdColumns"
+    class = "esqlabsR_convertConflictingPlotIdColumns"
   )
 }
 
@@ -2211,7 +2211,7 @@ convertProjectToV6 <- function(
   }
   cli::cli_warn(
     .esqlabsR5Messages$missingPIObservedDataSheets(missing),
-    class = "esqlabsR_importUnimportedPIObservedDataSheets"
+    class = "esqlabsR_convertMissingPIObservedDataSheets"
   )
 }
 
@@ -2364,7 +2364,7 @@ convertProjectToV6 <- function(
   if (length(mismatched) > 0L) {
     cli::cli_warn(
       .esqlabsR5Messages$unmergedPIParameterGroups(task, mismatched),
-      class = "esqlabsR_importUnmergedPIParameterGroups"
+      class = "esqlabsR_convertUnmergedPIParameterGroups"
     )
   }
   groups
@@ -2463,7 +2463,7 @@ convertProjectToV6 <- function(
   if (length(unresolved) > 0L) {
     cli::cli_warn(
       .esqlabsR5Messages$incompletePIOutputMappings(task, unresolved),
-      class = "esqlabsR_importIncompletePIOutputMappings"
+      class = "esqlabsR_convertIncompletePIOutputMappings"
     )
   }
   if (length(derived) == 0L) {
@@ -2716,12 +2716,15 @@ convertProjectToV6 <- function(
     return(NULL)
   }
   if (length(proteins) != length(ontogenies)) {
-    cli::cli_warn(.esqlabsR5Messages$ontogeniesNotReadable(
-      recordType,
-      recordId,
-      proteins,
-      ontogenies
-    ))
+    cli::cli_warn(
+      .esqlabsR5Messages$ontogeniesNotReadable(
+        recordType,
+        recordId,
+        proteins,
+        ontogenies
+      ),
+      class = "esqlabsR_convertOntogeniesNotReadable"
+    )
     return(NULL)
   }
   paste0(proteins, ":", ontogenies)

@@ -274,7 +274,7 @@
     Output
       v Converted the esqlabsR 5 project. Its esqlabsR 5 workbooks are now in '<tmp-path>'.
       i Edit the v6 workbooks and import them with `importProjectFromExcel()`, or load 'Project.json' with `loadProject()`.
-      i Folders name an environment variable the esqlabsR 5 way, as a part of the path. A v6 project writes it as `${NAME}`, so the values were rewritten:
+      i Folders name an environment variable the esqlabsR 5 way, as a part of the path. A v6 project writes them as `${NAME}`, so the values were rewritten:
       * modelFolder: "MDL/Simulations/" -> "${MDL}/Simulations/"
       * dataFolder: "OBSDATA" -> "${OBSDATA}"
       i Some sheets with no place in the v6 workbooks were not carried over; the esqlabsR 5 workbooks in 'esqlabsR5' keep them:
@@ -305,7 +305,7 @@
     Condition
       Error in `convertProjectToV6()`:
       x Cannot read the SteadyState value "maybe" in '<tmp-path>' as true or false.
-      i Use "TRUE" / "FALSE", "1" / "0" or "Yes" / "No", then convert again.
+      i Use `TRUE` / `FALSE`, `1` / `0` or `Yes` / `No`, then convert again.
 
 # convertProjectToV6() writes the parameter-identification sheets an export writes
 
@@ -350,7 +350,7 @@
     Code
       cat(conditionMessage(warning))
     Output
-      ! 1 ObservedDataSheet sheet named by the PIOutputMappings sheet is not in the data workbook: "Laskin 1982.Group B".
+      ! A sheet named in the ObservedDataSheet column of the PIOutputMappings sheet is not in the data workbook: "Laskin 1982.Group B".
       i A v6 project imports every sheet of the data workbook and finds a mapping's data set by its name, so the column is not carried over. A data set on a sheet the workbook does not have is not in the project: the mapping's DataSet does not resolve, and `validateProject()` reports it.
       i Point dataFile at the workbook that holds it in the v6 property sheet and import again.
 

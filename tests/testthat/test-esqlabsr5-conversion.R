@@ -1032,7 +1032,7 @@ test_that("an ObservedDataSheet the data workbook lacks is reported", {
 
   warning <- expect_warning(
     convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE),
-    class = "esqlabsR_importUnimportedPIObservedDataSheets"
+    class = "esqlabsR_convertMissingPIObservedDataSheets"
   )
   expect_snapshot(cat(conditionMessage(warning)))
 })
@@ -1242,7 +1242,7 @@ test_that(".v5ParsePIMappings keeps and reports an underivable path", {
 
   expect_warning(
     mappings <- .v5ParsePIMappings(noColumn, "t1", list(list(id = "s1"))),
-    class = "esqlabsR_importIncompletePIOutputMappings"
+    class = "esqlabsR_convertIncompletePIOutputMappings"
   )
   expect_length(mappings, 1L)
   expect_null(mappings[[1]]$outputPath)
@@ -1250,7 +1250,7 @@ test_that(".v5ParsePIMappings keeps and reports an underivable path", {
 
   warning <- expect_warning(
     expect_length(.v5ParsePIMappings(noColumn, "t1", NULL), 1L),
-    class = "esqlabsR_importIncompletePIOutputMappings"
+    class = "esqlabsR_convertIncompletePIOutputMappings"
   )
   expect_snapshot(cat(conditionMessage(warning)))
 })
@@ -1508,9 +1508,9 @@ test_that("a plot sheet with two id columns takes the v6 one and warns when they
   expect_warning(
     expect_warning(
       converted <- .v5ConvertPlotsWorkbook(plotsFile),
-      class = "esqlabsR_importConflictingPlotIdColumns"
+      class = "esqlabsR_convertConflictingPlotIdColumns"
     ),
-    class = "esqlabsR_importConflictingPlotIdColumns"
+    class = "esqlabsR_convertConflictingPlotIdColumns"
   )
   convertedFile <- withr::local_tempfile(fileext = ".xlsx")
   .writeExcel(converted$sheets, convertedFile)
@@ -1907,7 +1907,7 @@ test_that("the conversion warns naming each renamed duplicate parameter set", {
       file.path(projectDir, "ProjectConfiguration.xlsx"),
       silent = TRUE
     ),
-    esqlabsR_importRenamedParameterSets = function(cnd) {
+    esqlabsR_convertRenamedParameterSets = function(cnd) {
       renameWarning <<- conditionMessage(cnd)
       invokeRestart("muffleWarning")
     }
