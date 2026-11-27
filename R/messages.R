@@ -2116,11 +2116,13 @@ messages$observedDataFileNotFound <- function(filePath) {
   )
 }
 
-# `names` are the ids of the declarations; `files` the definition files they
-# were read from, empty for a project file that holds the section inline.
+# `names` are the ids of the declarations, `NA` for one with no name; `files`
+# the definition files they were read from, empty for a project file that holds
+# the section inline.
 messages$observedDataProgrammaticInProjectFile <- function(names, files) {
+  names[is.na(names)] <- "(no id)"
   bullets <- c(
-    "x" = "{cli::qty(names)}Observed-data source{?s} {.val {names}} {?is/are} declared as {.code programmatic} in the project file, but there is no {.cls DataSet} for {?it/them}.",
+    "x" = "{cli::qty(names)}Observed-data source{?s} {.val {names}} {?is/are} declared as {.code programmatic}, but there is no {.cls DataSet} for {?it/them}.",
     "i" = "A {.code programmatic} source is a {.cls DataSet} added with {.fn addObservedData} in the current R session, never one read from a file. {.fn saveProject} writes it to a PKML file in the data folder and declares it as a {.code pkml} source.",
     "i" = "Declare the data as a {.code pkml} or {.code excel} source, or remove {cli::qty(names)}{?the/these} declaration{?s}."
   )

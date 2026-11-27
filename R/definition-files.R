@@ -923,7 +923,6 @@
   }
   programmatic <- records[isProgrammatic]
   ids <- vapply(programmatic, .observedDataEntryIdOrNA, character(1))
-  ids[is.na(ids)] <- "(no name)"
   files <- unlist(lapply(programmatic, attr, ".definitionFile"))
   # A property of the file, not of the call that opened it (see
   # `.loadProjectTree()`), so the error names no function.

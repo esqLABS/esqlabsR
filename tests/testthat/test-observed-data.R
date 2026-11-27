@@ -79,8 +79,9 @@ test_that("loadProject refuses a project file declaring programmatic sources", {
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
       observedData = list(
-        list(type = "programmatic", name = "x"),
-        list(type = "programmatic", name = "y")
+        list(type = "programmatic", name = "Aciclovir_plasma_iv"),
+        list(type = "programmatic", name = "Aciclovir_plasma_po"),
+        list(type = "programmatic")
       )
     ),
     tmp,
@@ -90,14 +91,16 @@ test_that("loadProject refuses a project file declaring programmatic sources", {
   expect_snapshot(loadProject(tmp), error = TRUE)
 })
 
-test_that("loadProject names the definition file declaring a programmatic source", {
+test_that("loadProject names the definition files declaring programmatic sources", {
   project <- exampleProject()
-  dataSet <- ospsuite::DataSet$new(name = "Handwritten")
-  dataSet$setValues(xValues = c(0, 1), yValues = c(1, 2))
-  addObservedData(project, dataSet)
+  for (name in c("Aciclovir_plasma_digitized", "Aciclovir_urine_digitized")) {
+    dataSet <- ospsuite::DataSet$new(name = name)
+    dataSet$setValues(xValues = c(0, 1), yValues = c(1, 2))
+    addObservedData(project, dataSet)
+  }
   dir <- withr::local_tempdir("Handwritten_")
-  # Writing the tree directly keeps the `programmatic` declaration on disk, as a
-  # hand-written file would; `saveProject()` would write it as a `pkml` source.
+  # Writing the tree directly keeps the `programmatic` declarations on disk, as
+  # hand-written files would; `saveProject()` writes them as `pkml` sources.
   path <- .writeProjectTree(project, dir)
 
   expect_snapshot(loadProject(path), error = TRUE, transform = .redactTmpPath)
