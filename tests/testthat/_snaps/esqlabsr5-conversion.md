@@ -263,3 +263,43 @@
       i A v6 project imports every sheet of the data workbook and finds a mapping's data set by its name, so the column is not carried over. A data set on a sheet the workbook does not have is not in the project: the mapping's DataSet does not resolve, and `validateProject()` reports it.
       i Point dataFile at the workbook that holds it in the v6 property sheet and import again.
 
+# .v5ParsePIMappings keeps and reports an underivable path
+
+    Code
+      cat(conditionMessage(warning))
+    Output
+      ! 1 output mapping of parameter-identification task "t1" has no output path.
+      x Scenarios cell "s1".
+      i This PIOutputMappings sheet has no OutputPath column, so each mapping takes its outputs from the OutputPathsIds of the scenarios it names, and these scenarios name none.
+      i The mappings are kept, so `validateProject()` reports each one until its outputPath cell in the v6 PIOutputMappings sheet is filled and the workbooks are imported again.
+
+# an unpairable ontogeny declaration warns instead of dropping it in silence
+
+    Code
+      indiv <- .convertedIndividuals(.legacyOntogenyIndividual("Indiv1",
+        "CYP3A4,CYP2D6", "CYP3A4"))
+    Condition
+      Warning:
+      ! The protein ontogenies of individual "Indiv1" are not converted: the Protein and Ontogeny columns cannot be paired.
+      i 2 proteins against 1 ontogeny; each protein needs exactly one ontogeny.
+      i Write the pairs into the Protein Ontogenies cell of the v6 workbook as "Protein:Ontogeny,Protein:Ontogeny" and import again.
+
+---
+
+    Code
+      pop <- .convertedPopulations(.legacyOntogenyPopulation("Pop1", "CYP3A4", NA))
+    Condition
+      Warning:
+      ! The protein ontogenies of population "Pop1" are not converted: the Protein and Ontogeny columns cannot be paired.
+      i 1 protein against 0 ontogenies; each protein needs exactly one ontogeny.
+      i Write the pairs into the Protein Ontogenies cell of the v6 workbook as "Protein:Ontogeny,Protein:Ontogeny" and import again.
+
+# the conversion warns naming each renamed duplicate parameter set
+
+    Code
+      cat(renameWarning)
+    Output
+      ! 1 parameter set in 'Individuals.xlsx' reuses an id that is already taken, so it was renamed:
+      * "Global" -> "Global_2"
+      i A v6 project keeps every parameter set in the model-parameters workbook, so one sheet name cannot serve two sets. References made in 'Individuals.xlsx' point at the renamed set; rename the sheet and its references in the v6 workbooks to choose the id yourself.
+
