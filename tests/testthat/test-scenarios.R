@@ -1815,7 +1815,7 @@ test_that("addScenario sets no label unless one is passed", {
   expect_false("label" %in% names(jsonlite::read_json(file)))
 })
 
-test_that("a scenario label survives save, load, snapshot and restore", {
+test_that("a scenario label survives save and load", {
   project <- testProject()
   label <- "Aciclovir IV {250 mg} / Kidney"
   setScenario(project, "testscenario", label = label)
@@ -1827,14 +1827,11 @@ test_that("a scenario label survives save, load, snapshot and restore", {
     label
   )
 
-  snapshot <- snapshotProject(
-    reloaded,
-    dir = withr::local_tempdir(),
-    name = "with_label"
-  )
-  restored <- restoreProject(snapshot, withr::local_tempdir())
+  # Written again from memory into a fresh folder, as a tree, the label still
+  # reads back unchanged.
+  rewritten <- .reloadThroughTree(reloaded)
   expect_identical(
-    restored$definitions$scenarios[["testscenario"]]$label,
+    rewritten$definitions$scenarios[["testscenario"]]$label,
     label
   )
 })
