@@ -94,20 +94,18 @@ The cost is real and worth stating: a project is not self-contained without the 
 
 Every observed-data source carries two strings that are not always equal, and confusing them is the most common stumble in this part of the package:
 
-- **The source id** is the name the project knows the declaration by. It is the id you remove by, and it names the definition file. It is either the `id` you set, or, when you set none, it is taken from the data source: the file basename for a file-based source, the `DataSet` name for a programmatic one. The definition stores it in its `id` field.
+- **The source id** is the name the project knows the declaration by. It is the id you remove by, and it names the definition file. It is either the `id` you set, or, when you set none, it is taken from the data source: the file name without its extension for a file-based source, the `DataSet` name for a programmatic one. Like every other id it is lowercased and made a safe file name (`aciclovir_timevaluesdata`), and the definition stores it in its `id` field.
 - **The DataSet name** is the name a DataCombined references. It comes from the data itself. An Excel importer, for instance, expands a sheet into a long, fully qualified name that nobody would choose by hand.
 
 They differ because they answer different questions. The source id identifies *the declaration you wrote*; the DataSet name identifies *a series inside the data*, and one declaration can produce several of them (an Excel source naming three sheets yields three DataSets). No single string can serve both roles.
 
 The practical rule that falls out: read the DataSet name from `getObservedDataNames()` rather than typing it, and use the source id only when removing a source.
 
-This is also the one place where ids are **not** canonicalized, unlike every other definition kind. An observed-data id is matched verbatim, because it is so often a filename (`Aciclovir_TimeValuesData.xlsx`) or a DataSet name, and lowercasing it would rewrite the very string that identifies the source. The general rationale for canonicalizing ids, and why this exception does not undermine it, is in `vignette("about-the-project-model")`.
-
 ## Three kinds of source
 
 The three source types (`excel`, `pkml`, `programmatic`) differ only in where the numbers come from: `excel` for a workbook read through an OSPS importer configuration, `pkml` for a saved DataSet, and `programmatic` for a DataSet you built in the session.
 
-`programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only in your R session, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, still addressed by the DataSet name.
+`programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only in your R session, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, still addressed by the same id. The DataSet keeps its own name inside the file.
 
 ### Derived data stays in your own code
 

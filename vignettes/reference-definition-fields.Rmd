@@ -32,7 +32,7 @@ Each table's **If omitted** column is the one to read when you are deciding what
 Two conventions run through all of it:
 
 - Every `add*`, `set*`, and `remove*` function takes `project` first and the definition's `id` second. Only the fields after those are listed below.
-- Every `add*` function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused, so remove the existing source with `removeObservedData()` first. Adding a `DataSet` reads none of the project's sources, so it is refused at add time only when its name is the id of another source (such as a `DataSet` of that name saved earlier), when another source reads its data from `<name>.pkml`, or when it is the name of a data set loaded since the observed data last changed; any other clash with a data set inside an Excel or PKML source is reported the next time the observed data is loaded.
+- Every `add*` function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused, so remove the existing source with `removeObservedData()` first. Adding a `DataSet` reads none of the project's sources, so it is refused at add time only when its id is the id of another source (such as a `DataSet` saved earlier under that id), when another source reads its data from `<id>.pkml`, or when its name is the name of a `DataSet` added in the session or of a data set loaded since the observed data last changed; any other clash with a data set inside an Excel or PKML source is reported the next time the observed data is loaded.
 
 For why definitions are shaped this way, see `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")`. For the project file and folder layout, see `vignette("reference-project-file")`.
 
@@ -220,7 +220,7 @@ The one field is required, so nothing falls back to the model file. An empty pat
 
 ## Observed data
 
-`addObservedData(project, entry)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other `add*` functions this one is not vectorized over ids: it adds one source per call.
+`addObservedData(project, entry, id = NULL)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other `add*` functions this one is not vectorized over ids: it adds one source per call.
 
 Required fields by `type`:
 
@@ -236,11 +236,11 @@ Required fields by `type`:
 | `file` | per type | string | Critical error for `excel`, `pkml`. Relative to the project's data folder. |
 | `importerConfiguration` | `excel` only | string | Critical error for an `excel` source. |
 | `sheets` | `excel` only | character vector | Critical error for an `excel` source. An empty but present `sheets` counts as missing. |
-| `id` | no | string | Taken from the source: the file basename for a file-based source, the `DataSet` name for a programmatic one. Stored as the definition's `id` either way. |
+| `id` | no | string | The `id` argument of `addObservedData()` when given. Otherwise taken from the source: the file name without its extension for a file-based source, the `DataSet` name for a programmatic one. Stored as the definition's `id` either way. |
 
 A file that does not exist on disk is a warning rather than an error, so a project whose data lives elsewhere still loads. A path that escapes the data folder is a critical error, matching the abort the loader raises.
 
-An `id` you give is canonicalized like every other definition id, unless it is already the id of a source in the project (a file-based definition read from `project$definitions$observedData` and passed back keeps its id) or equal to the `file` basename. An id taken from the source keeps the source's spelling (`Aciclovir_TimeValuesData.xlsx`, `Scratch measurement`). Either way the id is saved in the definition file and the section is keyed by it, so `project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]` reads that source. A programmatic source keeps the `DataSet` name as its id when `saveProject()` writes the `DataSet` to `<name>.pkml` and turns the entry into a `pkml` source.
+Every observed-data id is canonicalized like every other definition id: an id you give, with a warning when that changes it, and an id taken from the source, without one (`Aciclovir_TimeValuesData.xlsx` gives `aciclovir_timevaluesdata`, a `DataSet` named `Scratch measurement` gives `scratch_measurement`). Two files with the same name in other folders or with other extensions give the same id, so the second source is refused until you give it an `id` of its own. The id is saved in the definition file, and a definition file without an `id` stops the load. The section is keyed by the id, so `project$definitions$observedData[["aciclovir_timevaluesdata"]]` reads that source, and a source read that way, changed and passed back with `overwrite = TRUE` replaces itself. A programmatic source keeps its id when `saveProject()` writes the `DataSet` to `<id>.pkml` and turns the entry into a `pkml` source; the `DataSet` keeps its own name inside that file.
 
 The source id and the DataSet name are different names; `vignette("about-the-plotting-model")` explains why. Read the DataSet name from `getObservedDataNames()`.
 

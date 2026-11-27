@@ -436,3 +436,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 21:55: addObservedData() takes an id argument, every observed-data id is lowercased and made a safe file name, including one taken from the file or the DataSet name, and removeObservedData() finds a source the way the other remove functions do. (#1368)
 - 2026-11-27 22:03: An observed-data definition without an id stops the load like any other definition, and a programmatic source is no longer read by a name field. (#1368)
 - 2026-11-27 22:10: Saving checks an observed-data id like every other definition id, and the step that renamed a definition file whose id changed only in case is gone. (#1368)
+- 2026-11-27 22:11: The observed-data articles and NEWS describe the id argument of addObservedData() and the one id rule shared with the other definitions. (#1368)

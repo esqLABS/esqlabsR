@@ -210,11 +210,11 @@ print.ObservedDataSource <- function(x, ...) {
 #' types: `excel` (via importer configuration), `pkml`, and
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
 #' `DataSet` added at runtime with [addObservedData()]; its data lives in
-#' the session until you save, and [saveProject()] persists it to a PKML
-#' file and rewrites the entry as a `pkml` source. A `programmatic` sentinel
-#' read from disk with no matching in-session `DataSet` (a hand-authored
-#' declaration, or a project opened before it was ever saved) resolves to
-#' nothing, and the load warns you by name.
+#' the session until you save, and [saveProject()] writes it to `<id>.pkml`
+#' in the data folder and rewrites the entry as a `pkml` source. A
+#' `programmatic` sentinel read from disk with no matching in-session
+#' `DataSet` (a hand-authored declaration, or a project opened before it was
+#' ever saved) resolves to nothing, and the load warns you, naming its id.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
