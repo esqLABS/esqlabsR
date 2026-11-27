@@ -137,50 +137,37 @@
   ids,
   sheets
 ) {
-  envir <- new.env(parent = parent.frame())
-  assign("filePath", filePath, envir = envir)
-  assign("ids", ids, envir = envir)
-  assign("sheets", sheets, envir = envir)
-  assign("n", length(ids), envir = envir)
-  list(
-    bullets = c(
-      "!" = "{cli::qty(n)}{n} individual{?s} in {.file {filePath}} {?is/are} \\
-      converted without the parameter set {?it/they} declare{?s/}, because the \\
-      sheet did not parse as a parameter sheet:",
-      stats::setNames(
-        sprintf(
-          "Individual {.val {ids[[%1$d]]}}: sheet {.val {sheets[[%1$d]]}}.",
-          seq_along(ids)
-        ),
-        rep("x", length(ids))
+  n <- length(ids)
+  cliBullets(
+    "!" = "{cli::qty(n)}{n} individual{?s} in {.file {filePath}} {?is/are} \\
+    converted without the parameter set {?it/they} declare{?s/}, because the \\
+    sheet did not parse as a parameter sheet:",
+    stats::setNames(
+      sprintf(
+        "Individual {.val {ids[[%1$d]]}}: sheet {.val {sheets[[%1$d]]}}.",
+        seq_along(ids)
       ),
-      "i" = "Nothing else reports this: the individual has no parametrization \\
-      and the project still validates, so every scenario using it runs on the \\
-      unmodified model. Add the set to the v6 model-parameters workbook and \\
-      to the individual's {.field ParameterSets} cell, then import again."
+      rep("x", length(ids))
     ),
-    envir = envir
+    "i" = "Nothing else reports this: the individual has no parametrization \\
+    and the project still validates, so every scenario using it runs on the \\
+    unmodified model. Add the set to the v6 model-parameters workbook and \\
+    to the individual's {.field ParameterSets} cell, then import again."
   )
 }
 
 .esqlabsR5Messages$undefinedIndividualSheets <- function(filePath, sheets) {
-  envir <- new.env(parent = parent.frame())
-  assign("filePath", filePath, envir = envir)
-  assign("sheets", sheets, envir = envir)
-  assign("n", length(sheets), envir = envir)
-  list(
-    bullets = c(
-      "!" = "{cli::qty(n)}{n} parameter {?sheet/sheets} of {.file {filePath}} \\
-      {?names/name} an individual that {.field IndividualBiometrics} does not \\
-      define, so that individual is not converted: {.val {sheets}}.",
-      "i" = "An individual comes from its {.field IndividualBiometrics} row, so \\
-      the sheet becomes a parameter set that no individual uses, and the \\
-      {cli::qty(n)}scenario{?s} naming the individual {?has/have} nothing to \\
-      resolve to.",
-      "i" = "Add a row for it to the {.field IndividualBiometrics} sheet of the \\
-      v6 individuals workbook and import again."
-    ),
-    envir = envir
+  n <- length(sheets)
+  cliBullets(
+    "!" = "{cli::qty(n)}{n} parameter {?sheet/sheets} of {.file {filePath}} \\
+    {?names/name} an individual that {.field IndividualBiometrics} does not \\
+    define, so that individual is not converted: {.val {sheets}}.",
+    "i" = "An individual comes from its {.field IndividualBiometrics} row, so \\
+    the sheet becomes a parameter set that no individual uses, and the \\
+    {cli::qty(n)}scenario{?s} naming the individual {?has/have} nothing to \\
+    resolve to.",
+    "i" = "Add a row for it to the {.field IndividualBiometrics} sheet of the \\
+    v6 individuals workbook and import again."
   )
 }
 
@@ -189,30 +176,23 @@
   ids,
   sets
 ) {
-  envir <- new.env(parent = parent.frame())
-  assign("filePath", filePath, envir = envir)
-  assign("ids", ids, envir = envir)
-  assign("sets", sets, envir = envir)
-  assign("n", length(ids), envir = envir)
-  list(
-    bullets = c(
-      "!" = "The {.field Individual Parameter Sets} column of \\
-      {.file {filePath}} names {cli::qty(n)}{?a parameter set/parameter sets} \\
-      that esqlabsR 5 did not apply, and that {?is/are} not linked to the \\
-      individual:",
-      stats::setNames(
-        sprintf(
-          "Individual {.val {ids[[%1$d]]}}: {.val {sets[[%1$d]]}}.",
-          seq_along(ids)
-        ),
-        rep("x", length(ids))
+  n <- length(ids)
+  cliBullets(
+    "!" = "The {.field Individual Parameter Sets} column of \\
+    {.file {filePath}} names {cli::qty(n)}{?a parameter set/parameter sets} \\
+    that esqlabsR 5 did not apply, and that {?is/are} not linked to the \\
+    individual:",
+    stats::setNames(
+      sprintf(
+        "Individual {.val {ids[[%1$d]]}}: {.val {sets[[%1$d]]}}.",
+        seq_along(ids)
       ),
-      "i" = "esqlabsR 5 applies to an individual the sheet named after it, and \\
-      so does the converted project. To apply another set as well, add it to \\
-      the individual's {.field ParameterSets} cell in the v6 individuals \\
-      workbook and import again."
+      rep("x", length(ids))
     ),
-    envir = envir
+    "i" = "esqlabsR 5 applies to an individual the sheet named after it, and \\
+    so does the converted project. To apply another set as well, add it to \\
+    the individual's {.field ParameterSets} cell in the v6 individuals \\
+    workbook and import again."
   )
 }
 
@@ -251,17 +231,11 @@
 }
 
 .esqlabsR5Messages$userDefinedVariability <- function(filePath, rows) {
-  envir <- new.env(parent = parent.frame())
-  assign("filePath", filePath, envir = envir)
-  assign("rows", rows, envir = envir)
-  list(
-    bullets = c(
-      "!" = "The {.field UserDefinedVariability} sheet of {.file {filePath}} is \\
-      not converted: {cli::qty(rows)}{rows} row{?s} of parameter variability.",
-      "i" = "esqlabsR 5 did not read the sheet, and a v6 population has no \\
-      field for it. The esqlabsR 5 workbook in {.file esqlabsR5} keeps it."
-    ),
-    envir = envir
+  cliBullets(
+    "!" = "The {.field UserDefinedVariability} sheet of {.file {filePath}} is \\
+    not converted: {cli::qty(rows)}{rows} row{?s} of parameter variability.",
+    "i" = "esqlabsR 5 did not read the sheet, and a v6 population has no \\
+    field for it. The esqlabsR 5 workbook in {.file esqlabsR5} keeps it."
   )
 }
 
@@ -284,114 +258,84 @@
   rows,
   grids
 ) {
-  envir <- new.env(parent = parent.frame())
-  assign("filePath", filePath, envir = envir)
-  assign("rows", rows, envir = envir)
-  assign("grids", grids, envir = envir)
-  assign("n", length(grids), envir = envir)
-  list(
-    bullets = c(
-      "!" = "The {.field exportConfiguration} sheet of {.file {filePath}} is \\
-      not converted: {cli::qty(rows)}{rows} {?row/rows} describing where a plot \\
-      grid's figure is written and at what size.",
-      if (length(grids) > 0L) {
-        c("x" = "{cli::qty(n)}Plot grid{?s} {.val {grids}}.")
-      },
-      "i" = "A project has no field for a figure's filename, width or height: \\
-      {.fn createPlots} returns the plot objects and the caller saves them, for \\
-      example with {.fn ospsuite.plots::exportPlot}. The esqlabsR 5 workbook in \\
-      {.file esqlabsR5} keeps the sheet."
-    ),
-    envir = envir
+  n <- length(grids)
+  cliBullets(
+    "!" = "The {.field exportConfiguration} sheet of {.file {filePath}} is \\
+    not converted: {cli::qty(rows)}{rows} {?row/rows} describing where a plot \\
+    grid's figure is written and at what size.",
+    if (length(grids) > 0L) {
+      c("x" = "{cli::qty(n)}Plot grid{?s} {.val {grids}}.")
+    },
+    "i" = "A project has no field for a figure's filename, width or height: \\
+    {.fn createPlots} returns the plot objects and the caller saves them, for \\
+    example with {.fn ospsuite.plots::exportPlot}. The esqlabsR 5 workbook in \\
+    {.file esqlabsR5} keeps the sheet."
   )
 }
 
 .esqlabsR5Messages$conflictingPlotIdColumns <- function(sheet, columns, pairs) {
-  envir <- new.env(parent = parent.frame())
-  assign("sheet", sheet, envir = envir)
-  assign("used", columns[[1]], envir = envir)
-  assign("other", columns[[2]], envir = envir)
-  assign("pairs", pairs, envir = envir)
-  assign("n", length(pairs), envir = envir)
-  list(
-    bullets = c(
-      "!" = "The {.field {sheet}} sheet has both a {.field {used}} and a \\
-      {.field {other}} column, and they hold different ids in {n} \\
-      row{?s} ({.field {used}} / {.field {other}}): {.val {pairs}}.",
-      "i" = "The v6 sheet keeps the id from {.field {used}}. Change it there \\
-      and import again to use the other."
-    ),
-    envir = envir
+  used <- columns[[1]]
+  other <- columns[[2]]
+  n <- length(pairs)
+  cliBullets(
+    "!" = "The {.field {sheet}} sheet has both a {.field {used}} and a \\
+    {.field {other}} column, and they hold different ids in {n} \\
+    row{?s} ({.field {used}} / {.field {other}}): {.val {pairs}}.",
+    "i" = "The v6 sheet keeps the id from {.field {used}}. Change it there \\
+    and import again to use the other."
   )
 }
 
 .esqlabsR5Messages$unmergedPIParameterGroups <- function(taskId, paths) {
-  envir <- new.env(parent = parent.frame())
-  assign("taskId", taskId, envir = envir)
-  assign("paths", paths, envir = envir)
-  assign("n", length(paths), envir = envir)
-  list(
-    bullets = c(
-      "!" = "{cli::qty(n)}{n} {.field Group}{?s} of parameter-identification \\
-      task {.val {taskId}} {?does/do} not agree on the bounds, so {?its/their} \\
-      rows were converted as one parameter each: {.val {paths}}.",
-      "i" = "The rows of one {.field Group} are one parameter estimated across \\
-      the scenarios they name, so they share one {.field MinValue}, \\
-      {.field MaxValue} and {.field StartValue}.",
-      "i" = "As converted, each row is estimated independently, which is not \\
-      what the group asked for. To estimate them together, keep one of the \\
-      rows in the {.field PIParameters} sheet of the v6 workbook, give it the \\
-      scenarios of all of them, and import again."
-    ),
-    envir = envir
+  n <- length(paths)
+  cliBullets(
+    "!" = "{cli::qty(n)}{n} {.field Group}{?s} of parameter-identification \\
+    task {.val {taskId}} {?does/do} not agree on the bounds, so {?its/their} \\
+    rows were converted as one parameter each: {.val {paths}}.",
+    "i" = "The rows of one {.field Group} are one parameter estimated across \\
+    the scenarios they name, so they share one {.field MinValue}, \\
+    {.field MaxValue} and {.field StartValue}.",
+    "i" = "As converted, each row is estimated independently, which is not \\
+    what the group asked for. To estimate them together, keep one of the \\
+    rows in the {.field PIParameters} sheet of the v6 workbook, give it the \\
+    scenarios of all of them, and import again."
   )
 }
 
 .esqlabsR5Messages$incompletePIOutputMappings <- function(taskId, scenarios) {
-  envir <- new.env(parent = parent.frame())
-  assign("taskId", taskId, envir = envir)
-  assign("scenarios", scenarios, envir = envir)
-  assign("n", length(scenarios), envir = envir)
-  list(
-    bullets = c(
-      "!" = "{cli::qty(n)}{n} output {?mapping/mappings} of \\
-      parameter-identification task {.val {taskId}} {?has/have} no output path.",
-      stats::setNames(
-        sprintf(
-          "Scenarios cell {.val {scenarios[[%1$d]]}}.",
-          seq_along(scenarios)
-        ),
-        rep("x", length(scenarios))
+  n <- length(scenarios)
+  cliBullets(
+    "!" = "{cli::qty(n)}{n} output {?mapping/mappings} of \\
+    parameter-identification task {.val {taskId}} {?has/have} no output path.",
+    stats::setNames(
+      sprintf(
+        "Scenarios cell {.val {scenarios[[%1$d]]}}.",
+        seq_along(scenarios)
       ),
-      "i" = "This {.field PIOutputMappings} sheet has no {.field OutputPath} \\
-      column, so each mapping takes its outputs from the {.field OutputPathsIds} \\
-      of the scenarios it names, and these scenarios name none.",
-      "i" = "The mappings are kept, so {.fn validateProject} reports each one \\
-      until its {.field outputPath} cell in the v6 {.field PIOutputMappings} \\
-      sheet is filled and the workbooks are imported again."
+      rep("x", length(scenarios))
     ),
-    envir = envir
+    "i" = "This {.field PIOutputMappings} sheet has no {.field OutputPath} \\
+    column, so each mapping takes its outputs from the {.field OutputPathsIds} \\
+    of the scenarios it names, and these scenarios name none.",
+    "i" = "The mappings are kept, so {.fn validateProject} reports each one \\
+    until its {.field outputPath} cell in the v6 {.field PIOutputMappings} \\
+    sheet is filled and the workbooks are imported again."
   )
 }
 
 .esqlabsR5Messages$missingPIObservedDataSheets <- function(sheets) {
-  envir <- new.env(parent = parent.frame())
-  assign("sheets", sheets, envir = envir)
-  assign("n", length(sheets), envir = envir)
-  list(
-    bullets = c(
-      "!" = "{cli::qty(n)}{n} {.field ObservedDataSheet} {?sheet/sheets} named \\
-      by the {.field PIOutputMappings} sheet {?is/are} not in the data \\
-      workbook: {.val {sheets}}.",
-      "i" = "A v6 project imports every sheet of the data workbook and finds a \\
-      mapping's data set by its name, so the column is not carried over. A \\
-      data set on a sheet the workbook does not have is not in the project: \\
-      the mapping's {.field DataSet} does not resolve, and \\
-      {.fn validateProject} reports it.",
-      "i" = "Point {.field dataFile} at the workbook that holds \\
-      {cli::qty(n)}{?it/them} in the v6 property sheet and import again."
-    ),
-    envir = envir
+  n <- length(sheets)
+  cliBullets(
+    "!" = "{cli::qty(n)}{n} {.field ObservedDataSheet} {?sheet/sheets} named \\
+    by the {.field PIOutputMappings} sheet {?is/are} not in the data \\
+    workbook: {.val {sheets}}.",
+    "i" = "A v6 project imports every sheet of the data workbook and finds a \\
+    mapping's data set by its name, so the column is not carried over. A \\
+    data set on a sheet the workbook does not have is not in the project: \\
+    the mapping's {.field DataSet} does not resolve, and \\
+    {.fn validateProject} reports it.",
+    "i" = "Point {.field dataFile} at the workbook that holds \\
+    {cli::qty(n)}{?it/them} in the v6 property sheet and import again."
   )
 }
 
@@ -544,9 +488,8 @@ convertProjectToV6 <- function(
 )
 
 # Read an esqlabsR 5 project and prepare its v6 workbooks, changing nothing on
-# disk. Every warning of the conversion, and every abort about the content of
-# the workbooks, comes from here, so a conversion that cannot proceed stops
-# before the folder is touched.
+# disk. The conversion's own warnings, and its aborts about the property sheet
+# and the folders, come from here, before the folder is touched.
 #
 # @returns A list:
 #   - projectDir     : the project folder
@@ -567,98 +510,69 @@ convertProjectToV6 <- function(
   .call = rlang::caller_env()
 ) {
   rlang::local_error_call(.call)
-  # Normalized, so the paths the plan holds compare and relativize alike: the
-  # section workbooks are normalized too.
-  projectConfigPath <- normalizePath(projectConfigPath)
+  projectConfigPath <- as.character(fs::path_abs(projectConfigPath))
   projectDir <- dirname(projectConfigPath)
-  propertyTable <- .v5PropertyTable(properties)
-  envVarRewrites <- .v5EnvVarFolders(propertyTable)
-  propertyTable$Value <- envVarRewrites$values
-
+  table <- .v5PropertyTable(properties)
+  envVarRewrites <- .v5EnvVarFolders(table)
+  table$Value <- envVarRewrites$values
+  props <- .v5PropertyLookup(table)
   configsFolder <- .v5ConfigurationsFolder(
-    .v5PropertyLookup(propertyTable)("configurationsFolder"),
+    props("configurationsFolder"),
     projectDir,
     .call
   )
-  propertyTable <- .v5WorkingFolders(
-    propertyTable,
-    projectDir,
-    configsFolder,
-    .call
-  )
-  props <- .v5PropertyLookup(propertyTable)
-  sections <- .v5ReadableWorkbooks(props, configsFolder, .call)
-  scenarios <- .v5ScenarioRecords(sections$scenariosFile$path)
+  table <- .v5WorkingFolders(table, projectDir, configsFolder, .call)
+  props <- .v5PropertyLookup(table)
+  targets <- .v5SectionTargets(props, configsFolder, .call)
+  sections <- Filter(function(target) file.exists(target$path), targets)
 
-  # Each section's v6 workbook, by property: `sheets` to write, or `copy` for a
-  # workbook whose layout v6 reads as it is. A workbook left with no sheet is
-  # not written.
-  workbooks <- lapply(sections, function(section) {
-    c(section, list(copy = TRUE))
+  # Every workbook read is carried over as it is, unless a converter below
+  # writes it anew; a converter that leaves a workbook no sheet drops it.
+  outputs <- lapply(sections, function(section) {
+    c(section, list(copyOf = section$path))
   })
-  # The sheets that have no v6 place and hold nothing a warning names, by
-  # workbook, for the summary.
   droppedSheets <- list()
+  addConverted <- function(property, converted) {
+    section <- sections[[property]] %||% targets[[property]]
+    outputs[property] <<- list(.v5Output(section, converted$sheets))
+    if (length(converted$dropped) > 0L) {
+      droppedSheets[[section$name]] <<- converted$dropped
+    }
+  }
+
+  scenarioSheets <- list()
   if (!is.null(sections$scenariosFile)) {
-    converted <- .v5ConvertScenariosWorkbook(
-      sections$scenariosFile$path,
-      .call
-    )
-    workbooks$scenariosFile$copy <- FALSE
-    workbooks$scenariosFile$sheets <- converted$sheets
-    droppedSheets[[sections$scenariosFile$name]] <- converted$dropped
+    converted <- .v5ConvertScenariosWorkbook(sections$scenariosFile$path, .call)
+    scenarioSheets <- converted$sheets
+    addConverted("scenariosFile", converted)
   }
-  workbooks <- .v5ConvertParameterWorkbooks(
-    workbooks,
-    sections,
-    scenarios,
-    .v5SectionTargets(props, configsFolder)
+  scenarios <- .v5ScenarioRecords(scenarioSheets$Scenarios)
+  for (converted in .v5ConvertParameterWorkbooks(sections, scenarios)) {
+    addConverted(converted$property, converted)
+  }
+  converters <- list(
+    populationsFile = .v5ConvertPopulationsWorkbook,
+    plotsFile = .v5ConvertPlotsWorkbook,
+    parameterIdentificationFile = function(file) {
+      .v5ConvertPIWorkbook(
+        file,
+        scenarios,
+        .v5OutputPaths(scenarioSheets$OutputPaths),
+        .v5DataWorkbookSheets(props, projectDir)
+      )
+    }
   )
-  if (!is.null(sections$populationsFile)) {
-    converted <- .v5ConvertPopulationsWorkbook(sections$populationsFile$path)
-    workbooks$populationsFile$copy <- FALSE
-    workbooks$populationsFile$sheets <- converted$sheets
-    droppedSheets[[sections$populationsFile$name]] <- converted$dropped
-  }
-  if (!is.null(sections$plotsFile)) {
-    converted <- .v5ConvertPlotsWorkbook(sections$plotsFile$path)
-    workbooks$plotsFile$copy <- FALSE
-    workbooks$plotsFile$sheets <- converted$sheets
-    droppedSheets[[sections$plotsFile$name]] <- converted$dropped
-  }
-  if (!is.null(sections$parameterIdentificationFile)) {
-    converted <- .v5ConvertPIWorkbook(
-      sections$parameterIdentificationFile$path,
-      scenarios,
-      .v5OutputPaths(sections$scenariosFile$path),
-      .v5DataWorkbookSheets(.v5PropertyLookup(propertyTable), projectDir)
-    )
+  for (property in intersect(names(converters), names(sections))) {
+    converted <- converters[[property]](sections[[property]]$path)
+    # `NULL` for a workbook already in the v6 layout, which is carried over.
     if (!is.null(converted)) {
-      workbooks$parameterIdentificationFile$copy <- FALSE
-      workbooks$parameterIdentificationFile$sheets <- converted$sheets
-      droppedSheets[[
-        sections$parameterIdentificationFile$name
-      ]] <- converted$dropped
+      addConverted(property, converted)
     }
   }
+  outputs <- Filter(Negate(is.null), outputs)
 
-  outputs <- list()
-  for (workbook in workbooks) {
-    if (isTRUE(workbook$copy)) {
-      outputs[[length(outputs) + 1L]] <- list(
-        path = workbook$path,
-        copyOf = workbook$path
-      )
-    } else if (length(workbook$sheets) > 0L) {
-      outputs[[length(outputs) + 1L]] <- list(
-        path = workbook$path,
-        sheets = workbook$sheets
-      )
-    }
-  }
-
-  propertyTable <- .v5DeclareWorkbooks(propertyTable, workbooks, sections)
-  propertySheets <- list(Project = .v5PropertySheet(propertyTable))
+  table <- .v5DeclareWorkbooks(table, outputs, sections)
+  propertySheets <- list(Project = .v5PropertySheet(table))
   # Only a workbook written since 6.0.0 has the sheet, but the import reads it
   # from any property workbook, so it is carried over unchanged.
   if (
@@ -670,22 +584,45 @@ convertProjectToV6 <- function(
     ))
   }
   v6Workbook <- file.path(projectDir, "Project.xlsx")
-  outputs <- c(
-    list(list(path = v6Workbook, sheets = propertySheets)),
-    outputs
-  )
 
-  moves <- c(
-    projectConfigPath,
-    vapply(sections, function(section) section$path, character(1))
-  )
   list(
     projectDir = projectDir,
-    moves = unique(unname(moves)),
-    outputs = outputs,
+    moves = unique(c(
+      projectConfigPath,
+      vapply(sections, function(section) section$path, character(1))
+    )),
+    outputs = c(
+      list(list(path = v6Workbook, sheets = propertySheets)),
+      unname(outputs)
+    ),
     v6Workbook = v6Workbook,
     envVarRewrites = envVarRewrites$rewrites,
-    droppedSheets = Filter(length, droppedSheets)
+    droppedSheets = droppedSheets
+  )
+}
+
+# The v6 workbook a section is written to: `section` with the sheets to write,
+# or `NULL` when there are none, so the workbook is not written.
+#
+# @keywords internal
+# @noRd
+.v5Output <- function(section, sheets) {
+  if (length(sheets) == 0L) {
+    return(NULL)
+  }
+  list(name = section$name, path = section$path, sheets = sheets)
+}
+
+# The named sheets of a workbook, read as data frames.
+#
+# @keywords internal
+# @noRd
+.v5ReadSheets <- function(file, sheets) {
+  stats::setNames(
+    lapply(sheets, function(sheet) {
+      as.data.frame(readExcel(file, sheet = sheet), check.names = FALSE)
+    }),
+    sheets
   )
 }
 
@@ -744,28 +681,25 @@ convertProjectToV6 <- function(
 # @noRd
 .v5EnvVarFolders <- function(table) {
   values <- table$Value
-  rewrites <- data.frame(
-    property = character(),
-    from = character(),
-    to = character(),
-    stringsAsFactors = FALSE
+  folder <- table$Property %in%
+    .v5EnvVarFolderProperties &
+    !vapply(values, .isBlankCell, logical(1))
+  values[folder] <- vapply(
+    values[folder],
+    .v5EnvVarSegments,
+    character(1),
+    USE.NAMES = FALSE
   )
-  for (i in which(table$Property %in% .v5EnvVarFolderProperties)) {
-    value <- values[[i]]
-    if (.isBlankCell(value)) {
-      next
-    }
-    rewritten <- .v5EnvVarSegments(value)
-    if (!identical(rewritten, value)) {
-      values[[i]] <- rewritten
-      rewrites[nrow(rewrites) + 1L, ] <- c(
-        table$Property[[i]],
-        value,
-        rewritten
-      )
-    }
-  }
-  list(values = values, rewrites = rewrites)
+  changed <- folder & values != table$Value
+  list(
+    values = values,
+    rewrites = data.frame(
+      property = table$Property[changed],
+      from = table$Value[changed],
+      to = values[changed],
+      stringsAsFactors = FALSE
+    )
+  )
 }
 
 # One folder value with each part that names a set environment variable
@@ -799,7 +733,7 @@ convertProjectToV6 <- function(
 # the esqlabsR 5 workbooks in it move into `esqlabsR5/`, keeping their path
 # inside the project.
 #
-# @returns The absolute, normalized folder, or NULL when the project names none.
+# @returns The absolute folder, or NULL when the project names none.
 # @keywords internal
 # @noRd
 .v5ConfigurationsFolder <- function(value, projectDir, .call) {
@@ -810,7 +744,7 @@ convertProjectToV6 <- function(
   if (.declaresEnvVarPath(value) || .pathEscapesRoot(value, projectDir)) {
     cli::cli_abort(.esqlabsR5Messages$configurationsFolderOutside(value))
   }
-  normalizePath(.absoluteAgainstRoot(value, projectDir), mustWork = FALSE)
+  .absoluteAgainstRoot(value, projectDir)
 }
 
 # Give the working folders the values a v6 project reads them by, and refuse a
@@ -878,7 +812,7 @@ convertProjectToV6 <- function(
   ) {
     return(value)
   }
-  root <- normalizePath(projectDir, mustWork = FALSE)
+  root <- projectDir
   if (fs::dir_exists(fs::path(root, value))) {
     return(value)
   }
@@ -899,73 +833,68 @@ convertProjectToV6 <- function(
 # moved to another workbook. The row of a workbook the project names but that
 # does not exist is kept, so the import still reports it.
 #
+# @param table The property table.
+# @param outputs The v6 workbooks, by property.
+# @param sections The esqlabsR 5 workbooks read, by property.
 # @keywords internal
 # @noRd
-.v5DeclareWorkbooks <- function(table, workbooks, sections) {
-  for (property in names(.v5SectionWorkbooks)) {
-    workbook <- workbooks[[property]]
-    written <- !is.null(workbook) &&
-      (isTRUE(workbook$copy) || length(workbook$sheets) > 0L)
-    if (written && !(property %in% table$Property)) {
+.v5DeclareWorkbooks <- function(table, outputs, sections) {
+  for (property in names(outputs)) {
+    if (!(property %in% table$Property)) {
       table <- rbind(
         table,
         data.frame(
           Property = property,
-          Value = workbook$name,
+          Value = outputs[[property]]$name,
           Description = NA_character_,
           stringsAsFactors = FALSE
         )
       )
-    } else if (!written && property %in% names(sections)) {
-      table <- table[table$Property != property, , drop = FALSE]
     }
   }
-  table
+  table[!(table$Property %in% setdiff(names(sections), names(outputs))), ]
 }
 
-# Where each section workbook goes, `list(name, path)` by property: the file the
-# project names, or the usual name. Used for a workbook the conversion writes
-# although the esqlabsR 5 project had none, such as the model-parameters
-# workbook of a project whose parameter sets were all in the individuals
-# workbook.
+# Where each section workbook is, `list(name, path)` by property, in the order
+# the import reads them: the file the project names, or the usual name, under
+# the configurations folder. A file name that climbs out of the configurations
+# folder aborts naming the property.
 #
 # @keywords internal
 # @noRd
-.v5SectionTargets <- function(props, configsFolder) {
+.v5SectionTargets <- function(props, configsFolder, .call) {
+  rlang::local_error_call(.call)
   if (is.null(configsFolder)) {
     return(list())
   }
   targets <- list()
   for (property in names(.v5SectionWorkbooks)) {
     name <- props(property) %||% .v5SectionWorkbooks[[property]]
+    if (.pathEscapesRoot(name, configsFolder)) {
+      cli::cli_abort(messages$projectPathEscapesRoot(
+        property,
+        name,
+        configsFolder
+      ))
+    }
     targets[[property]] <- list(
-      property = property,
       name = name,
-      path = normalizePath(
-        .absoluteAgainstRoot(name, configsFolder),
-        mustWork = FALSE
-      )
+      path = .absoluteAgainstRoot(name, configsFolder)
     )
   }
   targets
 }
 
-# The scenarios of the esqlabsR 5 scenarios workbook, as far as the conversion of
-# the other workbooks needs them: `list(id, individual, outputPaths)` for each
-# row that names a scenario.
+# The scenarios of the Scenarios sheet, as far as the conversion of the other
+# workbooks needs them: `list(id, individual, outputPaths)` for each row that
+# names a scenario.
 #
+# @param df The Scenarios sheet, or `NULL`.
 # @keywords internal
 # @noRd
-.v5ScenarioRecords <- function(scenariosFile) {
-  if (is.null(scenariosFile)) {
-    return(list())
-  }
-  if (!("Scenarios" %in% readxl::excel_sheets(scenariosFile))) {
-    return(list())
-  }
-  df <- readExcel(scenariosFile, sheet = "Scenarios")
+.v5ScenarioRecords <- function(df) {
   records <- list()
-  for (i in seq_len(nrow(df))) {
+  for (i in seq_len(nrow(df %||% data.frame()))) {
     id <- .v5CellValue(df, "Scenario_name", i)
     if (.isBlankCell(id)) {
       next
@@ -1000,40 +929,6 @@ convertProjectToV6 <- function(
     value <- values[[name]]
     if (.isBlankCell(value)) NULL else value
   }
-}
-
-# The section workbooks that exist, in the order the import reads them, each as
-# `list(property, name, path)`. A workbook whose property row is missing is
-# looked for under its usual name, as the import does. A file name that climbs
-# out of the configurations folder aborts naming the property.
-#
-# @keywords internal
-# @noRd
-.v5ReadableWorkbooks <- function(props, configsFolder, .call) {
-  rlang::local_error_call(.call)
-  if (is.null(configsFolder)) {
-    return(list())
-  }
-  sections <- list()
-  for (property in names(.v5SectionWorkbooks)) {
-    name <- props(property) %||% .v5SectionWorkbooks[[property]]
-    if (.pathEscapesRoot(name, configsFolder)) {
-      cli::cli_abort(messages$projectPathEscapesRoot(
-        property,
-        name,
-        configsFolder
-      ))
-    }
-    path <- normalizePath(
-      .absoluteAgainstRoot(name, configsFolder),
-      mustWork = FALSE
-    )
-    if (!file.exists(path)) {
-      next
-    }
-    sections[[property]] <- list(property = property, name = name, path = path)
-  }
-  sections
 }
 
 # The v6 property sheet: a `schemaVersion` and an `esqlabsRVersion` row, then
@@ -1248,63 +1143,38 @@ convertProjectToV6 <- function(
 # by an earlier workbook: the later sheet is renamed, and the references its own
 # workbook makes follow it (see `.v5AppendParameterSets()`).
 #
-# @param workbooks The v6 workbooks by property, as `.v5PlanConversion()` builds
-#   them.
 # @param sections The esqlabsR 5 workbooks read, by property.
 # @param scenarios The scenario records (`.v5ScenarioRecords()`).
-# @param targets Where each section workbook goes (`.v5SectionTargets()`).
-# @returns `workbooks`, with the model-parameters, individuals and applications
-#   workbooks written anew.
+# @returns One `list(property, sheets)` for each of the model-parameters,
+#   individuals and applications workbooks the conversion writes.
 # @keywords internal
 # @noRd
-.v5ConvertParameterWorkbooks <- function(
-  workbooks,
-  sections,
-  scenarios,
-  targets
-) {
-  if (length(targets) == 0L) {
-    return(workbooks)
-  }
+.v5ConvertParameterWorkbooks <- function(sections, scenarios) {
   sets <- list()
+  converted <- list()
 
   modelParams <- sections$modelParamsFile
   if (!is.null(modelParams)) {
     parsed <- .parseExcelParameterSheets(modelParams$path)
     sets <- .v5AppendParameterSets(sets, parsed, modelParams$path)$sets
   }
-
   individuals <- sections$individualsFile
   if (!is.null(individuals)) {
-    converted <- .v5ConvertIndividualsWorkbook(
-      individuals$path,
-      sets,
-      scenarios
-    )
-    sets <- converted$sets
-    workbooks$individualsFile <- c(
-      individuals,
-      list(copy = FALSE, sheets = converted$sheets)
-    )
+    workbook <- .v5ConvertIndividualsWorkbook(individuals$path, sets, scenarios)
+    sets <- workbook$sets
+    converted$individualsFile <- workbook$sheets
   }
-
   applications <- sections$applicationsFile
   if (!is.null(applications)) {
-    converted <- .v5ConvertApplicationsWorkbook(applications$path, sets)
-    sets <- converted$sets
-    workbooks$applicationsFile <- c(
-      applications,
-      list(copy = FALSE, sheets = converted$sheets)
-    )
+    workbook <- .v5ConvertApplicationsWorkbook(applications$path, sets)
+    sets <- workbook$sets
+    converted$applicationsFile <- workbook$sheets
   }
+  converted$modelParamsFile <- lapply(sets, .v5ParameterSetSheet)
 
-  if (length(sets) > 0L || !is.null(modelParams)) {
-    workbooks$modelParamsFile <- c(
-      modelParams %||% targets$modelParamsFile,
-      list(copy = FALSE, sheets = lapply(sets, .v5ParameterSetSheet))
-    )
-  }
-  workbooks
+  lapply(names(converted), function(property) {
+    list(property = property, sheets = converted[[property]])
+  })
 }
 
 # A parameter set as a sheet of the model-parameters workbook.
@@ -1623,9 +1493,9 @@ convertProjectToV6 <- function(
   if (length(namedIds) == 0L) {
     return(invisible(NULL))
   }
-  .warnFormatted(
+  cli::cli_warn(
     .esqlabsR5Messages$individualParameterSetsColumn(file, namedIds, namedSets),
-    "esqlabsR_convertIndividualParameterSets"
+    class = "esqlabsR_convertIndividualParameterSets"
   )
 }
 
@@ -1673,9 +1543,9 @@ convertProjectToV6 <- function(
   if (length(lostIds) == 0L) {
     return(invisible(NULL))
   }
-  .warnFormatted(
+  cli::cli_warn(
     .esqlabsR5Messages$unparametrizedIndividuals(file, lostIds, lostSheets),
-    "esqlabsR_importUnparametrizedIndividuals"
+    class = "esqlabsR_importUnparametrizedIndividuals"
   )
 }
 
@@ -1716,9 +1586,9 @@ convertProjectToV6 <- function(
   if (length(dropped) == 0L) {
     return(invisible(NULL))
   }
-  .warnFormatted(
+  cli::cli_warn(
     .esqlabsR5Messages$undefinedIndividualSheets(file, dropped),
-    "esqlabsR_importUndefinedIndividualSheets"
+    class = "esqlabsR_importUndefinedIndividualSheets"
   )
 }
 
@@ -1737,19 +1607,18 @@ convertProjectToV6 <- function(
 # scenario name does not survive as an id.
 #
 # @param file The esqlabsR 5 scenarios workbook.
-# @param call The frame an abort is attributed to.
+# @param .call The frame an abort is attributed to.
 # @returns `list(sheets, dropped)`, `dropped` naming the other sheets.
 # @keywords internal
 # @noRd
-.v5ConvertScenariosWorkbook <- function(file, call = NULL) {
+.v5ConvertScenariosWorkbook <- function(file, .call = NULL) {
   sheetNames <- readxl::excel_sheets(file)
-  sheets <- list()
-  for (sheet in intersect(sheetNames, c("Scenarios", "OutputPaths"))) {
-    df <- as.data.frame(readExcel(file, sheet = sheet), check.names = FALSE)
-    if (identical(sheet, "Scenarios")) {
-      df <- .v5ConvertScenariosSheet(df, file, call)
-    }
-    sheets[[sheet]] <- df
+  sheets <- .v5ReadSheets(
+    file,
+    intersect(sheetNames, c("Scenarios", "OutputPaths"))
+  )
+  if (!is.null(sheets$Scenarios)) {
+    sheets$Scenarios <- .v5ConvertScenariosSheet(sheets$Scenarios, file, .call)
   }
   list(
     sheets = sheets,
@@ -1762,10 +1631,10 @@ convertProjectToV6 <- function(
 #
 # @param df The sheet.
 # @param file The workbook, named when a boolean cell cannot be read.
-# @param call The frame an abort is attributed to.
+# @param .call The frame an abort is attributed to.
 # @keywords internal
 # @noRd
-.v5ConvertScenariosSheet <- function(df, file = NULL, call = NULL) {
+.v5ConvertScenariosSheet <- function(df, file = NULL, .call = NULL) {
   for (column in intersect(.v5ScenarioBooleanColumns, names(df))) {
     df[[column]] <- vapply(
       df[[column]],
@@ -1773,67 +1642,49 @@ convertProjectToV6 <- function(
       logical(1),
       field = column,
       file = file,
-      call = call,
+      .call = .call,
       USE.NAMES = FALSE
     )
   }
-
   # A sheet without the column is reported by the import, which requires it.
   if (!("Scenario_name" %in% names(df))) {
     return(df)
   }
-  ids <- as.character(df[["Scenario_name"]])
-  labelCells <- if ("Label" %in% names(df)) {
-    as.character(df[["Label"]])
-  } else {
-    rep(NA_character_, nrow(df))
-  }
-  records <- lapply(seq_len(nrow(df)), function(i) {
-    record <- list(id = ids[[i]])
-    if (!is.na(labelCells[[i]])) {
-      record$label <- labelCells[[i]]
-    }
-    record
-  })
-  labels <- vapply(
-    .v5KeepScenarioNamesAsLabels(records),
-    function(record) record$label %||% NA_character_,
-    character(1)
+  labels <- .v5ScenarioLabels(
+    as.character(df[["Scenario_name"]]),
+    as.character(df[["Label"]] %||% rep(NA_character_, nrow(df)))
   )
   if (all(is.na(labels))) {
     return(df)
   }
-  df[["Label"]] <- NULL
-  data.frame(
-    df[1L],
-    Label = labels,
-    df[-1L],
-    check.names = FALSE,
-    stringsAsFactors = FALSE
-  )
+  df[["Label"]] <- labels
+  dplyr::relocate(df, "Label", .after = "Scenario_name")
 }
 
-# Keep the `Scenario_name` of each scenario as its label when canonicalizing the
-# id changes more than its case, so the spelling esqlabsR 5 showed is not lost:
-# `Aciclovir_IV-2.5mg/kg` gets the id `aciclovir_iv-2.5mg_kg` and the label
-# `Aciclovir_IV-2.5mg/kg`. A name the id only lowercases gets no label, since the
-# id reads the same. Wrapping quotes are cell syntax, not part of the name, so
-# they are stripped first. A label the sheet gives in its `Label` column wins.
+# The label of each scenario: the `Label` cell, or else the `Scenario_name` when
+# canonicalizing it into an id changes more than its case, so the spelling
+# esqlabsR 5 showed is not lost: `Aciclovir_IV-2.5mg/kg` gets the id
+# `aciclovir_iv-2.5mg_kg` and the label `Aciclovir_IV-2.5mg/kg`. A name the id
+# only lowercases gets no label, since the id reads the same. Wrapping quotes
+# are cell syntax, not part of the name, so they are stripped first.
 #
-# @param scenarios Records carrying `id` and, optionally, `label`.
-# @returns `scenarios`, with the labels added.
+# @param ids The `Scenario_name` cells.
+# @param labels The `Label` cells.
+# @returns The labels, `NA` for a scenario without one.
 # @keywords internal
 # @noRd
-.v5KeepScenarioNamesAsLabels <- function(scenarios) {
-  lapply(scenarios, function(sc) {
-    if (is.null(sc$label) && .isNonEmptyString(sc$id)) {
-      name <- .stripWrappingQuotes(sc$id)
-      if (!identical(.canonicalizeOneId(name), tolower(name))) {
-        sc$label <- name
-      }
-    }
-    sc
-  })
+.v5ScenarioLabels <- function(ids, labels) {
+  names <- .stripWrappingQuotes(ids)
+  changed <- vapply(
+    names,
+    function(name) {
+      .isNonEmptyString(name) &&
+        !identical(.canonicalizeOneId(name), tolower(name))
+    },
+    logical(1),
+    USE.NAMES = FALSE
+  )
+  ifelse(is.na(labels) & changed, names, labels)
 }
 
 # Read one esqlabsR 5 boolean cell as `TRUE`, `FALSE` or `NA` (blank).
@@ -1846,10 +1697,10 @@ convertProjectToV6 <- function(
 # @param x One cell.
 # @param field The column, for the abort.
 # @param file The workbook, for the abort, or `NULL`.
-# @param call The frame the abort is attributed to.
+# @param .call The frame the abort is attributed to.
 # @keywords internal
 # @noRd
-.v5ToLogical <- function(x, field, file = NULL, call = NULL) {
+.v5ToLogical <- function(x, field, file = NULL, .call = NULL) {
   if (is.null(x) || length(x) == 0L || is.na(x)) {
     return(NA)
   }
@@ -1877,7 +1728,7 @@ convertProjectToV6 <- function(
   }
   cli::cli_abort(
     .esqlabsR5Messages$notLogical(field, x, file),
-    call = call
+    call = .call
   )
 }
 
@@ -1896,9 +1747,7 @@ convertProjectToV6 <- function(
 # @noRd
 .v5ConvertPlotsWorkbook <- function(file) {
   sheetNames <- readxl::excel_sheets(file)
-  read <- function(sheet) {
-    as.data.frame(readExcel(file, sheet = sheet), check.names = FALSE)
-  }
+  read <- function(sheet) .v5ReadSheets(file, sheet)[[1]]
   converters <- list(
     DataCombined = identity,
     plotConfiguration = .v5ConvertPlotSheet,
@@ -1981,21 +1830,17 @@ convertProjectToV6 <- function(
   if (!(from %in% names(df))) {
     return(df)
   }
-  preference <- intersect(unique(c(keep, from, to)), names(df))
   values <- rep(NA_character_, nrow(df))
-  for (column in preference) {
+  for (column in intersect(unique(c(keep, from, to)), names(df))) {
     blank <- is.na(values)
     values[blank] <- as.character(df[[column]])[blank]
   }
-  merged <- which(names(df) %in% c(to, from))
-  before <- seq_len(min(merged) - 1L)
-  data.frame(
-    df[before],
-    stats::setNames(list(values), to),
-    df[setdiff(seq_along(df), c(before, merged))],
-    check.names = FALSE,
-    stringsAsFactors = FALSE
-  )
+  first <- names(df)[min(match(intersect(c(to, from), names(df)), names(df)))]
+  df[[".merged"]] <- values
+  df <- dplyr::relocate(df, ".merged", .before = dplyr::all_of(first))
+  df[intersect(c(to, from), names(df))] <- NULL
+  names(df)[names(df) == ".merged"] <- to
+  df
 }
 
 # A true-or-false plot setting as `TRUE` / `FALSE` where esqlabsR 5 spelled it
@@ -2033,13 +1878,13 @@ convertProjectToV6 <- function(
   } else {
     character()
   }
-  .warnFormatted(
+  cli::cli_warn(
     .esqlabsR5Messages$skippedPlotExportConfiguration(
       plotsFile,
       nrow(exportDf),
       grids[!is.na(grids)]
     ),
-    "esqlabsR_importSkippedPlotExportConfiguration"
+    class = "esqlabsR_importSkippedPlotExportConfiguration"
   )
 }
 
@@ -2064,13 +1909,13 @@ convertProjectToV6 <- function(
   if (length(rows) == 0L) {
     return(invisible(NULL))
   }
-  .warnFormatted(
+  cli::cli_warn(
     .esqlabsR5Messages$conflictingPlotIdColumns(
       sheet,
       idColumn,
       paste0(used[rows], " / ", other[rows])
     ),
-    "esqlabsR_importConflictingPlotIdColumns"
+    class = "esqlabsR_importConflictingPlotIdColumns"
   )
 }
 
@@ -2097,7 +1942,7 @@ convertProjectToV6 <- function(
 #
 # @param file The esqlabsR 5 parameter-identification workbook.
 # @param scenarios The scenario records.
-# @param outputPaths The output paths, a named list `id -> path`.
+# @param outputPaths The output paths, a named character vector `id -> path`.
 # @param dataSheets The sheets of the data workbook, or `NULL` when it cannot be
 #   read.
 # @returns `list(sheets, dropped)`, or `NULL` for a workbook that already has the
@@ -2109,12 +1954,13 @@ convertProjectToV6 <- function(
   if ("PITasks" %in% sheetNames) {
     return(NULL)
   }
-  tasks <- .v5ParsePI(file, sheetNames, scenarios)
+  sheets <- .v5ReadSheets(file, intersect(.v5PISheets, sheetNames))
+  tasks <- .v5ParsePI(sheets, scenarios)
   # A mapping may name its output by the model path of an output path; the v6
   # sheet names it by the output path's id.
   tasks <- .v5ResolvePIOutputPathRefs(tasks, outputPaths)
   .v5WarnMissingPIObservedDataSheets(
-    .v5PIObservedDataSheets(file),
+    .v5PIObservedDataSheets(sheets$PIOutputMappings),
     dataSheets
   )
   list(
@@ -2123,23 +1969,16 @@ convertProjectToV6 <- function(
   )
 }
 
-# The `OutputPaths` sheet of the esqlabsR 5 scenarios workbook, as a named list
-# `id -> path`.
+# The `OutputPaths` sheet, as a named character vector `id -> path`.
 #
+# @param df The sheet, or `NULL`.
 # @keywords internal
 # @noRd
-.v5OutputPaths <- function(scenariosFile) {
-  if (
-    is.null(scenariosFile) ||
-      !("OutputPaths" %in% readxl::excel_sheets(scenariosFile))
-  ) {
-    return(list())
+.v5OutputPaths <- function(df) {
+  if (is.null(df)) {
+    return(character())
   }
-  df <- readExcel(scenariosFile, sheet = "OutputPaths")
-  as.list(stats::setNames(
-    as.character(df$OutputPath),
-    as.character(df$OutputPathId)
-  ))
+  stats::setNames(as.character(df$OutputPath), as.character(df$OutputPathId))
 }
 
 # The sheets of the project's data workbook, or `NULL` when the project names
@@ -2175,16 +2014,10 @@ convertProjectToV6 <- function(
 # from. A v6 project lists the data sheets in its observed-data definition and
 # finds a data set by its name, so the column is not carried over.
 #
+# @param df The `PIOutputMappings` sheet, or `NULL`.
 # @keywords internal
 # @noRd
-.v5PIObservedDataSheets <- function(piFile) {
-  if (!("PIOutputMappings" %in% readxl::excel_sheets(piFile))) {
-    return(character())
-  }
-  df <- readExcel(piFile, sheet = "PIOutputMappings")
-  if (!("ObservedDataSheet" %in% names(df)) || nrow(df) == 0L) {
-    return(character())
-  }
+.v5PIObservedDataSheets <- function(df) {
   declared <- unique(as.character(df$ObservedDataSheet))
   declared[!is.na(declared) & nzchar(declared)]
 }
@@ -2205,9 +2038,9 @@ convertProjectToV6 <- function(
   if (length(missing) == 0L) {
     return(invisible(NULL))
   }
-  .warnFormatted(
+  cli::cli_warn(
     .esqlabsR5Messages$missingPIObservedDataSheets(missing),
-    "esqlabsR_importUnimportedPIObservedDataSheets"
+    class = "esqlabsR_importUnimportedPIObservedDataSheets"
   )
 }
 
@@ -2216,41 +2049,23 @@ convertProjectToV6 <- function(
 # mappings and configuration from the five sheets, as
 # `{id, scenarios[], parameters[], outputMappings[], configuration}`.
 #
-# @param piFile The workbook.
-# @param sheets Its sheet names.
+# @param sheets The workbook's sheets of the layout, by name.
 # @param scenarios The scenario records, which the oldest mapping layout takes
 #   its output paths from.
 # @returns An unnamed list of task records (empty when no sheet names a task).
 # @keywords internal
 # @noRd
-.v5ParsePI <- function(piFile, sheets, scenarios = NULL) {
-  readSheet <- function(name) {
-    if (name %in% sheets) readExcel(piFile, sheet = name) else NULL
-  }
-  paramDf <- readSheet("PIParameters")
-  mappingDf <- readSheet("PIOutputMappings")
-  configDf <- readSheet("PIConfiguration")
-  algDf <- readSheet("AlgorithmOptions")
-  ciDf <- readSheet("CIOptions")
-
+.v5ParsePI <- function(sheets, scenarios) {
   # Gathered unquoted, as `.v5PITaskRows()` matches them, so a sheet quoting a
   # task name still describes the same task.
-  taskNames <- unique(unlist(lapply(
-    list(mappingDf, paramDf, configDf, algDf, ciDf),
-    function(df) {
-      if (!is.null(df) && "PITaskName" %in% names(df)) {
-        .stripWrappingQuotes(as.character(df$PITaskName))
-      }
-    }
-  )))
+  taskNames <- unique(unlist(lapply(sheets, function(df) {
+    .stripWrappingQuotes(as.character(df$PITaskName))
+  })))
   taskNames <- taskNames[!is.na(taskNames)]
-  if (length(taskNames) == 0L) {
-    return(list())
-  }
 
   lapply(taskNames, function(task) {
-    params <- .v5ParsePIParams(paramDf, task)
-    mappings <- .v5ParsePIMappings(mappingDf, task, scenarios)
+    params <- .v5ParsePIParams(sheets$PIParameters, task)
+    mappings <- .v5ParsePIMappings(sheets$PIOutputMappings, task, scenarios)
     # A task's scenarios are those its parameters and mappings name: the layout
     # has no list of its own.
     taskScenarios <- unique(unlist(lapply(
@@ -2262,7 +2077,12 @@ convertProjectToV6 <- function(
       scenarios = as.list(taskScenarios),
       parameters = params,
       outputMappings = mappings,
-      configuration = .v5ParsePIConfig(configDf, algDf, ciDf, task)
+      configuration = .v5ParsePIConfig(
+        sheets$PIConfiguration,
+        sheets$AlgorithmOptions,
+        sheets$CIOptions,
+        task
+      )
     )
   })
 }
@@ -2371,9 +2191,9 @@ convertProjectToV6 <- function(
   }
 
   if (length(mismatched) > 0L) {
-    .warnFormatted(
+    cli::cli_warn(
       .esqlabsR5Messages$unmergedPIParameterGroups(task, mismatched),
-      "esqlabsR_importUnmergedPIParameterGroups"
+      class = "esqlabsR_importUnmergedPIParameterGroups"
     )
   }
   groups
@@ -2389,7 +2209,7 @@ convertProjectToV6 <- function(
 #
 # @keywords internal
 # @noRd
-.v5ParsePIMappings <- function(df, task, scenarios = NULL) {
+.v5ParsePIMappings <- function(df, task, scenarios) {
   rows <- .v5PITaskRows(df, task)
   if (nrow(rows) > 0L && !("OutputPath" %in% names(rows))) {
     rows <- .v5PIDerivedMappingRows(rows, task, scenarios)
@@ -2470,9 +2290,9 @@ convertProjectToV6 <- function(
   }
 
   if (length(unresolved) > 0L) {
-    .warnFormatted(
+    cli::cli_warn(
       .esqlabsR5Messages$incompletePIOutputMappings(task, unresolved),
-      "esqlabsR_importIncompletePIOutputMappings"
+      class = "esqlabsR_importIncompletePIOutputMappings"
     )
   }
   if (length(derived) == 0L) {
@@ -2645,26 +2465,15 @@ convertProjectToV6 <- function(
 # validation reports it.
 #
 # @param tasks The task records.
-# @param outputPaths The output paths, a named list `id -> path`.
+# @param outputPaths The output paths, a named character vector `id -> path`.
 # @keywords internal
 # @noRd
 .v5ResolvePIOutputPathRefs <- function(tasks, outputPaths) {
-  if (length(tasks) == 0L || length(outputPaths) == 0L) {
-    return(tasks)
-  }
-  scalar <- vapply(outputPaths, \(x) length(x) == 1L, logical(1))
-  if (!any(scalar)) {
-    return(tasks)
-  }
-  valueToId <- stats::setNames(
-    names(outputPaths)[scalar],
-    vapply(outputPaths[scalar], as.character, character(1))
-  )
   lapply(tasks, function(task) {
     task$outputMappings <- lapply(task$outputMappings, function(mapping) {
-      path <- mapping$outputPath
-      if (length(path) == 1L && path %in% names(valueToId)) {
-        mapping$outputPath <- valueToId[[path]]
+      match <- names(outputPaths)[outputPaths %in% mapping$outputPath]
+      if (length(match) > 0L) {
+        mapping$outputPath <- match[[1]]
       }
       mapping
     })
@@ -2702,14 +2511,8 @@ convertProjectToV6 <- function(
   )
   column <- "Protein Ontogenies"
   if (!(column %in% names(df))) {
-    position <- match(pair[[1]], names(df))
-    df <- data.frame(
-      df[seq_len(position - 1L)],
-      stats::setNames(list(NA_character_), column),
-      df[setdiff(seq_along(df), seq_len(position - 1L))],
-      check.names = FALSE,
-      stringsAsFactors = FALSE
-    )
+    df[[column]] <- NA_character_
+    df <- dplyr::relocate(df, dplyr::all_of(column), .before = pair[[1]])
   }
   df[[column]] <- cells
   df[pair] <- NULL
@@ -2775,9 +2578,9 @@ convertProjectToV6 <- function(
     if (identical(sheet, "UserDefinedVariability")) {
       variability <- readExcel(file, sheet = sheet)
       if (nrow(variability) > 0L) {
-        .warnFormatted(
+        cli::cli_warn(
           .esqlabsR5Messages$userDefinedVariability(file, nrow(variability)),
-          "esqlabsR_convertUserDefinedVariability"
+          class = "esqlabsR_convertUserDefinedVariability"
         )
         next
       }

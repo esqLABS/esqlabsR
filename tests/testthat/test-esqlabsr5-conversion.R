@@ -999,7 +999,10 @@ test_that(".v5ParsePI parses the 5.x PITaskName layout", {
     "Configurations",
     "ParameterIdentification.xlsx"
   )
-  tasks <- .v5ParsePI(piFile, readxl::excel_sheets(piFile))
+  tasks <- .v5ParsePI(
+    .v5ReadSheets(piFile, readxl::excel_sheets(piFile)),
+    list()
+  )
   expect_setequal(
     vapply(tasks, function(t) t$id, character(1)),
     c("AciclovirSimple", "AciclovirSimplePathId", "AciclovirMultiScenario")
@@ -1034,7 +1037,7 @@ test_that(".v5ParsePI parses the 5.x PITaskName layout", {
 # rewritten to the id of the matching `outputPaths` definition, so the reference
 # resolves rather than dangling (#1158).
 test_that(".v5ResolvePIOutputPathRefs rewrites a full-path mapping to the output-path id", {
-  outputPaths <- list(Aciclovir_PVB = "Organism|PVB|Aciclovir|Plasma")
+  outputPaths <- c(Aciclovir_PVB = "Organism|PVB|Aciclovir|Plasma")
   tasks <- list(list(
     id = "t1",
     outputMappings = list(
@@ -1118,7 +1121,7 @@ test_that(".v5ParsePIMappings parses a row with no output path", {
     DataSet = c("d1", "d2"),
     stringsAsFactors = FALSE
   )
-  mappings <- .v5ParsePIMappings(blankCell, "t1")
+  mappings <- .v5ParsePIMappings(blankCell, "t1", list())
   expect_length(mappings, 2L)
   expect_identical(mappings[[1]]$outputPath, "Organism|A|Conc")
   expect_null(mappings[[2]]$outputPath)
@@ -1225,22 +1228,18 @@ test_that(".v5DropSkippedSheetRefs removes only references to skipped sheets", {
   expect_length(.v5DropSkippedSheetRefs("skipped", "Skipped"), 0L)
 })
 
-test_that(".v5KeepScenarioNamesAsLabels strips wrapping quotes before it compares and keeps", {
-  scenarios <- list(
-    list(id = "\"aciclovir_iv\""),
-    list(id = "\"Aciclovir_IV\""),
-    list(id = "\"Aciclovir IV\""),
-    list(id = "Aciclovir IV", label = "Aciclovir IV 250 mg")
-  )
-
+test_that(".v5ScenarioLabels strips wrapping quotes before it compares and keeps", {
   expect_identical(
-    .v5KeepScenarioNamesAsLabels(scenarios),
-    list(
-      list(id = "\"aciclovir_iv\""),
-      list(id = "\"Aciclovir_IV\""),
-      list(id = "\"Aciclovir IV\"", label = "Aciclovir IV"),
-      list(id = "Aciclovir IV", label = "Aciclovir IV 250 mg")
-    )
+    .v5ScenarioLabels(
+      c(
+        "\"aciclovir_iv\"",
+        "\"Aciclovir_IV\"",
+        "\"Aciclovir IV\"",
+        "Aciclovir IV"
+      ),
+      c(NA, NA, NA, "Aciclovir IV 250 mg")
+    ),
+    c(NA, NA, "Aciclovir IV", "Aciclovir IV 250 mg")
   )
 })
 
