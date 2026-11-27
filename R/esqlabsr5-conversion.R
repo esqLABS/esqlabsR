@@ -226,6 +226,55 @@
   )
 }
 
+.esqlabsR5Messages$droppedSheets <- function(dropped) {
+  workbooks <- names(dropped)
+  n <- length(unlist(dropped))
+  cliBullets(
+    "i" = "{cli::qty(n)}{?A sheet/Some sheets} with no place in the v6 \\
+    workbooks {?was/were} not carried over; the esqlabsR 5 workbooks in \\
+    {.file esqlabsR5} keep {?it/them}:",
+    stats::setNames(
+      sprintf(
+        "{.file {workbooks[[%1$d]]}}: {.val {dropped[[%1$d]]}}",
+        seq_along(dropped)
+      ),
+      rep("*", length(dropped))
+    )
+  )
+}
+
+.esqlabsR5Messages$ontogeniesNotReadable <- function(
+  recordType,
+  recordId,
+  proteins,
+  ontogenies
+) {
+  cliBullets(
+    "!" = "The protein ontogenies of {recordType} {.val {recordId}} are not \\
+    converted: the {.field Protein} and {.field Ontogeny} columns cannot be \\
+    paired.",
+    "i" = "{length(proteins)} protein{?s} against {length(ontogenies)} \\
+    ontogen{?y/ies}; each protein needs exactly one ontogeny.",
+    "i" = "Write the pairs into the {.field Protein Ontogenies} cell of the v6 \\
+    workbook as {.val Protein:Ontogeny,Protein:Ontogeny} and import again."
+  )
+}
+
+.esqlabsR5Messages$userDefinedVariability <- function(filePath, rows) {
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("rows", rows, envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field UserDefinedVariability} sheet of {.file {filePath}} is \\
+      not converted: {cli::qty(rows)}{rows} row{?s} of parameter variability.",
+      "i" = "esqlabsR 5 did not read the sheet, and a v6 population has no \\
+      field for it. The esqlabsR 5 workbook in {.file esqlabsR5} keeps it."
+    ),
+    envir = envir
+  )
+}
+
 .esqlabsR5Messages$folderHoldsProject <- function(dir, found) {
   cliBullets(
     "x" = "{.file {dir}} already holds a v6 project or an earlier conversion: \\
@@ -428,6 +477,15 @@ convertProjectToV6 <- function(
     scenarios,
     .v5SectionTargets(props, configsFolder)
   )
+  # The sheets that have no v6 place and hold nothing a warning names, by
+  # workbook, for the summary.
+  droppedSheets <- list()
+  if (!is.null(sections$populationsFile)) {
+    converted <- .v5ConvertPopulationsWorkbook(sections$populationsFile$path)
+    workbooks$populationsFile$copy <- FALSE
+    workbooks$populationsFile$sheets <- converted$sheets
+    droppedSheets[[sections$populationsFile$name]] <- converted$dropped
+  }
 
   outputs <- list()
   for (workbook in workbooks) {
@@ -479,7 +537,8 @@ convertProjectToV6 <- function(
     moves = unname(moves),
     outputs = outputs,
     v6Workbook = v6Workbook,
-    envVarRewrites = envVarRewrites$rewrites
+    envVarRewrites = envVarRewrites$rewrites,
+    droppedSheets = Filter(length, droppedSheets)
   )
 }
 
@@ -878,6 +937,12 @@ convertProjectToV6 <- function(
         rewrites$from,
         rewrites$to
       ),
+      class = "esqlabsR_conversionSummary"
+    )
+  }
+  if (length(plan$droppedSheets) > 0L) {
+    cli::cli_inform(
+      .esqlabsR5Messages$droppedSheets(plan$droppedSheets),
       class = "esqlabsR_conversionSummary"
     )
   }
@@ -1290,6 +1355,11 @@ convertProjectToV6 <- function(
   .v5WarnUndefinedIndividualSheets(ids, setSheetNames, scenarios, file)
   .v5WarnIndividualParameterSetsColumn(biometrics, ids, file)
   biometrics[["Individual Parameter Sets"]] <- NULL
+  biometrics <- .v5MergeOntogenyColumns(
+    biometrics,
+    "individual",
+    "IndividualId"
+  )
 
   sheetCanonical <- vapply(setSheetNames, .canonicalizeOneId, character(1))
   parameterSets <- vapply(
@@ -1502,6 +1572,124 @@ convertProjectToV6 <- function(
   .warnFormatted(
     .esqlabsR5Messages$undefinedIndividualSheets(file, dropped),
     "esqlabsR_importUndefinedIndividualSheets"
+  )
+}
+
+# Individuals and populations ----
+
+# Write the esqlabsR 5 `Protein` + `Ontogeny` column pair of an individuals or
+# populations sheet as the single `Protein Ontogenies` column a v6 workbook has.
+#
+# @param df The sheet.
+# @param recordType `"individual"` or `"population"`, for the warning.
+# @param idColumn The sheet's id column, for the warning.
+# @returns `df` with a `Protein Ontogenies` column, where the `Protein` column
+#   was when the sheet had none, and without the pair.
+# @keywords internal
+# @noRd
+.v5MergeOntogenyColumns <- function(df, recordType, idColumn) {
+  pair <- intersect(c("Protein", "Ontogeny"), names(df))
+  if (length(pair) == 0L) {
+    return(df)
+  }
+  cells <- vapply(
+    seq_len(nrow(df)),
+    function(i) {
+      .formatOntogeniesToCell(.v5ProteinOntogenies(
+        df[i, , drop = FALSE],
+        recordType,
+        as.character(.v5CellValue(df, idColumn, i))
+      ))
+    },
+    character(1)
+  )
+  column <- "Protein Ontogenies"
+  if (!(column %in% names(df))) {
+    position <- match(pair[[1]], names(df))
+    df <- data.frame(
+      df[seq_len(position - 1L)],
+      stats::setNames(list(NA_character_), column),
+      df[setdiff(seq_along(df), seq_len(position - 1L))],
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  df[[column]] <- cells
+  df[pair] <- NULL
+  df
+}
+
+# One row's protein ontogenies, from either spelling an esqlabsR 5 sheet uses.
+#
+# A single `Protein Ontogenies` cell holds `Protein:Ontogeny,Protein:Ontogeny`;
+# a `Protein` + `Ontogeny` pair holds two comma-separated lists, paired up
+# positionally (`A,B` with `X,Y` means `A:X` and `B:Y`). The single cell wins
+# when both carry a value. A pair that cannot be paired (one column filled, or a
+# different number of proteins and ontogenies) warns naming the record, since
+# the ontogenies would otherwise leave the project in silence.
+#
+# @param row One row of the sheet.
+# @param recordType `"individual"` or `"population"`, for the warning.
+# @param recordId The row's id, for the warning.
+# @returns `Protein:Ontogeny` entries, one per ontogeny, or `NULL`.
+# @keywords internal
+# @noRd
+.v5ProteinOntogenies <- function(row, recordType, recordId) {
+  single <- .splitProteinOntogenies(row[["Protein Ontogenies"]])
+  if (length(single) > 0L) {
+    return(single)
+  }
+  proteins <- .splitProteinOntogenies(row[["Protein"]])
+  ontogenies <- .splitProteinOntogenies(row[["Ontogeny"]])
+  if (length(proteins) == 0L && length(ontogenies) == 0L) {
+    return(NULL)
+  }
+  if (length(proteins) != length(ontogenies)) {
+    cli::cli_warn(.esqlabsR5Messages$ontogeniesNotReadable(
+      recordType,
+      recordId,
+      proteins,
+      ontogenies
+    ))
+    return(NULL)
+  }
+  paste0(proteins, ":", ontogenies)
+}
+
+# The populations workbook in the v6 layout: its first sheet, the populations,
+# with the ontogenies in one column. The other sheets have no v6 place; a
+# `UserDefinedVariability` sheet that holds rows is reported.
+#
+# @param file The esqlabsR 5 populations workbook.
+# @returns `list(sheets, dropped)`, `dropped` naming the sheets not carried over
+#   that no warning names.
+# @keywords internal
+# @noRd
+.v5ConvertPopulationsWorkbook <- function(file) {
+  sheetNames <- readxl::excel_sheets(file)
+  populations <- as.data.frame(readExcel(file, sheet = 1), check.names = FALSE)
+  populations <- .v5MergeOntogenyColumns(
+    populations,
+    "population",
+    "PopulationName"
+  )
+  dropped <- character()
+  for (sheet in sheetNames[-1]) {
+    if (identical(sheet, "UserDefinedVariability")) {
+      variability <- readExcel(file, sheet = sheet)
+      if (nrow(variability) > 0L) {
+        .warnFormatted(
+          .esqlabsR5Messages$userDefinedVariability(file, nrow(variability)),
+          "esqlabsR_convertUserDefinedVariability"
+        )
+        next
+      }
+    }
+    dropped <- c(dropped, sheet)
+  }
+  list(
+    sheets = stats::setNames(list(populations), sheetNames[[1]]),
+    dropped = dropped
   )
 }
 

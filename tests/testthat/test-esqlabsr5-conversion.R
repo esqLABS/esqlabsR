@@ -501,13 +501,12 @@ test_that("convertProjectToV6() moves every parameter set to the model-parameter
     readxl::excel_sheets(file.path(configDir, "ModelParameters.xlsx")),
     c("Global", "Aciclovir", "Sheet, with comma", "Adult", "Child", "IV_250mg")
   )
-  expect_identical(
-    as.list(readExcel(
-      file.path(configDir, "Applications.xlsx"),
-      sheet = "ApplicationProtocols"
-    )),
-    list(ApplicationId = "IV_250mg", ParameterSets = "IV_250mg")
+  protocols <- readExcel(
+    file.path(configDir, "Applications.xlsx"),
+    sheet = "ApplicationProtocols"
   )
+  expect_identical(protocols$ApplicationId, "IV_250mg")
+  expect_identical(protocols$ParameterSets, "IV_250mg")
   biometrics <- readExcel(
     file.path(configDir, "Individuals.xlsx"),
     sheet = "IndividualBiometrics"
@@ -587,4 +586,58 @@ test_that("an Individual Parameter Sets cell naming another set is reported", {
     unlist(project$definitions$individuals[["adult"]]$parameterSets),
     "adult"
   )
+})
+
+# Individuals and populations ----
+
+test_that("convertProjectToV6() writes a Protein + Ontogeny pair as one Protein Ontogenies column", {
+  projectDir <- localLegacyExcelProject()
+  convertExcelProject(projectDir)
+  configDir <- file.path(projectDir, "Configurations")
+
+  biometrics <- readExcel(
+    file.path(configDir, "Individuals.xlsx"),
+    sheet = "IndividualBiometrics"
+  )
+  expect_identical(
+    biometrics$`Protein Ontogenies`,
+    c("CYP3A4:CYP3A4", "CYP3A4:CYP3A4,CYP2D6:CYP2C8")
+  )
+  expect_false(any(c("Protein", "Ontogeny") %in% names(biometrics)))
+  populations <- readExcel(file.path(configDir, "Populations.xlsx"))
+  expect_identical(
+    populations$`Protein Ontogenies`,
+    c("CYP3A4:CYP3A4,CYP2D6:CYP2C8", NA)
+  )
+  expect_false(any(c("Protein", "Ontogeny") %in% names(populations)))
+})
+
+test_that("a filled UserDefinedVariability sheet is reported, an empty one is not", {
+  projectDir <- localLegacyExcelProject()
+  expect_false(any(grepl(
+    "UserDefinedVariability",
+    convertExcelProject(projectDir)$warnings,
+    fixed = TRUE
+  )))
+
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Populations.xlsx"),
+    function(sheets) {
+      sheets$UserDefinedVariability <- data.frame(
+        `Container Path` = "Organism|Liver",
+        `Parameter Name` = "Volume",
+        Mean = 1.5,
+        SD = 0.2,
+        Distribution = "Normal",
+        check.names = FALSE
+      )
+      sheets
+    }
+  )
+  warning <- expect_warning(
+    convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE),
+    class = "esqlabsR_convertUserDefinedVariability"
+  )
+  expect_snapshot(cat(conditionMessage(warning)), transform = .redactTmpDir)
 })

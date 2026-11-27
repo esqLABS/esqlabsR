@@ -88,7 +88,6 @@
       Configurations/Plots.xlsx [plotTypes] 5 rows: plotType
       Configurations/Plots.xlsx [ObservedDataNames] 0 rows: 
       Configurations/Populations.xlsx [Demographics] 2 rows: PopulationName | species | population | numberOfIndividuals | proportionOfFemales | weightMin | weightMax | weightUnit | heightMin | heightMax | heightUnit | ageMin | ageMax | BMIMin | BMIMax | BMIUnit | Protein Ontogenies
-      Configurations/Populations.xlsx [UserDefinedVariability] 0 rows: Container Path | Parameter Name | Mean | SD | Distribution
       Configurations/Scenarios.xlsx [OutputPaths] 2 rows: OutputPathId | OutputPath
       Configurations/Scenarios.xlsx [Scenarios] 8 rows: Scenario_name | IndividualId | PopulationId | ReadPopulationFromCSV | ModelParameterSheets | ApplicationProtocol | SimulationTime | SimulationTimeUnit | SteadyState | SteadyStateTime | SteadyStateTimeUnit | OverwriteFormulasInSS | ModelFile | OutputPathsIds
 
@@ -193,6 +192,8 @@
       i Folders name an environment variable the esqlabsR 5 way, as a part of the path. A v6 project writes it as `${NAME}`, so the values were rewritten:
       * modelFolder: "MDL/Simulations/" -> "${MDL}/Simulations/"
       * dataFolder: "OBSDATA" -> "${OBSDATA}"
+      i A sheet with no place in the v6 workbooks was not carried over; the esqlabsR 5 workbooks in 'esqlabsR5' keep it:
+      * 'Populations.xlsx': "UserDefinedVariability"
 
 # an Individual Parameter Sets cell naming another set is reported
 
@@ -202,4 +203,12 @@
       ! The Individual Parameter Sets column of '<tmp-path>' names a parameter set that esqlabsR 5 did not apply, and that is not linked to the individual:
       x Individual "Adult": "Global".
       i esqlabsR 5 applies to an individual the sheet named after it, and so does the converted project. To apply another set as well, add it to the individual's ParameterSets cell in the v6 individuals workbook and import again.
+
+# a filled UserDefinedVariability sheet is reported, an empty one is not
+
+    Code
+      cat(conditionMessage(warning))
+    Output
+      ! The UserDefinedVariability sheet of '<tmp-path>' is not converted: 1 row of parameter variability.
+      i esqlabsR 5 did not read the sheet, and a v6 population has no field for it. The esqlabsR 5 workbook in 'esqlabsR5' keeps it.
 
