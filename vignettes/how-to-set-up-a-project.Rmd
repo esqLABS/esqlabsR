@@ -230,7 +230,7 @@ If you only want to change an option, you do not need Excel: assign the new valu
 
 **Only one observed-data workbook.** The Excel files can name only one observed-data workbook, the `dataFile` row in `Project.xlsx`. If the project has more than one observed-data source, or a PKML or programmatic source, the export writes one Excel source and warns about the others. A project imported from these files has only that one source, reading every sheet of its workbook, and re-importing over the existing project removes the other sources from it.
 
-**Importing pre-6.0.0 projects from Excel.** If you are bringing over a pre-6.0.0 project, rather than editing a current project in Excel, `vignette("how-to-migrate-from-excel")` is the guide for that, and it lists the rest of what to check after an import.
+**Bringing over an esqlabsR 5 project.** If you are bringing over a project made with esqlabsR 5, rather than editing a current project in Excel, convert it with `convertProjectToV6()` first. `vignette("how-to-migrate-from-excel")` is the guide for that, and it lists the rest of what to check after the conversion.
 
 ## Share or archive a project
 
