@@ -427,3 +427,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:57: The converter's tests drop the duplicates and the checks that could not fail, merge the overlapping ones into single conversions, edit workbooks with editWorkbookSheets(), call the converter one way, and describe what they check rather than their history. (#1426)
 - 2026-11-27 22:58: The convertProjectToV6() help, the migration article and NEWS describe what is not moved, the ${NAME} rewrite and its exceptions, the snapshot JSON, the new refusals, all sheets the summary lists, and the Yes cell that now turns a scenario setting on; the #1182 bullet drops its 5.x rationale. (#1426)
 - 2026-11-27 23:30: The argument test of convertProjectToV6() checks the length errors by text, since their message names the frame the test runs in. (#1426)
+- 2026-11-27 23:30: Regenerated the convertProjectToV6() help page. (#1426)
