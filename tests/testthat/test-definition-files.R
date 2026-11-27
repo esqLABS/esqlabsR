@@ -1,7 +1,7 @@
 # Tests for the scenarios definition-files format layer (R/definition-files.R):
 # the per-scenario JSON tree loader, in-memory mutators reconciled to disk by
-# saveProject(), lazy referential validation, and the derived single-file
-# snapshot.
+# saveProject(), lazy referential validation, and the single project file that
+# carries every section inline.
 
 test_that("loadProject reads scenarios from the definitions/scenarios/ tree", {
   project <- testProject()
@@ -107,18 +107,16 @@ test_that("an unknown outputPathId is a lazy referential finding, not a load err
   expect_true(any(grepl("Ghost", msgs)))
 })
 
-test_that("snapshotProject writes a self-contained single file with scenarios inlined", {
+test_that("an inlined project file loads with every scenario", {
   project <- testProject()
-  # snapshotProject writes a `.esqlabsR` file and returns its path.
-  snap <- snapshotProject(project, dir = withr::local_tempdir())
-  expect_identical(fs::path_ext(snap), "esqlabsR")
+  reloaded <- .reloadThroughInlineFile(project)
+  path <- reloaded$info$projectFilePath
 
-  raw <- jsonlite::fromJSON(snap, simplifyVector = FALSE)
+  raw <- jsonlite::fromJSON(path, simplifyVector = FALSE)
   expect_length(raw$scenarios, length(project$definitions$scenarios))
-  # The snapshot directory has no definitions/ tree; the inline array suffices.
-  expect_false(dir.exists(file.path(dirname(snap), "definitions", "scenarios")))
+  # The folder has no definitions/ tree; the inline array suffices.
+  expect_false(dir.exists(file.path(dirname(path), "definitions", "scenarios")))
 
-  reloaded <- restoreProject(snap, withr::local_tempdir())
   expect_named(
     reloaded$definitions$scenarios,
     names(project$definitions$scenarios),
@@ -126,66 +124,18 @@ test_that("snapshotProject writes a self-contained single file with scenarios in
   )
 })
 
-test_that("snapshot -> restore -> snapshot is a fixed point", {
+test_that("writing a project as a tree and loading it back is a fixed point", {
   project <- testProject()
+  reloaded <- .reloadThroughTree(project)
 
-  snap1 <- snapshotProject(project, dir = withr::local_tempdir())
-  reloaded <- restoreProject(snap1, withr::local_tempdir())
-
-  snap2 <- snapshotProject(reloaded, dir = withr::local_tempdir())
-
-  expect_identical(
-    jsonlite::fromJSON(snap1, simplifyVector = FALSE),
-    jsonlite::fromJSON(snap2, simplifyVector = FALSE)
-  )
+  expect_identical(.projectToJson(reloaded), .projectToJson(project))
 })
 
-test_that("snapshot -> restore -> snapshot is a fixed point for the plots trio", {
-  # testProject()'s fixture has no dataCombined/plots/plotGrids, so the fixed
-  # point above never exercises the three sections reshaped most by this
-  # refactor. exampleProject() populates all three.
-  project <- exampleProject()
-  expect_gt(length(project$definitions$dataCombined), 0)
-  expect_gt(length(project$definitions$plots), 0)
-  expect_gt(length(project$definitions$plotGrids), 0)
-
-  snap1 <- snapshotProject(project, dir = withr::local_tempdir())
-  reloaded <- restoreProject(snap1, withr::local_tempdir())
-  snap2 <- snapshotProject(reloaded, dir = withr::local_tempdir())
-
-  json1 <- jsonlite::fromJSON(snap1, simplifyVector = FALSE)
-  json2 <- jsonlite::fromJSON(snap2, simplifyVector = FALSE)
-  expect_identical(json1, json2)
-  # The three sections must actually be inlined, not silently dropped to NULL.
-  expect_length(json1$dataCombined, length(project$definitions$dataCombined))
-  expect_length(json1$plots, length(project$definitions$plots))
-  expect_length(json1$plotGrids, length(project$definitions$plotGrids))
-})
-
-test_that("saveProject() on a restored project materializes the whole set", {
-  snap <- snapshotProject(testProject(), dir = withr::local_tempdir())
-  dir <- withr::local_tempdir()
-  project <- restoreProject(snap, dir)
-  before <- names(project$definitions$scenarios)
-  scenariosDir <- file.path(dir, "definitions", "scenarios")
-
-  # A restored project already has a full on-disk tree; an in-memory add plus a
-  # save reconciles the whole set, so a reload sees every sibling.
-  addScenario(project, "newlyadded", modelFile = "Aciclovir.pkml")
-  expect_false(file.exists(file.path(scenariosDir, "newlyadded.json")))
-  saveProject(project)
-  reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_named(
-    reloaded$definitions$scenarios,
-    c(before, "newlyadded"),
-    ignore.order = TRUE
-  )
-})
-
-test_that("a write-back plus saveProject() on a restored project preserves siblings", {
-  snap <- snapshotProject(testProject(), dir = withr::local_tempdir())
-  dir <- withr::local_tempdir()
-  project <- restoreProject(snap, dir)
+test_that("a write-back plus saveProject() preserves the sibling scenarios", {
+  # The save rewrites the whole scenarios folder from memory, so changing one
+  # scenario must leave every other scenario's file in place.
+  project <- testProject()
+  dir <- project$info$projectDirPath
   before <- names(project$definitions$scenarios)
 
   existing <- before[[1]]
@@ -555,10 +505,11 @@ test_that("a high-precision numeric value survives a definition write/reload rou
     preciseValue
   )
 
-  snap <- snapshotProject(reloaded, dir = withr::local_tempdir())
-  snapshotReloaded <- restoreProject(snap, withr::local_tempdir())
+  # The single-file form, with every section written into the project file,
+  # keeps full precision too.
+  inlineReloaded <- .reloadThroughInlineFile(reloaded)
   expect_identical(
-    snapshotReloaded$definitions$initialConditions[["precise"]][[1]]$value,
+    inlineReloaded$definitions$initialConditions[["precise"]][[1]]$value,
     preciseValue
   )
 })

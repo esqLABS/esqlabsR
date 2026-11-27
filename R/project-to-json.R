@@ -4,7 +4,7 @@
 # step). Walks a `Project` and emits a v2.0 `Project.json` file. The
 # contract is:
 #
-#   loadProject(path) |> saveSnapshot(out)  produces a JSON file that, when
+#   loadProject(path) |> .saveProjectJson(out)  produces a JSON file that, when
 #   re-loaded, yields a `Project` structurally identical to the first one.
 #
 # Layered to mirror the end-state shape: a top-level `.projectToJson()`
@@ -25,8 +25,8 @@
 #'
 #' @param project A `Project` (R6) instance.
 #' @param includeScenarios Logical. When `TRUE` (default), the `scenarios`
-#'   array is inlined (the self-contained snapshot shape). When `FALSE`,
-#'   `scenarios` is emitted as an empty array, because scenarios are
+#'   array is inlined (the self-contained inline project file shape). When
+#'   `FALSE`, `scenarios` is emitted as an empty array, because scenarios are
 #'   persisted as a definition tree alongside the container, not inline. Ignored
 #'   when `containerOnly` is `TRUE` (every section is emptied then).
 #' @param containerOnly Logical. When `TRUE`, every tree-owned section
@@ -37,8 +37,8 @@
 #'   defaultSolverSettings, excel). This is the on-disk `Project.json`
 #'   container shape: the `definitions/<kind>/` tree owns every section and
 #'   wins on reload, so re-serializing the sections here is wasted work. When
-#'   `FALSE` (default) the sections are serialized (the self-contained snapshot
-#'   shape).
+#'   `FALSE` (default) the sections are serialized (the self-contained inline
+#'   project file shape).
 #'
 #' @return A nested list shaped exactly the v2.0 JSON schema, ready for
 #'   `jsonlite::write_json(..., auto_unbox = TRUE, null = "null")`.
@@ -98,9 +98,9 @@
       schemaVersion = "2.0",
       esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
     ),
-    # A project with no name (one imported from a workbook that carries none, one
-    # upgraded from a snapshot) omits the key rather than declaring the metadata
-    # and setting it to null, which reads as a field someone emptied.
+    # A project with no name (one imported from a workbook that carries none)
+    # omits the key rather than declaring the metadata and setting it to null,
+    # which reads as a field someone emptied.
     if (!is.null(project$info$name)) list(name = project$info$name),
     if (!is.null(project$info$description)) {
       list(description = project$info$description)
@@ -159,8 +159,9 @@
 #' @param project A `Project` (R6) instance.
 #' @param path Destination path. Parent directory must exist.
 #' @param includeScenarios Logical. Passed to `.projectToJson()`: `TRUE`
-#'   (default) inlines the scenarios array (snapshot shape); `FALSE` writes
-#'   the container shape with scenarios held as a definition tree alongside.
+#'   (default) inlines the scenarios array (inline project file shape);
+#'   `FALSE` writes the container shape with scenarios held as a definition
+#'   tree alongside.
 #'   Ignored when `containerOnly` is `TRUE`.
 #' @param containerOnly Logical. Passed to `.projectToJson()`: `TRUE` writes
 #'   only the container (metadata, filePaths, defaultSolverSettings,
@@ -259,7 +260,7 @@
 }
 
 # JSON array of scenario objects. A thin wrapper over the per-scenario
-# serializer `.scenarioToJson()`; used by the monolithic snapshot
+# serializer `.scenarioToJson()`; used by the inline project file
 # (`.projectToJson()`). The definition-files writer calls `.scenarioToJson()`
 # directly, one scenario per file.
 .scenariosToJson <- function(project) {
@@ -451,9 +452,9 @@
 }
 
 # JSON array of observed-data source entries. The section is named by id in
-# memory, but the snapshot keeps the array shape, each entry carrying its own
-# `id`. Strips the `ObservedDataSource` class wrapper from each entry (carried
-# only for the print method) so it never reaches JSON.
+# memory, but an inline project file keeps the array shape, each entry carrying
+# its own `id`. Strips the `ObservedDataSource` class wrapper from each entry
+# (carried only for the print method) so it never reaches JSON.
 .observedDataToJson <- function(project) {
   unname(lapply(project$definitions$observedData, unclass))
 }

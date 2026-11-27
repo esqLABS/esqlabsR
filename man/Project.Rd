@@ -13,9 +13,7 @@ Changes you make to a loaded project — with \code{addScenario()},
 functions — live only in your R session until you write them to the
 project files with \code{\link[=saveProject]{saveProject()}}. This makes a loaded project a safe
 place to experiment: discard unsaved changes by loading the project
-again with \code{\link[=loadProject]{loadProject()}}, or
-use \code{\link[=snapshotProject]{snapshotProject()}} / \code{\link[=restoreProject]{restoreProject()}} to set a save-point and
-return to it later.
+again with \code{\link[=loadProject]{loadProject()}}.
 
 A \code{Project} cannot be copied with \verb{$clone()} — because nothing is
 written to disk until you save, there is no need for a working copy: the
