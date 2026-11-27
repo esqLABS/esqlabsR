@@ -538,7 +538,7 @@ convertProjectToV6 <- function(
   # The `esqlabsR5/` folder of a converted project holds esqlabsR 5 workbooks
   # too; converting them there would put a second project inside the first.
   if (
-    identical(basename(projectDir), .esqlabsR5Folder) &&
+    identical(tolower(basename(projectDir)), tolower(.esqlabsR5Folder)) &&
       length(.v5ProjectFiles(dirname(projectDir))) > 0L
   ) {
     cli::cli_abort(.esqlabsR5Messages$archiveOfConversion(
@@ -1303,9 +1303,12 @@ convertProjectToV6 <- function(
     }
   }
   if (length(notRestored) > 0L) {
-    cli::cli_warn(.esqlabsR5Messages$restoreIncomplete(
-      as.character(fs::path_rel(notRestored, projectDir))
-    ))
+    cli::cli_warn(
+      .esqlabsR5Messages$restoreIncomplete(
+        as.character(fs::path_rel(notRestored, projectDir))
+      ),
+      class = "esqlabsR_convertRestoreIncomplete"
+    )
   }
   invisible(NULL)
 }

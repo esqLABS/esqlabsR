@@ -319,7 +319,7 @@ test_that("a file the restore cannot move back is named, and kept in esqlabsR5/"
   expect_error(
     withCallingHandlers(
       convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE),
-      warning = function(w) {
+      esqlabsR_convertRestoreIncomplete = function(w) {
         warnings <<- c(warnings, conditionMessage(w))
         invokeRestart("muffleWarning")
       }
@@ -608,6 +608,14 @@ test_that("convertProjectToV6() refuses the esqlabsR 5 workbooks a conversion ke
     transform = .redactTmpDir
   )
   expect_identical(.folderState(projectDir), before)
+
+  # A file system that ignores case finds the folder under any spelling.
+  archive <- file.path(projectDir, "esqlabsr5")
+  file.rename(file.path(projectDir, "esqlabsR5"), archive)
+  expect_error(
+    convertProjectToV6(file.path(archive, "ProjectConfiguration.xlsx")),
+    "converted project"
+  )
 })
 
 test_that("convertProjectToV6() refuses a folder outside the project folder", {

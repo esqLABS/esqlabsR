@@ -428,3 +428,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:58: The convertProjectToV6() help, the migration article and NEWS describe what is not moved, the ${NAME} rewrite and its exceptions, the snapshot JSON, the new refusals, all sheets the summary lists, and the Yes cell that now turns a scenario setting on; the #1182 bullet drops its 5.x rationale. (#1426)
 - 2026-11-27 23:30: The argument test of convertProjectToV6() checks the length errors by text, since their message names the frame the test runs in. (#1426)
 - 2026-11-27 23:30: Regenerated the convertProjectToV6() help page. (#1426)
+- 2026-11-27 23:55: convertProjectToV6() gives the warning about files it could not move back the class esqlabsR_convertRestoreIncomplete, and recognizes the esqlabsR5/ folder of a converted project under any case of its name. (#1426)
