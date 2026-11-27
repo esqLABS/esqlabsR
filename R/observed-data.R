@@ -261,59 +261,8 @@ loadObservedData <- function(project) {
     allDataSets,
     private$.programmaticDataSets
   )
-  # A `programmatic` sentinel resolves to nothing unless this session added its
-  # DataSet: the data lives only in the runtime store, so a sentinel read from
-  # disk (a reload, or a project opened elsewhere) has no backing DataSet and
-  # would silently vanish from the result. Warn by name so the drop is loud
-  # instead of surfacing later as an obscure dangling DataCombined reference.
-  unresolved <- .unresolvedProgrammaticNames(
-    self$definitions$observedData,
-    names(allDataSets)
-  )
-  if (length(unresolved) > 0) {
-    # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
-    # and `addObservedData()`, and on every `createDataCombined()`/`createPlots()`),
-    # so throttle to once per session per project rather than firing on every call.
-    cli::cli_warn(
-      messages$observedDataProgrammaticUnresolved(unresolved),
-      .frequency = "once",
-      .frequency_id = paste0(
-        "esqlabsR_observed_data_unresolved_programmatic_",
-        .projectWarningKey(self)
-      )
-    )
-  }
   private$.observedDataNamesCache <- names(allDataSets)
   allDataSets
-}
-
-# A stable per-project key for once-per-session warning frequency ids, so a
-# throttled warning fires once per project rather than once globally: two
-# projects in the same session each get their own warning. Falls back to a
-# constant for a session-only project (no file on disk to key on).
-#
-# @keywords internal
-# @noRd
-.projectWarningKey <- function(self) {
-  self$info$projectFilePath %||% "session"
-}
-
-# Names of `programmatic` sentinels with no backing DataSet in the resolved set
-# (their data was never added this session, or was lost across a reload).
-#
-# @keywords internal
-# @noRd
-.unresolvedProgrammaticNames <- function(observedData, resolvedNames) {
-  programmatic <- Filter(
-    function(e) identical(e$type, "programmatic"),
-    observedData
-  )
-  names <- vapply(
-    programmatic,
-    function(e) e$name %||% NA_character_,
-    character(1)
-  )
-  setdiff(names[!is.na(names)], resolvedNames)
 }
 
 # Merge a batch of loaded DataSets into the accumulator, aborting on a name

@@ -399,3 +399,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 16:26: The importProjectFromExcel() summary no longer lists the folders and observed-data files it copied, which an import into another folder is expected to do; it still warns about what could not be copied.
 - 2026-11-27 16:36: The warning about folders an import could not copy reads in the singular when there is one folder.
 - 2026-11-27 18:08: Loading a project file that declares a programmatic observed-data source stops with an error naming the source and its definition file, since such a source has no DataSet outside the R session that added it. (#1365)
+- 2026-11-27 18:11: The warning that a programmatic observed-data source has no data is gone, with its message and once-per-project throttle, since a project can no longer load one. (#1365)

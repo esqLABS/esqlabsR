@@ -2116,14 +2116,6 @@ messages$observedDataFileNotFound <- function(filePath) {
   )
 }
 
-messages$observedDataProgrammaticUnresolved <- function(names) {
-  cliBullets(
-    "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
-    "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
-  )
-}
-
 # `names` are the ids of the declarations; `files` the definition files they
 # were read from, empty for a project file that holds the section inline.
 messages$observedDataProgrammaticInProjectFile <- function(names, files) {
