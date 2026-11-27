@@ -343,17 +343,18 @@ messages$importWouldOverwriteProject <- function(outputDir) {
 
 # The two steps that turn the JSON file `snapshotProjectConfiguration()` saved
 # in esqlabsR 5 at `path` into a project of the current format, as bullets
-# ready for the raising call. `restoreProjectConfiguration()` names the
-# property-sheet workbook it writes after the JSON file, with `.xlsx` in place
-# of `.json`. `importLegacySnapshot` and `legacySnapshotNotLoadable` give the
-# same advice.
+# ready for the raising call. Only esqlabsR 5.7.0 restores the
+# parameter-identification workbook, so an earlier esqlabsR 5 is not offered.
+# `restoreProjectConfiguration()` writes the property-sheet workbook beside the
+# JSON file, named after it with a lowercase `.json` swapped for `.xlsx`.
+# `importLegacySnapshot` and `legacySnapshotNotLoadable` give the same advice.
 .restoreLegacySnapshotSteps <- function(path) {
-  workbook <- sub("\\.json$", ".xlsx", basename(path), ignore.case = TRUE)
+  workbook <- sub("\\.json$", ".xlsx", basename(path))
   cliBullets(
-    "i" = "In esqlabsR 5 (5.5.0 or later), restore the project's Excel files \\
-    from it with {.code restoreProjectConfiguration()}.",
-    "i" = "Then, in this version, import the restored {.file {workbook}} with \\
-    {.fn importProjectFromExcel}."
+    "i" = "In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the \\
+    project's Excel files from it with {.fn restoreProjectConfiguration}.",
+    "i" = "Then, in this version, import the restored {.file {workbook}}, \\
+    written beside the JSON file, with {.fn importProjectFromExcel}."
   )
 }
 

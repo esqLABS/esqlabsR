@@ -5,8 +5,8 @@
     Condition
       Error:
       x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, not a project of the current format.
-      i In esqlabsR 5 (5.5.0 or later), restore the project's Excel files from it with `restoreProjectConfiguration()`.
-      i Then, in this version, import the restored 'ProjectConfiguration.xlsx' with `importProjectFromExcel()`.
+      i In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the project's Excel files from it with `restoreProjectConfiguration()`.
+      i Then, in this version, import the restored 'ProjectConfiguration.xlsx', written beside the JSON file, with `importProjectFromExcel()`.
 
 # a clean saveProject() is a no-op with the up-to-date message
 

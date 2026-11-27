@@ -76,8 +76,8 @@
     Condition
       Error in `importProjectFromExcel()`:
       x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5. `importProjectFromExcel()` reads the Excel files of a project, not this file.
-      i In esqlabsR 5 (5.5.0 or later), restore the project's Excel files from it with `restoreProjectConfiguration()`.
-      i Then, in this version, import the restored 'ProjectConfiguration.xlsx' with `importProjectFromExcel()`.
+      i In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the project's Excel files from it with `restoreProjectConfiguration()`.
+      i Then, in this version, import the restored 'ProjectConfiguration.xlsx', written beside the JSON file, with `importProjectFromExcel()`.
 
 # importProjectFromExcel refuses any other JSON file and writes nothing
 
