@@ -34,11 +34,16 @@
 # Refusals ----
 
 test_that("convertProjectToV6() takes one path and one TRUE or FALSE", {
+  # Not snapshots: the message of `validateIsOfLength()` names the frame the
+  # test runs in, which differs between `devtools::test()` and `R CMD check`.
+  expect_error(convertProjectToV6(c("A.xlsx", "B.xlsx")), "length 1")
+  expect_error(
+    convertProjectToV6("A.xlsx", silent = c(TRUE, FALSE)),
+    "length 1"
+  )
   expect_snapshot(
     {
-      convertProjectToV6(c("A.xlsx", "B.xlsx"))
       convertProjectToV6(NA_character_)
-      convertProjectToV6("A.xlsx", silent = c(TRUE, FALSE))
       convertProjectToV6("A.xlsx", silent = NA)
     },
     error = TRUE

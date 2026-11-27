@@ -1,20 +1,10 @@
 # convertProjectToV6() takes one path and one TRUE or FALSE
 
     Code
-      convertProjectToV6(c("A.xlsx", "B.xlsx"))
-    Condition
-      Error in `ospsuite.utils::validateIsOfLength()`:
-      ! `test()`: Object should be of length 1, but is of length 2 instead.
-    Code
       convertProjectToV6(NA_character_)
     Condition
       Error in `convertProjectToV6()`:
       x `projectConfigPath` must not be `NA`.
-    Code
-      convertProjectToV6("A.xlsx", silent = c(TRUE, FALSE))
-    Condition
-      Error in `ospsuite.utils::validateIsOfLength()`:
-      ! `test()`: Object should be of length 1, but is of length 2 instead.
     Code
       convertProjectToV6("A.xlsx", silent = NA)
     Condition
