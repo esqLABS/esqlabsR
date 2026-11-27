@@ -449,9 +449,12 @@
 #'
 #' The conversion refuses, before changing anything:
 #' - a folder that already holds a v6 project (`Project.json`, `Project.xlsx`
-#'   or files in `definitions/`) or an earlier conversion (an `esqlabsR5/`
-#'   folder), and the `esqlabsR5/` folder of a converted project;
-#' - a workbook that is already in the v6 layout;
+#'   or definition files (`.json`) in `definitions/`) or an earlier conversion
+#'   (an `esqlabsR5/` folder), and the `esqlabsR5/` folder of a converted
+#'   project;
+#' - a project configuration workbook that is already in the v6 layout (it has
+#'   a `schemaVersion` row);
+#' - a workbook name that points outside the configurations folder;
 #' - a folder value that points outside the project folder, such as an absolute
 #'   path or one starting with `../`: a v6 project reaches such a folder
 #'   through an environment variable, written as `${SHARED}/Data`;

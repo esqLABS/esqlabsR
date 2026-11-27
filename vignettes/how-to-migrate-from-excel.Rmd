@@ -60,7 +60,7 @@ What the conversion changes in the workbooks:
 
 * **Parameter sets.** Every sheet of the individuals and applications workbooks that is a parameter sheet moves to the model parameters workbook. The applications workbook gets one `ApplicationProtocols` row per protocol, naming the protocol's parameter set, and each individual names its own sheet in the `ParameterSets` column of `IndividualBiometrics`. Since the three workbooks had their own sheet names, one name can be taken twice; the later sheet is renamed (`Indiv1` becomes `Indiv1_2`), the references its own workbook makes follow it, and a warning names each rename.
 * **Ontogenies.** The `Protein` and `Ontogeny` column pair becomes the single `Protein Ontogenies` column (`CYP3A4:CYP3A4,CYP2D6:CYP2C8`).
-* **Scenarios.** `Yes`/`No` and `1`/`0` become `TRUE`/`FALSE`. A scenario name that the id does not keep, such as `Aciclovir IV 2.5 mg/kg`, goes into the new `Label` column, so plots and reports still show it.
+* **Scenarios.** `Yes`/`No` and `1`/`0` become `TRUE`/`FALSE`. A scenario name that the id does not keep, such as `Aciclovir IV 2.5 mg/kg`, goes into the new `Label` column, so the project keeps the name as you typed it.
 * **Plots.** The columns `plotID`, `DataCombinedName`, `name` and `plotIDs` become `plotId`, `dataCombined`, `plotGridId` and `plots`, and an axis scale written `"lin"` becomes `"linear"`.
 * **Parameter identification.** The sheets keyed by `PITaskName` become the `PITasks`, `PIParameters` and `PIOutputMappings` sheets. The rows of a `PIParameters` sheet that share a `Group` become one parameter estimated across their scenarios. The `ObservedDataSheet` column is not needed any more: the project imports every sheet of the data workbook and finds a data set by its name.
 * **Folders.** `modelFolder` becomes `simulationsFolder`, and `populationsFolder`, which esqlabsR 5 read inside the configurations folder, becomes its path from the project folder (`Configurations/PopulationsCSV`). A folder that names an environment variable as part of its path (`SHARED/Data`, with `SHARED` set) is written as `${SHARED}/Data`, which 6.0.0 reads; a part containing "path" is kept as written, as esqlabsR 5 did, and a rewritten `populationsFolder` stays inside the configurations folder (`Configurations/${POPCSV}`). The summary lists each value it rewrote.
@@ -69,8 +69,9 @@ Some content has no place in 6.0.0. The conversion warns when a sheet that holds
 
 The conversion refuses, before changing anything:
 
-* a folder that already holds a 6.0.0 project (`Project.json`, `Project.xlsx` or files in `definitions/`) or an earlier conversion (`esqlabsR5/`), and the `esqlabsR5/` folder of a converted project;
-* a workbook that is already in the layout of 6.0.0: import it with `importProjectFromExcel()` instead;
+* a folder that already holds a 6.0.0 project (`Project.json`, `Project.xlsx` or definition files (`.json`) in `definitions/`) or an earlier conversion (`esqlabsR5/`), and the `esqlabsR5/` folder of a converted project;
+* a project configuration workbook that is already in the layout of 6.0.0 (it has a `schemaVersion` row): import it with `importProjectFromExcel()` instead;
+* a workbook name that points outside the configurations folder;
 * a folder value that points outside the project folder, such as an absolute path or one starting with `../`. A 6.0.0 project keeps its folders inside the project folder, or reaches a shared folder through an environment variable: write the value as `${SHARED}/Data` in `ProjectConfiguration.xlsx` and convert again;
 * a workbook that lies outside the project folder once links are followed, such as a configurations folder that is a link to a shared folder;
 * a project whose configurations folder holds no esqlabsR 5 workbook.

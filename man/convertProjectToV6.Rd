@@ -55,9 +55,12 @@ back as it was before and the error is shown.
 The conversion refuses, before changing anything:
 \itemize{
 \item a folder that already holds a v6 project (\code{Project.json}, \code{Project.xlsx}
-or files in \verb{definitions/}) or an earlier conversion (an \verb{esqlabsR5/}
-folder), and the \verb{esqlabsR5/} folder of a converted project;
-\item a workbook that is already in the v6 layout;
+or definition files (\code{.json}) in \verb{definitions/}) or an earlier conversion
+(an \verb{esqlabsR5/} folder), and the \verb{esqlabsR5/} folder of a converted
+project;
+\item a project configuration workbook that is already in the v6 layout (it has
+a \code{schemaVersion} row);
+\item a workbook name that points outside the configurations folder;
 \item a folder value that points outside the project folder, such as an absolute
 path or one starting with \verb{../}: a v6 project reaches such a folder
 through an environment variable, written as \verb{$\{SHARED\}/Data};

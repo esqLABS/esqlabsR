@@ -429,3 +429,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 23:30: The argument test of convertProjectToV6() checks the length errors by text, since their message names the frame the test runs in. (#1426)
 - 2026-11-27 23:30: Regenerated the convertProjectToV6() help page. (#1426)
 - 2026-11-27 23:55: convertProjectToV6() gives the warning about files it could not move back the class esqlabsR_convertRestoreIncomplete, and recognizes the esqlabsR5/ folder of a converted project under any case of its name. (#1426)
+- 2026-11-27 23:55: The convertProjectToV6() help, NEWS and the migration article say that only a project configuration workbook already in the v6 layout is refused, name the refused workbook name outside the configurations folder and definition files, limit the Yes-cell note to the columns esqlabsR 5 had, and say the Label keeps the typed name. (#1426)
