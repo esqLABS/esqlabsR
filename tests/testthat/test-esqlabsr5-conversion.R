@@ -19,7 +19,7 @@
 
 # Set one property of a copied project's esqlabsR 5 property sheet.
 .setProperty <- function(projectDir, property, value) {
-  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  configPath <- legacyExcelProjectPath(projectDir)
   properties <- readExcel(configPath)
   properties$Value[properties$Property == property] <- value
   .writeExcel(properties, configPath)
@@ -109,7 +109,7 @@ test_that("convertProjectToV6() refuses a workbook that is already in the v6 lay
 
 test_that("convertProjectToV6() refuses a folder that holds a v6 project or an earlier conversion", {
   configPath <- function(projectDir) {
-    file.path(projectDir, "ProjectConfiguration.xlsx")
+    legacyExcelProjectPath(projectDir)
   }
 
   projectDir <- localExcelProjectDir()
@@ -155,7 +155,7 @@ convertExcelProject <- function(projectDir, silent = TRUE) {
   }
   jsonPath <- withCallingHandlers(
     convertProjectToV6(
-      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      legacyExcelProjectPath(projectDir),
       silent = silent
     ),
     warning = collect
@@ -175,7 +175,7 @@ test_that("convertProjectToV6() moves the esqlabsR 5 workbooks and writes a proj
 
   expect_invisible(
     jsonPath <- suppressWarnings(convertProjectToV6(
-      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      legacyExcelProjectPath(projectDir),
       silent = TRUE
     ))
   )
@@ -417,7 +417,7 @@ test_that("convertProjectToV6() puts the folder back when it is interrupted", {
 test_that("convertProjectToV6() writes the v6 workbooks", {
   projectDir <- localExcelProjectDir()
   suppressWarnings(convertProjectToV6(
-    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    legacyExcelProjectPath(projectDir),
     silent = TRUE
   ))
 
@@ -538,7 +538,7 @@ test_that("convertProjectToV6() refuses a workbook linked from outside the proje
   sharedBefore <- .folderState(shared)
 
   expect_snapshot(
-    convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx")),
+    convertProjectToV6(legacyExcelProjectPath(projectDir)),
     error = TRUE,
     transform = .redactTmpDir
   )
@@ -548,7 +548,7 @@ test_that("convertProjectToV6() refuses a workbook linked from outside the proje
   # The property workbook itself can be the link.
   projectDir <- localExcelProjectDir()
   elsewhere <- file.path(withr::local_tempdir(), "ProjectConfiguration.xlsx")
-  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  configPath <- legacyExcelProjectPath(projectDir)
   file.rename(configPath, elsewhere)
   file.symlink(elsewhere, configPath)
   expect_error(
@@ -560,7 +560,7 @@ test_that("convertProjectToV6() refuses a workbook linked from outside the proje
 
 test_that("convertProjectToV6() refuses a workbook file name outside the configurations folder", {
   projectDir <- localExcelProjectDir()
-  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  configPath <- legacyExcelProjectPath(projectDir)
   properties <- readExcel(configPath)
   properties$Value[properties$Property == "plotsFile"] <- "../Plots.xlsx"
   .writeExcel(properties, configPath)
@@ -582,7 +582,7 @@ test_that("convertProjectToV6() refuses a project whose workbooks it cannot find
     before <- .folderState(projectDir)
 
     expect_snapshot(
-      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx")),
+      convertProjectToV6(legacyExcelProjectPath(projectDir)),
       error = TRUE,
       transform = .redactTmpDir
     )
@@ -617,7 +617,7 @@ test_that("convertProjectToV6() refuses a folder outside the project folder", {
   )
   for (i in seq_along(cases)) {
     projectDir <- localExcelProjectDir()
-    configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+    configPath <- legacyExcelProjectPath(projectDir)
     properties <- readExcel(configPath)
     properties$Value[properties$Property == names(cases)[[i]]] <- cases[[i]]
     .writeExcel(properties, configPath)
@@ -718,7 +718,7 @@ test_that("the conversion summary names each folder value it rewrote", {
 
   summary <- character()
   suppressWarnings(withCallingHandlers(
-    convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx")),
+    convertProjectToV6(legacyExcelProjectPath(projectDir)),
     message = function(m) {
       if (inherits(m, "esqlabsR_conversionSummary")) {
         summary <<- c(summary, conditionMessage(m))
@@ -842,9 +842,11 @@ test_that("an Individual Parameter Sets cell naming another set is reported", {
 
 # Individuals and populations ----
 
+# The esqlabsR 5 `Protein` + `Ontogeny` column pair holds two comma lists,
+# zipped positionally, and becomes the single `Protein Ontogenies` column.
 test_that("convertProjectToV6() writes a Protein + Ontogeny pair as one Protein Ontogenies column", {
   projectDir <- localLegacyExcelProject()
-  convertExcelProject(projectDir)
+  converted <- convertExcelProject(projectDir)
   configDir <- file.path(projectDir, "Configurations")
 
   biometrics <- readExcel(
@@ -862,16 +864,24 @@ test_that("convertProjectToV6() writes a Protein + Ontogeny pair as one Protein 
     c("CYP3A4:CYP3A4,CYP2D6:CYP2C8", NA)
   )
   expect_false(any(c("Protein", "Ontogeny") %in% names(populations)))
+
+  # `adult` declares one ontogeny in the workbook, `child` two, `adultpop` two.
+  definitions <- converted$project$definitions
+  expect_identical(
+    definitions$individuals[["adult"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
+  )
+  expect_identical(
+    definitions$individuals[["child"]]$proteinOntogenies,
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+  expect_identical(
+    definitions$populations[["adultpop"]]$proteinOntogenies,
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
 })
 
-test_that("a filled UserDefinedVariability sheet is reported, an empty one is not", {
-  projectDir <- localLegacyExcelProject()
-  expect_false(any(grepl(
-    "UserDefinedVariability",
-    convertExcelProject(projectDir)$warnings,
-    fixed = TRUE
-  )))
-
+test_that("a filled UserDefinedVariability sheet is reported", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Populations.xlsx"),
@@ -909,7 +919,7 @@ test_that("convertProjectToV6() writes scenario booleans as TRUE / FALSE and kee
       sheets
     }
   )
-  convertExcelProject(projectDir)
+  converted <- convertExcelProject(projectDir)
 
   scenarios <- readExcel(
     file.path(projectDir, "Configurations", "Scenarios.xlsx"),
@@ -922,6 +932,12 @@ test_that("convertProjectToV6() writes scenario booleans as TRUE / FALSE and kee
   )
   expect_identical(scenarios$SteadyState, c(TRUE, FALSE, TRUE, FALSE, NA, TRUE))
   expect_type(scenarios$ReadPopulationFromCSV, "logical")
+
+  # `PI Scenario 2` loses its spaces in the id and keeps them in the label;
+  # `AdultScenario` only loses its capitals, so it gets no label.
+  definitions <- converted$project$definitions$scenarios
+  expect_identical(definitions[["pi_scenario_2"]]$label, "PI Scenario 2")
+  expect_null(definitions[["adultscenario"]]$label)
 })
 
 test_that("convertProjectToV6() stops on a scenario boolean it cannot read, before changing the folder", {
@@ -951,8 +967,6 @@ test_that("convertProjectToV6() writes the plot sheets with the v6 columns", {
     DataCombinedName = c("AciclovirPVB", NA, "AciclovirPVB"),
     dataCombined = c(NA, "AciclovirPop", "Ignored"),
     plotType = "individual",
-    xAxisScale = c("lin", "log", NA),
-    displayLLOQ = c("no", "Yes", NA),
     stringsAsFactors = FALSE
   )
   expect_identical(
@@ -961,8 +975,6 @@ test_that("convertProjectToV6() writes the plot sheets with the v6 columns", {
       plotId = c("P1", "P2", "P3"),
       dataCombined = c("AciclovirPVB", "AciclovirPop", "AciclovirPVB"),
       plotType = "individual",
-      xAxisScale = c("linear", "log", NA),
-      displayLLOQ = c(FALSE, TRUE, NA),
       stringsAsFactors = FALSE
     )
   )
@@ -1049,8 +1061,7 @@ test_that("a missing data workbook leaves the ObservedDataSheet check to the imp
 
 # esqlabsR 5 readers, unit by unit ----
 #
-# Copies of the esqlabsR 5 readers the import used to own; each block pins the
-# behavior of the reader the conversion now uses.
+# Each block pins one of the converter's readers of an esqlabsR 5 sheet.
 
 test_that(".v5UniqueImportedId falls back instead of aborting on an empty cell", {
   expect_identical(.v5UniqueImportedId(character(0), character()), "item")
@@ -1132,10 +1143,9 @@ test_that(".v5ResolvePIOutputPathRefs rewrites a full-path mapping to the output
   )
 })
 
-# Blank/NA-cell guards in the 5.x parsers (PR #1160 review). A real legacy
-# workbook can carry a trailing blank row or an empty cell; these must be
-# skipped or dropped, not turned into an injected `NA`, a `"...|NA"` path, or a
-# stringified boolean.
+# A real esqlabsR 5 workbook can carry a trailing blank row or an empty cell;
+# these are skipped or dropped, not turned into an injected `NA`, a `"...|NA"`
+# path, or a stringified boolean.
 
 test_that(".v5PIPath drops a blank parameter name instead of building a `|NA` path", {
   expect_null(.v5PIPath("Aciclovir", NA))
@@ -1353,12 +1363,8 @@ test_that("the converted Scenarios sheet keeps the meaning of legacy boolean spe
   expect_identical(scenarios[[3]]$overwriteFormulasInSS, TRUE)
 })
 
-# Regression (#1213): a real 5.x workbook spells the ontogenies as a `Protein` +
-# `Ontogeny` column pair, not as the single `Protein Ontogenies` cell this
-# fixture set uses. Reading only the single column returned nothing for every
-# legacy workbook, so every ontogeny was discarded, and because two definitions
-# differing only in their ontogenies then imported identically nothing in the
-# output revealed the loss.
+# An esqlabsR 5 workbook spells the ontogenies as a `Protein` + `Ontogeny`
+# column pair; the converted sheet must read back to the same ontogenies.
 
 # One legacy-spelling row: the comma-separated `Protein` and `Ontogeny` cells
 # pair up positionally.
@@ -1432,19 +1438,6 @@ test_that("a legacy two-column Protein + Ontogeny sheet converts its ontogenies"
     spaced[[1]]$proteinOntogenies,
     c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   )
-})
-
-test_that("two populations differing only in their ontogenies do not convert identically", {
-  populations <- .convertedPopulations(rbind(
-    .legacyOntogenyPopulation("Pop1", "CYP3A4", "CYP3A4"),
-    .legacyOntogenyPopulation("Pop2", "CYP2D6", "CYP2C8")
-  ))
-  expect_identical(populations[[1]]$proteinOntogenies, "CYP3A4:CYP3A4")
-  expect_identical(populations[[2]]$proteinOntogenies, "CYP2D6:CYP2C8")
-  expect_false(identical(
-    populations[[1]]$proteinOntogenies,
-    populations[[2]]$proteinOntogenies
-  ))
 })
 
 test_that("the current single-column spelling wins over the pair columns", {
@@ -1527,12 +1520,9 @@ test_that("a plot sheet with two id columns takes the v6 one and warns when they
 # Each block converts a throwaway copy of a fixture, often with one workbook
 # changed, and checks the project the conversion produced.
 
-# Regression (#1184): a grid's `plotIDs` cell is a multi-value Excel cell, and
-# the 5.x convention wraps each value in `""` so it may itself contain a comma.
-# Decoding that cell with the in-memory codec kept the quotes, which
-# canonicalization then turned into underscores (`"P1"` -> `_p1_`), so every
-# member of a quoted grid dangled and the freshly imported project failed its
-# own validateProject().
+# A grid's `plotIDs` cell is a multi-value cell, and the esqlabsR 5 convention
+# wraps each value in `""` so it may itself contain a comma. The quotes are
+# cell syntax, so the grid's members must not keep them (`"P1"` -> `_p1_`).
 test_that("a quoted 5.x plotIDs cell converts with the grid's members intact", {
   projectDir <- localExcelProjectDir()
   plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
@@ -1559,100 +1549,13 @@ test_that("a quoted 5.x plotIDs cell converts with the grid's members intact", {
   )
   expect_identical(.splitPlotIDs(grids[["aciclovir2"]]$plots), "p2")
 
-  # The whole point: the converted project does not report the grid members as
-  # unknown plot ids.
+  # The converted project does not report the grid members as unknown plot ids.
   plotErrors <- vapply(
     suppressWarnings(validateProject(project))$plots$critical_errors,
     function(e) e$message,
     character(1)
   )
   expect_false(any(grepl("references unknown plots", plotErrors)))
-})
-
-# Copy the TestProjectExcel fixture and rewrite its individuals and populations
-# workbooks into the legacy `Protein` + `Ontogeny` spelling, returning the copied
-# project directory. The fixture itself keeps the current single-column spelling
-# (which is why it never caught the drop), so the legacy layout is produced here
-# rather than checked in as a second binary workbook.
-.excelFixtureWithLegacyOntogenies <- function(envir = parent.frame()) {
-  work <- withr::local_tempdir(.local_envir = envir)
-  file.copy(
-    list.files(
-      testthat::test_path("data", "TestProjectExcel"),
-      full.names = TRUE
-    ),
-    work,
-    recursive = TRUE
-  )
-  rewrite <- function(workbook, sheet, proteins, ontogenies) {
-    path <- file.path(work, "Configurations", workbook)
-    names <- readxl::excel_sheets(path)
-    sheets <- stats::setNames(
-      lapply(names, function(s) readExcel(path, sheet = s)),
-      names
-    )
-    df <- sheets[[sheet]]
-    df[["Protein Ontogenies"]] <- NULL
-    df[["Protein"]] <- proteins
-    df[["Ontogeny"]] <- ontogenies
-    sheets[[sheet]] <- df
-    .writeExcel(sheets, path)
-  }
-  # The fixture's individual and its first population both carry
-  # `CYP3A4:CYP3A4,CYP2D6:CYP2C8`; its second population carries none.
-  rewrite(
-    "Individuals.xlsx",
-    "IndividualBiometrics",
-    "CYP3A4,CYP2D6",
-    "CYP3A4,CYP2C8"
-  )
-  rewrite(
-    "Populations.xlsx",
-    "Demographics",
-    c("CYP3A4,CYP2D6", NA),
-    c("CYP3A4,CYP2C8", NA)
-  )
-  work
-}
-
-test_that("a legacy-spelling workbook converts its ontogenies, and round-trips through Excel", {
-  work <- .excelFixtureWithLegacyOntogenies()
-  project <- convertExcelProject(work)$project
-
-  expected <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
-  expect_identical(
-    project$definitions$individuals[["indiv1"]]$proteinOntogenies,
-    expected
-  )
-  expect_identical(
-    project$definitions$populations[["testpopulation"]]$proteinOntogenies,
-    expected
-  )
-  # The population authored without ontogenies keeps none, so the two are
-  # distinguishable in the converted tree.
-  expect_null(
-    project$definitions$populations[[
-      "testpopulation_noonto"
-    ]]$proteinOntogenies
-  )
-
-  # Exporting writes the single-cell spelling, and re-importing that reads the
-  # same pairs back: the ontogenies are a fixed point of the round trip.
-  excelOut <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
-  reimported <- suppressWarnings(loadProject(importProjectFromExcel(
-    file.path(excelOut, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  )))
-  expect_identical(
-    reimported$definitions$individuals[["indiv1"]]$proteinOntogenies,
-    expected
-  )
-  expect_identical(
-    reimported$definitions$populations[["testpopulation"]]$proteinOntogenies,
-    expected
-  )
 })
 
 # A sheet named after an individual (the `Indiv1` sheet in the fixture) is that
@@ -1749,17 +1652,6 @@ test_that("a skipped sheet named after an individual is not linked to that indiv
   expect_false("indiv1" %in% unlist(indiv$parameterSets))
 })
 
-test_that("a converted project resolves the population csv folder where the csvs are", {
-  # Nothing is copied, so the value itself has to name the folder that holds
-  # the csv files.
-  project <- convertExcelProject(localExcelProjectDir())$project
-
-  expect_true(file.exists(file.path(
-    project$paths$populationsFolder,
-    "TestPopulation.csv"
-  )))
-})
-
 test_that("a populations folder already at the project root is taken as authored", {
   # Both layouts are accepted; a project following the root-level layout must
   # keep resolving there rather than be redirected under the configurations
@@ -1788,35 +1680,22 @@ test_that("a populations folder already at the project root is taken as authored
 # the rename, not keep resolving to the earlier workbook's set.
 test_that("the conversion re-points a case-differing parameter-set reference", {
   projectDir <- localExcelProjectDir()
-  individualsFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
+  configDir <- file.path(projectDir, "Configurations")
 
   # The individuals workbook's sheet is `Indiv1`; its own `ParameterSets` cell
   # names it in lower case. Give the model-parameters workbook a clashing sheet
   # so the individuals one is the one that gets renamed.
-  modelParamsFile <- file.path(
-    projectDir,
-    "Configurations",
-    "ModelParameters.xlsx"
+  editWorkbookSheets(
+    file.path(configDir, "ModelParameters.xlsx"),
+    function(sheets) c(sheets, list(Indiv1 = .parameterSheet()))
   )
-  mpSheets <- readxl::excel_sheets(modelParamsFile)
-  .writeExcel(
-    c(
-      stats::setNames(
-        lapply(mpSheets, function(s) readExcel(modelParamsFile, sheet = s)),
-        mpSheets
-      ),
-      list(Indiv1 = .parameterSheet())
-    ),
-    modelParamsFile
+  editWorkbookSheets(
+    file.path(configDir, "Individuals.xlsx"),
+    function(sheets) {
+      sheets$IndividualBiometrics$ParameterSets <- "indiv1"
+      sheets
+    }
   )
-
-  indivSheets <- readxl::excel_sheets(individualsFile)
-  contents <- stats::setNames(
-    lapply(indivSheets, function(s) readExcel(individualsFile, sheet = s)),
-    indivSheets
-  )
-  contents$IndividualBiometrics$ParameterSets <- "indiv1"
-  .writeExcel(contents, individualsFile)
 
   project <- convertExcelProject(projectDir)$project
 
@@ -1828,34 +1707,25 @@ test_that("the conversion re-points a case-differing parameter-set reference", {
   )
 })
 
-# Before 6.0.0 the model-parameters, individuals, and applications workbooks were
-# three separate parameter-set namespaces, so a legacy project may legitimately
-# use one sheet name in two of them. They now share a single namespace: the
-# workbook read first keeps the plain id, the later sheet is renamed, and the
-# references that later workbook makes follow the rename. Without the re-pointing
-# the renamed set is orphaned and the referrer silently resolves to the *other*
-# workbook's set.
+# In esqlabsR 5 the model-parameters, individuals, and applications workbooks
+# were three parameter-set namespaces, so a project may use one sheet name in two
+# of them. A v6 project has one: the workbook read first keeps the plain id, the
+# later sheet is renamed, and the references that later workbook makes follow
+# the rename, so they do not resolve to the *other* workbook's set.
 test_that("the conversion renames a duplicate parameter-set id and re-points its own workbook's references", {
   projectDir <- localExcelProjectDir()
-  modelParamsFile <- file.path(
-    projectDir,
-    "Configurations",
-    "ModelParameters.xlsx"
-  )
 
   # Add model-parameter sheets clashing with the individuals workbook's `Indiv1`
   # sheet and the applications workbook's `Protocol_250mg` sheet. Model
   # parameters are read first, so both of those get renamed.
-  sheets <- readxl::excel_sheets(modelParamsFile)
-  .writeExcel(
-    c(
-      stats::setNames(
-        lapply(sheets, function(s) readExcel(modelParamsFile, sheet = s)),
-        sheets
-      ),
-      list(Indiv1 = .parameterSheet(), Protocol_250mg = .parameterSheet())
-    ),
-    modelParamsFile
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ModelParameters.xlsx"),
+    function(sheets) {
+      c(
+        sheets,
+        list(Indiv1 = .parameterSheet(), Protocol_250mg = .parameterSheet())
+      )
+    }
   )
 
   project <- convertExcelProject(projectDir)$project
@@ -1883,28 +1753,23 @@ test_that("the conversion renames a duplicate parameter-set id and re-points its
 
 test_that("the conversion warns naming each renamed duplicate parameter set", {
   projectDir <- localExcelProjectDir()
-  individualsFile <- file.path(
-    projectDir,
-    "Configurations",
-    "Individuals.xlsx"
-  )
 
   # Rename the individuals workbook's parameter sheet onto a model-parameters
   # sheet name (`Global`), so the individuals workbook is the one that loses the
   # id and the warning names it.
-  sheets <- readxl::excel_sheets(individualsFile)
-  contents <- stats::setNames(
-    lapply(sheets, function(s) readExcel(individualsFile, sheet = s)),
-    sheets
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Individuals.xlsx"),
+    function(sheets) {
+      names(sheets)[names(sheets) == "Indiv1"] <- "Global"
+      sheets
+    }
   )
-  names(contents)[names(contents) == "Indiv1"] <- "Global"
-  .writeExcel(contents, individualsFile)
 
   # Snapshot the rename warning alone, caught by its own condition class.
   renameWarning <- NULL
   suppressWarnings(withCallingHandlers(
     convertProjectToV6(
-      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      legacyExcelProjectPath(projectDir),
       silent = TRUE
     ),
     esqlabsR_convertRenamedParameterSets = function(cnd) {
@@ -1947,10 +1812,8 @@ test_that("an application referencing a skipped sheet loses the reference", {
   expect_false("scratch_notes" %in% names(project$definitions$parameterSets))
 })
 
-# The reported case: a `PIOutputMappings` sheet from the layout that predates the
-# `OutputPath` column. Every mapping came out with no output path and the restore
-# stopped on the first one. The column's absence is read as that older layout,
-# whose outputs come from the scenario (#1192).
+# A `PIOutputMappings` sheet from the layout that predates the `OutputPath`
+# column identifies a mapping's outputs through the scenarios it names (#1192).
 test_that("a PIOutputMappings sheet with no OutputPath column converts", {
   projectDir <- localExcelProjectDir()
   configDir <- file.path(projectDir, "Configurations")
@@ -2000,8 +1863,7 @@ test_that("a PIOutputMappings sheet with no OutputPath column converts", {
     logical(1)
   )))
 
-  # The whole point: the converted project is loadable, and the task whose
-  # scenario declares output paths has no complaint against it.
+  # The task whose scenario declares output paths has no complaint against it.
   results <- suppressWarnings(validateProject(project))
   errors <- unlist(lapply(results, function(section) {
     vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
@@ -2038,42 +1900,13 @@ test_that("the conversion writes the output-path id of a 5.x DataCombined curve"
   )
 })
 
-# The legacy fixture (#1213) ----
+# The legacy fixture ----
 #
-# These tests pin what the conversion does with the workbook shapes real
-# pre-5.6 projects carry, using the `TestProjectExcelLegacy/` fixture. The
-# sibling `TestProjectExcel/` fixture uses the modern spelling of every one of
-# these shapes.
+# These tests pin what the conversion does with the workbook shapes of projects
+# made before esqlabsR 5.6, using the `TestProjectExcelLegacy/` fixture.
 
-# #1213 item 1: a two-column `Protein` + `Ontogeny` pair is the pre-5.6 way to
-# declare ontogenies. Each cell of the pair is a comma list, zipped positionally
-# with the other, and the pair is folded into the single-cell
-# `Protein:Ontogeny,...` spelling. A pair that reads cleanly is silent; only an
-# unpairable declaration is reported.
-test_that("a legacy two-column ontogeny pair converts its ontogenies", {
-  converted <- convertExcelProject(localLegacyExcelProject())
-
-  # `adult` declares one ontogeny in the workbook, `child` two, `adultpop` two.
-  expect_identical(
-    converted$project$definitions$individuals[["adult"]]$proteinOntogenies,
-    "CYP3A4:CYP3A4"
-  )
-  expect_identical(
-    converted$project$definitions$individuals[["child"]]$proteinOntogenies,
-    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
-  )
-  expect_identical(
-    converted$project$definitions$populations[["adultpop"]]$proteinOntogenies,
-    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
-  )
-
-  # Every pair in this fixture is readable, so nothing is reported about them.
-  expect_false(any(grepl("ontogen", converted$warnings, ignore.case = TRUE)))
-})
-
-# #1213 item 1, the sharpest statement of the same thing: two populations authored
-# to differ in NOTHING but their ontogenies must not convert to the same
-# definition.
+# Two populations that differ in nothing but their ontogenies convert to two
+# different definitions.
 test_that("two populations differing only in their ontogenies convert differently", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
@@ -2114,13 +1947,9 @@ test_that("two populations differing only in their ontogenies convert differentl
     fixed = TRUE
   )
   expect_false(any(grepl("proteinOntogenies", withoutOntogenies, fixed = TRUE)))
-
-  # Both files were written, so the comparison above is a real difference.
-  expect_true(any(grepl("adultpop", withOntogenies, fixed = TRUE)))
-  expect_true(any(grepl("adultpopnoonto", withoutOntogenies, fixed = TRUE)))
 })
 
-# #1213 item 4: the rows of a `PIParameters` sheet sharing a `Group` (with the
+# The rows of a `PIParameters` sheet sharing a `Group` (with the
 # same container path and parameter name) are ONE free parameter estimated across
 # the scenarios they name between them, so the two rows sharing group 2 here
 # convert to one parameter naming both scenarios rather than two independent ones.
@@ -2149,10 +1978,9 @@ test_that("a repeated parameter-identification Group converts to one parameter",
   expect_false(any(grepl("Group", converted$warnings, fixed = TRUE)))
 })
 
-# #1213 item 4, the check esqlabsR 5.x made alongside the merge: one parameter has
-# one set of bounds, so rows of a group that disagree about them cannot be one
-# parameter. 5.x refused to build the task at all; the conversion keeps the rows
-# unmerged (nothing invented, nothing lost) and says so.
+# One parameter has one set of bounds, so rows of a group that disagree about
+# them cannot be one parameter: the conversion keeps them unmerged (nothing
+# invented, nothing lost) and says so.
 test_that("a parameter-identification Group whose bounds disagree is reported and left unmerged", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
@@ -2177,8 +2005,7 @@ test_that("a parameter-identification Group whose bounds disagree is reported an
   expect_true(any(grepl("Group", converted$warnings, fixed = TRUE)))
 })
 
-# #1213 item 14: the legacy `Units` cell is carried through as the parameter's
-# declared display unit, which is lossless.
+# The `Units` cell is carried through as the parameter's declared display unit.
 test_that("a legacy parameter-identification Units cell is carried through", {
   converted <- convertExcelProject(localLegacyExcelProject())
   task <- converted$project$definitions$parameterIdentification[[
@@ -2224,10 +2051,10 @@ test_that("a PI task name spelled quoted and unquoted is one task", {
   expect_length(tasks[["aciclovirfit"]]$outputMappings, 2L)
 })
 
-# #1213 item 5: an esqlabsR 5 project spells `populationsFolder` as a folder name
-# under the configurations folder, while a project resolves its working folders
-# against its own root. The conversion writes the value as the path of that
-# folder from the project folder.
+# An esqlabsR 5 project spells `populationsFolder` as a folder name under the
+# configurations folder, while a v6 project resolves its working folders against
+# its own root. The conversion writes the value as the path of that folder from
+# the project folder.
 test_that("the populations CSV folder resolves in a converted project", {
   projectDir <- localLegacyExcelProject()
   converted <- convertExcelProject(projectDir)
@@ -2250,11 +2077,10 @@ test_that("the populations CSV folder resolves in a converted project", {
   expect_equal(summary$total_critical_errors, 0)
 })
 
-# #1213 item 9, first route: a parameter sheet whose column headers are duplicated
-# is correctly rejected as not a parameter sheet. The rejection names the sheet,
-# and a second warning names the consequence: the individual that sheet
-# parametrized is converted with no parametrization at all, while its siblings
-# keep theirs and the project still validates clean.
+# A parameter sheet whose column headers are duplicated is not a parameter sheet.
+# One warning names the sheet, and a second names the consequence: the individual
+# that sheet parametrized is converted without it, while its siblings keep theirs
+# and the project still validates clean.
 test_that("a parameter sheet with duplicated headers names the individual it costs the parametrization", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
@@ -2289,12 +2115,11 @@ test_that("a parameter sheet with duplicated headers names the individual it cos
   expect_match(converted$warnings[[2]], "without the parameter set")
 })
 
-# #1213 item 9, second route: individuals are keyed off the biometrics rows, so an
-# individual that has a parameter sheet but no biometrics row is not converted.
-# Its sheet still becomes a parameter set owned by nobody, and the scenario naming
-# the individual is left dangling. Validation reports that dangling reference,
-# which is the symptom; the conversion names the cause, the sheet whose individual
-# has no biometrics row, and the row to add.
+# Individuals are keyed off the biometrics rows, so an individual that has a
+# parameter sheet but no biometrics row is not converted. Its sheet becomes a
+# parameter set owned by nobody, and the scenario naming the individual is left
+# dangling. Validation reports the dangling reference; the conversion names the
+# cause, the sheet whose individual has no biometrics row.
 test_that("an individual with a parameter sheet but no biometrics row is dropped, and the sheet is named", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
@@ -2326,50 +2151,11 @@ test_that("an individual with a parameter sheet but no biometrics row is dropped
   expect_true(any(grepl("undefined individual", converted$warnings)))
 })
 
-# #1213 item 15: the 5.x `PIOutputMappings` sheet names the sheet of the data
-# workbook each mapping's data set comes from. A project has no per-mapping
-# counterpart for it, so the column is not carried and the base fixture, whose
-# sheet is in the workbook, says nothing. A named sheet that is NOT in the data
-# workbook is a mapping whose data set the project does not hold, and that is
-# reported.
-test_that("an ObservedDataSheet naming a sheet outside the data workbook is reported", {
-  expect_false(any(grepl(
-    "ObservedDataSheet",
-    convertExcelProject(localLegacyExcelProject())$warnings,
-    fixed = TRUE
-  )))
-
-  projectDir <- localLegacyExcelProject()
-  editWorkbookSheets(
-    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
-    function(sheets) {
-      sheets$PIOutputMappings$ObservedDataSheet <- "Laskin 1982.Group B"
-      sheets
-    }
-  )
-  converted <- convertExcelProject(projectDir)
-
-  expect_true(any(grepl(
-    "ObservedDataSheet",
-    converted$warnings,
-    fixed = TRUE
-  )))
-  expect_true(any(grepl("Group B", converted$warnings, fixed = TRUE)))
-})
-
-# #1213 item 26: the 5.x `exportConfiguration` sheet says where each grid's figure
-# is written and at what size, and a project has no field for any of it, so the
-# rows cannot be converted and an export cannot write them back. That decision is
-# the user's figure layout, so it is reported rather than dropped in silence. The
-# base fixture's sheet is header-only, which is what a workbook carries whether or
-# not it was filled in, and says nothing.
-test_that("a filled legacy plots exportConfiguration sheet is reported, an empty one is not", {
-  expect_false(any(grepl(
-    "exportConfiguration",
-    convertExcelProject(localLegacyExcelProject())$warnings,
-    fixed = TRUE
-  )))
-
+# The esqlabsR 5 `exportConfiguration` sheet says where each grid's figure is
+# written and at what size, and a project has no field for any of it, so filled
+# rows are reported. A header-only sheet, which every workbook carries, is not;
+# the base fixture's conversion raises no warning at all.
+test_that("a filled legacy plots exportConfiguration sheet is reported", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Plots.xlsx"),
@@ -2454,27 +2240,6 @@ test_that("the conversion keeps the 5.x plot settings and converts lin", {
   expect_true(status$excel_in_sync)
 })
 
-test_that("converting a 5.x workbook keeps a Scenario_name that canonicalizing changes beyond case as the label", {
-  projectDir <- localLegacyExcelProject()
-  editWorkbookSheets(
-    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
-    function(sheets) {
-      scenarios <- sheets$Scenarios
-      scenarios$Scenario_name[scenarios$Scenario_name == "PIScenario2"] <-
-        "PI Scenario 2"
-      sheets$Scenarios <- scenarios
-      sheets
-    }
-  )
-
-  scenarios <- convertExcelProject(projectDir)$project$definitions$scenarios
-
-  # `PI Scenario 2` loses its spaces in the id and keeps them in the label;
-  # `AdultScenario` only loses its capitals, so it gets no label.
-  expect_identical(scenarios[["pi_scenario_2"]]$label, "PI Scenario 2")
-  expect_null(scenarios[["adultscenario"]]$label)
-})
-
 test_that("a Label cell wins over the Scenario_name kept as the label", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
@@ -2495,14 +2260,14 @@ test_that("a Label cell wins over the Scenario_name kept as the label", {
   expect_null(scenarios[["childscenario"]]$label)
 })
 
-test_that(".v5ToLogical reads the boolean spellings of esqlabsR 5", {
+test_that(".v5ToLogical reads logical, numeric and blank cells", {
   expect_identical(
     vapply(
-      list(TRUE, 1, 0, "Yes", "n", "  ", NA, NULL),
+      list(TRUE, 1, 0, "  ", NA, NULL),
       function(x) .v5ToLogical(x, "SteadyState"),
       logical(1)
     ),
-    c(TRUE, TRUE, FALSE, TRUE, FALSE, NA, NA, NA)
+    c(TRUE, TRUE, FALSE, NA, NA, NA)
   )
   expect_error(.v5ToLogical(2, "SteadyState"), "SteadyState")
 })

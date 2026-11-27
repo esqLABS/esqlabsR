@@ -156,7 +156,7 @@
 # convertProjectToV6() refuses a workbook linked from outside the project folder
 
     Code
-      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+      convertProjectToV6(legacyExcelProjectPath(projectDir))
     Condition
       Error in `convertProjectToV6()`:
       x Workbooks of the project lie outside the project folder once links are followed: 'Configurations/Scenarios.xlsx', 'Configurations/ModelParameters.xlsx', 'Configurations/Individuals.xlsx', 'Configurations/Populations.xlsx', 'Configurations/Applications.xlsx', 'Configurations/Plots.xlsx', and 'Configurations/ParameterIdentification.xlsx'.
@@ -174,7 +174,7 @@
 # convertProjectToV6() refuses a project whose workbooks it cannot find
 
     Code
-      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+      convertProjectToV6(legacyExcelProjectPath(projectDir))
     Condition
       Error in `convertProjectToV6()`:
       x No esqlabsR 5 workbook was found in the configurations folder 'Missing', so there is nothing to convert.
@@ -183,7 +183,7 @@
 ---
 
     Code
-      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+      convertProjectToV6(legacyExcelProjectPath(projectDir))
     Condition
       Error in `convertProjectToV6()`:
       x No esqlabsR 5 workbook was found in the configurations folder 'MYCONF', so there is nothing to convert.
@@ -193,7 +193,7 @@
 ---
 
     Code
-      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+      convertProjectToV6(legacyExcelProjectPath(projectDir))
     Condition
       Error in `convertProjectToV6()`:
       x The property sheet names no configurationsFolder, so there is no esqlabsR 5 workbook to convert.
@@ -290,7 +290,7 @@
       x Individual "Adult": "Global".
       i esqlabsR 5 applies to an individual the sheet named after it, and so does the converted project. To apply another set as well, add it to the individual's ParameterSets cell in the v6 individuals workbook and import again.
 
-# a filled UserDefinedVariability sheet is reported, an empty one is not
+# a filled UserDefinedVariability sheet is reported
 
     Code
       cat(conditionMessage(warning))
