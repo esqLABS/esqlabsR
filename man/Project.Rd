@@ -950,7 +950,8 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
     \describe{
       \item{\code{entry}}{An observed-data source: a \code{DataSet} or a configuration list.
 See \code{\link[=addObservedData]{addObservedData()}}.}
-      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{id}}{Character scalar, the id of the new source, or \code{NULL} to take
+it from the entry or the source. See \code{\link[=addObservedData]{addObservedData()}}.}
       \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
 the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }

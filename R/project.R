@@ -514,6 +514,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add observed data. See [addObservedData()].
+    #' @param id Character scalar, the id of the new source, or `NULL` to take
+    #'   it from the entry or the source. See [addObservedData()].
     addObservedData = function(entry, id = NULL, overwrite = FALSE) {
       private$.impl(.addObservedData_impl, entry, id, overwrite)
     },

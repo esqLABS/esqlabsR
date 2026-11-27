@@ -28,6 +28,14 @@ Unlike the other authoring functions, \code{addObservedData()} is not
 vectorized over ids: its second argument is a \code{DataSet} or a configuration
 list, not an id, so it adds a single source per call. Add several sources
 with several calls.
+
+A \code{dataCombined} entry refers to a data set by its name, not by the id of its
+source. When some \code{dataCombined} entry refers to a data set,
+\code{removeObservedData()} reads the removed source to learn the names of its
+data sets, and warns for each \code{dataCombined} that still refers to one of
+them. A source that cannot be read (a missing file, for example) is removed
+without this warning; \code{\link[=validateProject]{validateProject()}} reports the reference that no
+longer resolves.
 }
 \seealso{
 Other observedData:

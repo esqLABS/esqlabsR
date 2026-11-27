@@ -142,7 +142,7 @@ addObservedData(project, scratch)
 
 The source id is taken from the DataSet name, `scratch_measurement`; pass `id` to choose another. Until you save, that `DataSet` lives only in your R session and its entry is `{id: "scratch_measurement", type: "programmatic"}`. On `saveProject()` the package writes the `DataSet` to a PKML file named after the id (`scratch_measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source reading that file. The `DataSet` keeps its own name inside the file, so a DataCombined still refers to `Scratch measurement`. From then on it is an ordinary file-backed source that survives a reload, and it keeps its id: you remove it by `scratch_measurement` before and after saving.
 
-Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
+Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you, naming the source id, so it never vanishes silently.
 
 ## Data you compute in R
 

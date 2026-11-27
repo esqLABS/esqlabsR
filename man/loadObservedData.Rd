@@ -22,7 +22,7 @@ types: \code{excel} (via importer configuration), \code{pkml}, and
 the session until you save, and \code{\link[=saveProject]{saveProject()}} writes it to \verb{<id>.pkml}
 in the data folder and rewrites the entry as a \code{pkml} source. A
 \code{programmatic} sentinel read from disk with no matching in-session
-\code{DataSet} (a hand-authored declaration, or a project opened before it was
+\code{DataSet} (a declaration written by hand, or a project opened before it was
 ever saved) resolves to nothing, and the load warns you, naming its id.
 }
 \examples{

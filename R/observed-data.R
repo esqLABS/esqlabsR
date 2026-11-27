@@ -213,7 +213,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' the session until you save, and [saveProject()] writes it to `<id>.pkml`
 #' in the data folder and rewrites the entry as a `pkml` source. A
 #' `programmatic` sentinel read from disk with no matching in-session
-#' `DataSet` (a hand-authored declaration, or a project opened before it was
+#' `DataSet` (a declaration written by hand, or a project opened before it was
 #' ever saved) resolves to nothing, and the load warns you, naming its id.
 #'
 #' @param project A `Project` object (see [loadProject()]).
