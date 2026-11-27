@@ -971,9 +971,17 @@ setPopulation <- function(project, id, ...) {
 # the tree write leaves the injected population recoverable (worst case is an
 # orphan CSV file, never lost data). Mirrors `.persistProgrammaticObservedData`.
 #
+# Its own errors are attributed to `call`, so a save that aborts here reads as
+# `Error in saveProject()`.
+#
 # @keywords internal
 # @noRd
-.persistProgrammaticPopulations <- function(self, private) {
+.persistProgrammaticPopulations <- function(
+  self,
+  private,
+  call = rlang::caller_env()
+) {
+  rlang::local_error_call(call)
   populations <- private$.getSection("populations")
   toPersist <- names(which(vapply(
     populations,

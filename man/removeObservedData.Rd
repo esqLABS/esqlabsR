@@ -11,13 +11,13 @@ removeObservedData(project, id)
 
 \item{id}{Character vector of ids. An observed-data id is the declaration's
 \code{id} field, or, when it declares none, comes from the data source itself
-(the \code{DataSet} name of an unsaved programmatic source, or a file basename
-for a file-based source). Each is matched as the declaration stores it and,
-failing that, as \code{\link[=addObservedData]{addObservedData()}} would have canonicalized it, so a
-derived id is found by the source's own spelling and a declared one by
-either the form you authored or the canonical form you were given back. A
-saved programmatic source that declares no \code{id} is matched by its
-\verb{<name>.pkml} basename (see the note above).}
+(the name of a \code{DataSet} added with \code{\link[=addObservedData]{addObservedData()}} and not saved yet,
+or a file basename for a file-based source). Each is matched as the
+declaration stores it and, failing that, as \code{\link[=addObservedData]{addObservedData()}} would have
+canonicalized it, so a derived id is found by the source's own spelling
+and a declared one by either the form you authored or the canonical form
+you were given back. A \code{DataSet} saved with \code{\link[=saveProject]{saveProject()}} is matched by
+its \verb{<name>.pkml} basename (see the note above).}
 }
 \value{
 The \code{project} object, invisibly.
@@ -31,10 +31,10 @@ in-memory update; persist with \code{\link[=saveProject]{saveProject()}}. Warns 
 no matching entry.
 }
 \details{
-Note a programmatic source changes its id once saved: \code{\link[=saveProject]{saveProject()}} writes
-the \code{DataSet} to \verb{<name>.pkml} and rewrites the entry as a \code{pkml} source, so
-after a save you remove it by that file basename (\code{"<name>.pkml"}), not by the
-original \code{DataSet} name.
+Note that a \code{DataSet} added with \code{\link[=addObservedData]{addObservedData()}} changes its id once
+saved: \code{\link[=saveProject]{saveProject()}} writes the \code{DataSet} to \verb{<name>.pkml} and rewrites the
+entry as a \code{pkml} source, so after a save you remove it by that file basename
+(\code{"<name>.pkml"}), not by the original \code{DataSet} name.
 
 Unlike the other authoring functions, \code{addObservedData()} is not
 vectorized over ids: its second argument is a \code{DataSet} or a configuration

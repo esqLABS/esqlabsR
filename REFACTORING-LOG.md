@@ -348,6 +348,16 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:52: NEWS lists the removal of createDataCombinedFromExcel() and createPlotsFromExcel() as a breaking change, with the renamed arguments, and drops their soft-deprecation entry. (#1361)
 - 2026-11-20 20:56: The NEWS deprecation intro is in plain words and no longer claims removed functions abort, and the removal bullet says project is now the first argument. (#1361)
 - 2026-11-20 20:57: The NEWS deprecation intro no longer says the warning appears on every call. (#1361)
+- 2026-11-21 16:02: Adding a DataSet with addObservedData() no longer reads the other observed-data sources or runs their scripts. (#1367)
+- 2026-11-23 14:44: Adding or saving a DataSet no longer overwrites a PKML file another observed-data source reads, and the add-time name check is documented. (#1367)
+- 2026-11-23 14:45: The help page of addObservedData() is regenerated for the add-time name check. (#1367)
+- 2026-11-23 14:55: The save-time file-collision message tells the modeler to remove the DataSet's source, rename the DataSet and add it again. (#1367)
+- 2026-11-23 19:20: Observed-data messages and the removeObservedData() help speak of a DataSet added in this session, and the save-time id collision says to remove, rename and add the DataSet again. (#1367)
+- 2026-11-23 19:21: A save that stops on a DataSet added with addObservedData() names saveProject() in its error, not an internal function. (#1367)
+- 2026-11-23 19:22: A save that stops on a Population added with addPopulation() names saveProject() in its error, not an internal function.
+- 2026-11-23 19:35: Ten R files are formatted with Air, which wraps lines longer than 80 characters; the code itself is unchanged.
+- 2026-11-23 19:35: DESCRIPTION records roxygen2 8.1.1, the version that last regenerated the help pages.
+- 2026-11-23 19:55: The addObservedData() help is shorter: the add-time name check is described once, in Details, without the full list of checks. (#1367)
 - 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
 - 2026-11-25 16:24: Formatted the message catalog with Air.
 - 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
@@ -371,6 +381,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 18:31: Round-trip tests that repeated other save tests are gone, the two plots fixed-point tests are one, and the sibling-preservation test runs on the fixture project directly. (#1399)
 - 2026-11-26 10:44: Tests cover refusing a 5.x JSON whose model folder climbs out of the project with ../, and recognizing an in-place import when the output folder is spelled differently. (#1399)
 - 2026-11-26 10:44: The importProjectFromExcel() help page is regenerated from the revised documentation. (#1399)
+- 2026-11-26 11:58: Merged v6, which removed the script source; the add-time name-check tests use PKML and missing-file sources, and the help no longer mentions scripts. (#1367)
 - 2026-11-26 11:58: The addObservedData() help page is regenerated, so it no longer carries the paragraph its documentation dropped with the script source.
 - 2026-11-26 14:06: The test helper that hides temp paths in snapshots also recognizes the macOS temp folder, whose path carries a double slash. (#1399)
 - 2026-11-26 14:37: Importing a 5.x JSON whose data folder is the project folder itself reads the data workbook beside it instead of warning that it is missing. (#1399)
@@ -398,3 +409,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 15:41: The importProjectFromExcel() help says any file that is not Excel stops the import before anything is written, the esqlabsR 5 snapshot JSON included, and keeps the advice for a user who has that JSON file. (#1417)
 - 2026-11-27 16:26: The importProjectFromExcel() summary no longer lists the folders and observed-data files it copied, which an import into another folder is expected to do; it still warns about what could not be copied.
 - 2026-11-27 16:36: The warning about folders an import could not copy reads in the singular when there is one folder.
+- 2026-11-27 17:47: The new base branch, which removes snapshotProject() and restoreProject(), is merged in; the help pages are regenerated. (#1367)
