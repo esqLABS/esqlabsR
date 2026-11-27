@@ -117,6 +117,51 @@ test_that("loadProject() errors on an unsupported schemaVersion", {
   )
 })
 
+# `loadProject()` is the name a user upgrading from esqlabsR 5 reaches for
+# first, so the absent `schemaVersion` of the JSON file
+# `snapshotProjectConfiguration()` saved must not be reported to them as an
+# unsupported version: the file is an esqlabsR 5 project, and the message says
+# how to get its Excel files back and import them (#1417).
+test_that("loadProject() on the esqlabsR 5 snapshot JSON says how to restore and import it", {
+  dir <- withr::local_tempdir()
+  snapshot <- file.path(dir, "ProjectConfiguration.json")
+  file.copy(
+    test_path("data", "TestProjectExcel", "ProjectConfiguration.json"),
+    snapshot
+  )
+
+  expect_snapshot(
+    loadProject(snapshot),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+})
+
+# A folder that holds no project but the esqlabsR 5 snapshot JSON is most
+# likely an esqlabsR 5 project folder, so it gets the advice for that file
+# rather than the generic "no project found" (#1417).
+test_that("loadProject() on a folder holding only the esqlabsR 5 snapshot JSON gives the restore advice", {
+  dir <- withr::local_tempdir()
+  file.copy(
+    test_path("data", "TestProjectExcel", "ProjectConfiguration.json"),
+    file.path(dir, "ProjectConfiguration.json")
+  )
+
+  expect_snapshot(loadProject(dir), error = TRUE, transform = .redactTmpDir)
+})
+
+# The usual esqlabsR 5 project folder also holds the Excel files the snapshot
+# JSON was saved from, so the advice is to import those (#1417).
+test_that("loadProject() on an esqlabsR 5 project folder points at its workbook", {
+  projectDir <- localExcelProjectDir()
+
+  expect_snapshot(
+    loadProject(projectDir),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+})
+
 test_that("loadProject() warns on a dangling cross-reference", {
   path <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
@@ -352,22 +397,6 @@ test_that("initProject() scaffolds a project already in sync with its Excel side
 
   status <- suppressWarnings(projectStatus(project, silent = TRUE))
   expect_true(status$excel_in_sync)
-})
-
-test_that("initProject() names an unnamed project's snapshot after the fallback stem", {
-  # `snapshotProject()` falls back to "project" only on a NULL name, so an
-  # empty-string name would produce a leading-dash filename.
-  destination <- withr::local_tempdir()
-  initProject(
-    destination,
-    type = "minimal",
-    createExcel = FALSE,
-    overwrite = TRUE
-  )
-  project <- loadProject(file.path(destination, "Project.json"))
-
-  snapshot <- snapshotProject(project, dir = withr::local_tempdir())
-  expect_match(basename(snapshot), "^project-")
 })
 
 test_that("initProject() rejects a name that is not a single string", {

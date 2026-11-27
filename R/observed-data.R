@@ -51,20 +51,18 @@ print.ObservedDataSource <- function(x, ...) {
 # The loader reads the current folder in place of the key whenever the folder
 # exists, so sources listed under the earlier key next to that folder have to
 # become definition files in it: a renamed key would be ignored and its
-# sources dropped on the next save. `definitionsDir` is `NULL` for a snapshot,
-# which has no folder.
+# sources dropped on the next save.
 #
 # @keywords internal
 # @noRd
 .abortOnEarlierObservedDataLayout <- function(
   jsonData,
   container,
-  definitionsDir = NULL,
+  definitionsDir,
   call = rlang::caller_env()
 ) {
   hasEarlierKey <- "observedData" %in% names(jsonData)
-  hasEarlierFolder <- !is.null(definitionsDir) &&
-    dir.exists(file.path(definitionsDir, "observed-data"))
+  hasEarlierFolder <- dir.exists(file.path(definitionsDir, "observed-data"))
   if (!hasEarlierKey && !hasEarlierFolder) {
     return(invisible(NULL))
   }
@@ -76,8 +74,9 @@ print.ObservedDataSource <- function(x, ...) {
     }
     if (hasCurrent) "move" else "rename"
   }
-  hasCurrentFolder <- !is.null(definitionsDir) &&
-    dir.exists(file.path(definitionsDir, "observed-data-sources"))
+  hasCurrentFolder <- dir.exists(
+    file.path(definitionsDir, "observed-data-sources")
+  )
   keyChange <- if (
     hasCurrentFolder && length(jsonData[["observedData"]]) > 0L
   ) {
@@ -90,7 +89,7 @@ print.ObservedDataSource <- function(x, ...) {
       container,
       keyChange = keyChange,
       folderChange = change(hasEarlierFolder, hasCurrentFolder),
-      definitionsFolder = basename(definitionsDir %||% "")
+      definitionsFolder = basename(definitionsDir)
     ),
     call = call
   )

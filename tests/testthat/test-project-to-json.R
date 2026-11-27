@@ -402,9 +402,10 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   )
 })
 
-test_that("a populated initialConditions section round-trips through a snapshot", {
-  # An inline snapshot with one initial-condition set. Loading it, saving a
-  # snapshot, and reloading yields an identical section (a fixed point).
+test_that("a populated initialConditions section round-trips through an inline project file", {
+  # An inline project file with one initial-condition set. Loading it, writing
+  # it again as an inline project file, and reloading yields an identical
+  # section (a fixed point).
   src <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(

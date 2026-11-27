@@ -411,13 +411,13 @@
       x The file lists sources under the key observedData, but the project's 'definitions' folder already has the subfolder 'observed-data-sources', which is read instead.
       i Save each source listed under observedData as its own definition file '<id>.json' in 'observed-data-sources', then delete the key observedData.
 
-# restoring a snapshot with the earlier observed-data key aborts
+# loading an inline project file with the earlier observed-data key aborts
 
     Code
-      restoreProject(snapshot, dir)
+      loadProject(path)
     Condition
-      Error in `restoreProject()`:
-      ! 'aciclovir.esqlabsR' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
+      Error:
+      ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
       x The file uses the key observedData.
       i Rename the key to observedDataSources.
 

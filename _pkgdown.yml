@@ -65,8 +65,6 @@ reference:
       - Project
       - loadProject
       - saveProject
-      - snapshotProject
-      - restoreProject
       - projectStatus
       - initProject
       - exampleProjectPath

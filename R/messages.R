@@ -283,8 +283,7 @@ messages$invalidInitProjectName <- function() {
 messages$saveProjectNoTree <- function() {
   cliBullets(
     "This project does not have a project folder on disk yet, so it cannot be saved.",
-    "i" = "Use {.fn snapshotProject} to save it to a single file.",
-    "i" = "Or create a project folder with {.fn initProject} and load it with {.fn loadProject}."
+    "i" = "Create a project folder with {.fn initProject} and load it with {.fn loadProject}."
   )
 }
 
@@ -292,33 +291,11 @@ messages$projectAlreadyUpToDate <- function() {
   "Project is already up to date; nothing to save."
 }
 
-messages$snapshotFileExists <- function(path) {
-  cliBullets(
-    "A snapshot file already exists at {.file {path}}.",
-    "i" = "Pass {.code overwrite = TRUE} to replace it, or a different {.arg name}."
-  )
-}
-
-# The `{name}` placeholder is the validated value, not `snapshotProject()`'s
-# `name` argument (`{.arg name}` above renders that literally). `given` is
+# The `{name}` placeholder is the validated value. `given` is
 # `.validateFilenameSegment()`'s description of a value that is no name at all
 # (and `NULL` for a well-formed name that would escape the directory), because
 # quoting an empty string, an `NA` or a number as if it "contained a path
 # separator" says something untrue about it.
-messages$invalidSnapshotName <- function(name, given) {
-  cliBullets(
-    "{.arg name} must be a single filename stem without path separators.",
-    "x" = if (is.null(given)) {
-      "The stem {.val {name}} contains a path separator or is {.val .} / \\
-      {.val ..}, so it could write outside {.arg dir}."
-    } else {
-      "It is {given}, not a single non-empty string."
-    },
-    "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
-    {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
-  )
-}
-
 messages$invalidProjectFileName <- function(name, given) {
   cliBullets(
     "{.arg projectFileName} must be a single filename without path separators.",
@@ -354,25 +331,6 @@ messages$invalidDefinitionsFolder <- function(name, given) {
   )
 }
 
-messages$restoreDirNotEmpty <- function(dir) {
-  cliBullets(
-    "The folder {.path {dir}} is not empty.",
-    "i" = "{.fn restoreProject} needs an empty or new folder. Pass \\
-    {.code overwrite = TRUE} to replace the folder's contents, or choose a \\
-    different folder."
-  )
-}
-
-messages$restoreOverwroteTree <- function(dir) {
-  cliBullets(
-    "Replaced the project in {.path {dir}} with the snapshot.",
-    "!" = "Project objects loaded from this folder before the restore still \\
-    contain the old project.",
-    "i" = "Continue with the project returned by {.fn restoreProject}, or \\
-    load it again with {.fn loadProject}."
-  )
-}
-
 messages$importWouldOverwriteProject <- function(outputDir) {
   cliBullets(
     "A JSON project already exists in {.path {outputDir}}.",
@@ -383,17 +341,30 @@ messages$importWouldOverwriteProject <- function(outputDir) {
   )
 }
 
-messages$importCopiedAssetFolders <- function(folders) {
-  ospsuite.utils::cliFormat(
-    "Copied {length(folders)} referenced folder{?s} into the new project: {.file {folders}}."
+# Raised from `importProjectFromExcel()` for a path that is not a file `readxl`
+# recognizes as Excel.
+messages$importNotExcelFile <- function(path) {
+  cliBullets(
+    "x" = "{.file {path}} is not an Excel file. \\
+    {.fn importProjectFromExcel} reads the {.file Project.xlsx} or \\
+    {.file ProjectConfiguration.xlsx} workbook of a project."
   )
 }
 
 messages$importUncopiedAssetFolders <- function(folders) {
   ospsuite.utils::cliFormat(
     "{length(folders)} folder{?s} named by the project configuration {cli::qty(length(folders))}{?was/were} not copied: {.file {folders}}.",
-    "Each is absent from the Excel project, points outside it, or already holds files in the new project (pass {.code overwrite = TRUE} to replace those).",
-    "A definition pointing into one will not resolve until you place the folder in the new project."
+    "{cli::qty(length(folders))}{?It is/Each is} absent from the Excel project, points outside it, or already holds files in the new project (pass {.code overwrite = TRUE} to replace {?it/those}).",
+    "{cli::qty(length(folders))}A definition pointing into {?it/one of them} will not resolve until you place {?it/that folder} in the new project."
+  )
+}
+
+# Files from a data folder that is the project folder, kept because the new
+# project already holds a file of the same name.
+messages$importUncopiedAssetFiles <- function(files) {
+  ospsuite.utils::cliFormat(
+    "{length(files)} observed-data file{?s} {cli::qty(length(files))}{?was/were} not copied: {.file {files}}.",
+    "The new project already holds a file of {cli::qty(length(files))}{?that/each} name and reads {?it/those} instead (pass {.code overwrite = TRUE} to replace {?it/them})."
   )
 }
 
@@ -802,17 +773,40 @@ messages$importSkippedNonParameterSheets <- function(
 }
 
 # Raised from `.loadProjectTree()`, whose schema-version check fails on every
-# file `.isLegacySnapshot()` recognizes: a previous-version snapshot carries no
-# `schemaVersion` at all.
+# file `.isLegacySnapshot()` recognizes (the JSON file
+# `snapshotProjectConfiguration()` saved in esqlabsR 5 carries no
+# `schemaVersion` at all), and from `.resolveProjectContainerPath()` for a
+# folder that holds such a file and no project.
+#
+# `restoreProjectConfiguration()` writes the property-sheet workbook beside the
+# JSON file, named after it with a lowercase `.json` swapped for `.xlsx`. When
+# that workbook is already there, the project still has its Excel files, and
+# restoring them first would replace any edit made to them since the JSON was
+# saved, so the advice is to import them and to restore only if they are older.
+# Only esqlabsR 5.7.0 restores the parameter-identification workbook, so an
+# earlier esqlabsR 5 is not offered.
 messages$legacySnapshotNotLoadable <- function(jsonPath) {
+  workbook <- sub("\\.json$", ".xlsx", basename(jsonPath))
+  steps <- if (fs::file_exists(file.path(dirname(jsonPath), workbook))) {
+    c(
+      "i" = "Import the {.file {workbook}} beside it with \\
+      {.fn importProjectFromExcel}.",
+      "i" = "If those Excel files are older than the JSON file, restore them \\
+      from it first with {.fn restoreProjectConfiguration} in esqlabsR 5.7.0."
+    )
+  } else {
+    c(
+      "i" = "In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the \\
+      project's Excel files from it with {.fn restoreProjectConfiguration}.",
+      "i" = "Then, in this version, import the restored {.file {workbook}}, \\
+      written beside the JSON file, with {.fn importProjectFromExcel}."
+    )
+  }
   cliBullets(
-    "x" = "{.file {jsonPath}} is a previous-version project snapshot, not a \\
-    project of the current format.",
-    "i" = "A previous-version snapshot has to be upgraded before it can be \\
-    opened.",
-    "i" = "Upgrade it into a new folder with \\
-    {.code restoreProject(<snapshot>, dir = <newFolder>)}, which returns the \\
-    upgraded project."
+    "x" = "{.file {jsonPath}} is the JSON file that \\
+    {.fn snapshotProjectConfiguration} saved in esqlabsR 5, not a project of \\
+    the current format.",
+    steps
   )
 }
 
@@ -862,38 +856,6 @@ messages$excelProjectFileUnreadable <- function(projectConfigPath) {
     "i" = "It must be a valid {.field .xlsx} workbook (the project's \\
     {.file Project.xlsx})."
   )
-}
-
-messages$legacySnapshotMalformedSheet <- function() {
-  cliBullets(
-    "x" = "This previous-version project snapshot is malformed and cannot be \\
-    upgraded.",
-    "i" = "A sheet in the snapshot is not a {.code {{column_names, rows}}} \\
-    object; the file may be truncated or hand-edited."
-  )
-}
-
-messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
-  notice <- c(
-    "i" = "Detected a previous-version project snapshot and upgraded it to the \\
-    current project format.",
-    "!" = "Observed data does not travel in a snapshot; add it with \\
-    {.fn addObservedDataSource} if a plot or parameter identification needs it."
-  )
-  if (length(missingFolders) > 0L) {
-    notice <- c(
-      notice,
-      "!" = "{length(missingFolders)} referenced folder{?s} \\
-      {cli::qty(length(missingFolders))}{?is/are} missing from the upgraded \\
-      project: {.file {missingFolders}}.",
-      "i" = "A snapshot carries only the configuration workbooks, so a model, \\
-      data or population folder travels with it only when it sits beside the \\
-      snapshot file at that relative path.",
-      "i" = "Nothing that reads from one of them will resolve until you place \\
-      the folder in the project."
-    )
-  }
-  cliBullets(notice)
 }
 
 messages$exportWouldOverwriteWorkbooks <- function(outputDir) {

@@ -1567,14 +1567,15 @@ test_that("a programmatic name in a project snapshot loads as its id", {
   )
 })
 
-test_that("snapshotProject writes observed data as an array of records with ids", {
+test_that("an inline project file stores observed data as an array of records with ids", {
   project <- testProject()
   suppressMessages(addObservedDataSource(
     project,
     ospsuite::DataSet$new(name = "Scratch measurement")
   ))
 
-  path <- snapshotProject(project, dir = withr::local_tempdir(), name = "obs")
+  path <- file.path(withr::local_tempdir(), "Project.json")
+  .saveProjectJson(project, path)
   written <- jsonlite::read_json(path)
 
   # An array: no names, each record carrying its own `id`.
@@ -1991,17 +1992,12 @@ test_that("loading a project whose earlier key lists sources next to the current
   expect_snapshot(loadProject(path), error = TRUE)
 })
 
-test_that("restoring a snapshot with the earlier observed-data key aborts", {
-  snapshot <- snapshotProject(
-    testProject(),
-    dir = withr::local_tempdir(),
-    name = "aciclovir"
-  )
-  json <- jsonlite::read_json(snapshot)
+test_that("loading an inline project file with the earlier observed-data key aborts", {
+  path <- file.path(withr::local_tempdir(), "Project.json")
+  .saveProjectJson(testProject(), path)
+  json <- jsonlite::read_json(path)
   names(json)[names(json) == "observedDataSources"] <- earlierKey
-  jsonlite::write_json(json, snapshot, auto_unbox = TRUE, null = "null")
-  dir <- file.path(withr::local_tempdir(), "restored")
+  jsonlite::write_json(json, path, auto_unbox = TRUE, null = "null")
 
-  expect_snapshot(restoreProject(snapshot, dir), error = TRUE)
-  expect_false(dir.exists(dir))
+  expect_snapshot(loadProject(path), error = TRUE)
 })

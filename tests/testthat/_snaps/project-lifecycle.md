@@ -1,3 +1,33 @@
+# loadProject() on the esqlabsR 5 snapshot JSON says how to restore and import it
+
+    Code
+      loadProject(snapshot)
+    Condition
+      Error:
+      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, not a project of the current format.
+      i In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the project's Excel files from it with `restoreProjectConfiguration()`.
+      i Then, in this version, import the restored 'ProjectConfiguration.xlsx', written beside the JSON file, with `importProjectFromExcel()`.
+
+# loadProject() on a folder holding only the esqlabsR 5 snapshot JSON gives the restore advice
+
+    Code
+      loadProject(dir)
+    Condition
+      Error:
+      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, not a project of the current format.
+      i In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the project's Excel files from it with `restoreProjectConfiguration()`.
+      i Then, in this version, import the restored 'ProjectConfiguration.xlsx', written beside the JSON file, with `importProjectFromExcel()`.
+
+# loadProject() on an esqlabsR 5 project folder points at its workbook
+
+    Code
+      loadProject(projectDir)
+    Condition
+      Error:
+      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, not a project of the current format.
+      i Import the 'ProjectConfiguration.xlsx' beside it with `importProjectFromExcel()`.
+      i If those Excel files are older than the JSON file, restore them from it first with `restoreProjectConfiguration()` in esqlabsR 5.7.0.
+
 # a clean saveProject() is a no-op with the up-to-date message
 
     Code
@@ -12,8 +42,7 @@
     Condition
       Error in `saveProject()`:
       ! This project does not have a project folder on disk yet, so it cannot be saved.
-      i Use `snapshotProject()` to save it to a single file.
-      i Or create a project folder with `initProject()` and load it with `loadProject()`.
+      i Create a project folder with `initProject()` and load it with `loadProject()`.
 
 # initProject() rejects a name that is not a single string
 

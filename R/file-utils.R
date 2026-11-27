@@ -344,3 +344,15 @@ readExcel <- function(path, sheet = NULL, ...) {
   }
   invisible(NULL)
 }
+
+# TRUE when `a` and `b` name the same file or folder. Compared with
+# `normalizePath()` rather than the lexical `fs::path_norm()`, so the same
+# location reached by two spellings (relative and absolute, a symlinked root, a
+# case-different drive letter) is recognized as one. A path that does not
+# exist is compared as spelled after making it absolute.
+#
+# @keywords internal
+# @noRd
+.samePath <- function(a, b) {
+  normalizePath(a, mustWork = FALSE) == normalizePath(b, mustWork = FALSE)
+}
