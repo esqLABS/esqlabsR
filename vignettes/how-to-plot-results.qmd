@@ -431,7 +431,7 @@ To draw a figure, `createPlots()` turns each DataCombined definition into a `Dat
 
 ### Create a DataCombined from its definition
 
-`createDataCombined()` takes the project, the ids of the DataCombined definitions to build, and the scenario results. It returns a list named by id. Instead of `DataCombined` ids, you can pass `plotGrids` to build every DataCombined that the named Plot Grids draw from.
+`createDataCombined()` takes the project, the ids of the DataCombined definitions to build, and the scenario results. It returns a list named by id. Besides DataCombined ids, you can pass `plotGrids` to build every DataCombined that the named Plot Grids draw from, or `plots` to build the DataCombined that the named Plots draw from, including Plots that are not part of any Plot Grid. If you pass several of `dataCombined`, `plotGrids` and `plots`, you get every DataCombined they select, each once.
 
 ```{r create-datacombined}
 dataCombinedList <- createDataCombined(

@@ -111,6 +111,32 @@ test_that(".validateDataCombined flags an empty observed dataSet reference", {
 
 # createDataCombined(project, ...) tests ----
 
+# The distinct curve labels of each DataCombined in a list, to compare a whole
+# createDataCombined() result against the labels its definitions declare.
+curveLabelsByDataCombined <- function(dataCombinedList) {
+  lapply(dataCombinedList, function(dataCombined) {
+    sort(unique(as.character(dataCombined$toDataFrame()$name)))
+  })
+}
+
+# The example project plus the plot `p_standalone`, which is part of no plot
+# grid and draws from its own DataCombined `aciclovir_iv_standalone`.
+exampleProjectWithStandalonePlot <- function(envir = parent.frame()) {
+  project <- exampleProject(envir = envir)
+  addDataCombined(
+    project,
+    "aciclovir_iv_standalone",
+    simulated = list(list(
+      label = "Aciclovir IV standalone",
+      scenario = "aciclovir_iv",
+      path = project$definitions$outputPaths$aciclovir_pvb,
+      group = "Aciclovir PVB"
+    ))
+  )
+  addPlot(project, "p_standalone", "aciclovir_iv_standalone", "individual")
+  project
+}
+
 test_that("createDataCombined errors on non-Project input", {
   expect_error(createDataCombined("not a project"), "expected <Project>")
 })
@@ -136,6 +162,70 @@ test_that("createDataCombined errors when a requested plotGrids name is unknown"
   expect_snapshot(
     error = TRUE,
     createDataCombined(project, plotGrids = "DoesNotExist")
+  )
+})
+
+test_that("createDataCombined errors when a requested plots id is unknown", {
+  project <- exampleProject()
+  # An unknown plot id aborts like an unknown plot grid, also when a missing
+  # simulated path or observed dataSet would only be skipped.
+  expect_snapshot(
+    error = TRUE,
+    createDataCombined(project, plots = "ghost", stopIfNotFound = FALSE)
+  )
+})
+
+test_that("createDataCombined(plots) builds only the DataCombined the plot draws from", {
+  # The result holds the DataCombined of the plot outside every plot grid, and
+  # not the one the example grid uses.
+  project <- exampleProjectWithStandalonePlot()
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- createDataCombined(
+    project,
+    plots = "p_standalone",
+    scenarioResults = simulated
+  )
+
+  expect_equal(
+    curveLabelsByDataCombined(result),
+    list(aciclovir_iv_standalone = "Aciclovir IV standalone")
+  )
+})
+
+test_that("createDataCombined builds the union of dataCombined, plotGrids and plots", {
+  project <- exampleProjectWithStandalonePlot()
+  addDataCombined(
+    project,
+    "aciclovir_iv_direct",
+    simulated = list(list(
+      label = "Aciclovir IV direct",
+      scenario = "aciclovir_iv",
+      path = project$definitions$outputPaths$aciclovir_pvb,
+      group = "Aciclovir PVB"
+    ))
+  )
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  # `aciclovir_individual` is reached through the example grid and through its
+  # plot `p1`; `aciclovir_iv_standalone` through `dataCombined` and through
+  # `p_standalone`. Each DataCombined is built once.
+  result <- createDataCombined(
+    project,
+    dataCombined = c("aciclovir_iv_direct", "aciclovir_iv_standalone"),
+    plotGrids = "individual_diagnostics",
+    plots = c("p1", "p_standalone"),
+    scenarioResults = simulated
+  )
+
+  labels <- curveLabelsByDataCombined(result)
+  expect_equal(
+    labels[order(names(labels))],
+    list(
+      aciclovir_individual = c("Aciclovir observed", "Aciclovir simulated"),
+      aciclovir_iv_direct = "Aciclovir IV direct",
+      aciclovir_iv_standalone = "Aciclovir IV standalone"
+    )
   )
 })
 

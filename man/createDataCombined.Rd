@@ -8,6 +8,7 @@ createDataCombined(
   project,
   dataCombined = NULL,
   plotGrids = NULL,
+  plots = NULL,
   scenarioResults = NULL,
   stopIfNotFound = TRUE,
   validate = TRUE
@@ -21,29 +22,41 @@ any name is not declared in \code{dataCombined} definitions, an error is
 thrown.}
 
 \item{plotGrids}{Names of plot grids whose DataCombined dependencies
-should be built. Combined with \code{dataCombined} if both are given.}
+should be built. Combined with \code{dataCombined} and \code{plots} if several are
+given.}
+
+\item{plots}{Character vector of plot ids, default \code{NULL}. The DataCombined
+each plot draws from is built, so you can get the data behind a plot that
+is not part of any plot grid, such as one you draw on its own with the
+\code{plots} argument of \code{\link[=createPlots]{createPlots()}}. Each id is looked up in the project's
+\code{plots} definitions. Combined with \code{dataCombined} and \code{plotGrids} if
+several are given.}
 
 \item{scenarioResults}{A named list of Scenario Results (as
 returned by \code{\link[=runScenarios]{runScenarios()}}). Not the OSPS \code{SimulationResults}.}
 
 \item{stopIfNotFound}{If \code{TRUE} (default), the function errors when a
 referenced simulated path or observed dataSet cannot be resolved. If
-\code{FALSE}, a warning is emitted and the entry is skipped.}
+\code{FALSE}, a warning is emitted and the entry is skipped. An id in
+\code{plotGrids} or \code{plots} that is not defined in the project always stops
+with an error.}
 
 \item{validate}{If \code{TRUE} (default), the \code{dataCombined} section is validated
 before any DataCombined is built, so a definition missing a required field
 aborts with a clear message instead of failing mid-build.}
 }
 \value{
-A named list of \code{DataCombined} objects, one per requested name.
-Empty list when no names are requested.
+A named list of \code{DataCombined} objects, one per selected
+DataCombined, named by its id. An empty list when none of \code{dataCombined},
+\code{plotGrids} and \code{plots} is given.
 }
 \description{
 Builds \code{\link[ospsuite:DataCombined]{ospsuite::DataCombined}} objects from a JSON-driven
 \link[=loadProject]{Project}. The project's \code{dataCombined} section declares the
 simulated/observed entries; \code{loadObservedData(project)} resolves observed
-sources internally. Either \code{dataCombined} or \code{plotGrids} (or both)
-selects which DataCombined to build.
+sources internally. Any of \code{dataCombined}, \code{plotGrids} and \code{plots}
+selects which DataCombined to build; given together, they are combined, and
+a DataCombined selected more than once is built once.
 
 A simulated entry's \code{path} may be either a model quantity path or an
 output-path id (a key of the project's \code{outputPaths} definitions). An id is

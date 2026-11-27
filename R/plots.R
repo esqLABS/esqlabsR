@@ -307,10 +307,7 @@ print.DataCombined <- function(x, ...) {
       character(1)
     )
     knownPlotIds <- knownPlotIds[!is.na(knownPlotIds)]
-    allGridIds <- unique(unlist(lapply(
-      plotGrids,
-      function(g) .splitPlotIDs(g$plots)
-    )))
+    allGridIds <- .plotIdsOfGrids(plotGrids)
     invalidGridRefs <- setdiff(allGridIds, knownPlotIds)
     if (length(invalidGridRefs) > 0) {
       result$addCriticalError(
@@ -1256,6 +1253,14 @@ print.DataCombined <- function(x, ...) {
   }
   parts <- c(parts, current)
   trimws(parts)
+}
+
+# The plot ids the given plot grids include, each id once.
+#
+# @keywords internal
+# @noRd
+.plotIdsOfGrids <- function(plotGrids) {
+  unique(unlist(lapply(plotGrids, function(g) .splitPlotIDs(g$plots))))
 }
 
 #' Add a plot configuration to a Project
