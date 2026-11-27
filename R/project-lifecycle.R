@@ -532,6 +532,42 @@ isProjectInitialized <- function(destination = ".") {
   jsonFiles[isContainer]
 }
 
+# The top-level keys of the JSON file that `snapshotProjectConfiguration()`
+# saved in esqlabsR 5: the property/path sheet plus one key per configuration
+# workbook. Every esqlabsR 5 release that saved the file wrote this same fixed
+# set (a newer one adds sections such as `ParameterIdentification`; an older
+# one omits them), so recognizing the file on these keys is stable across
+# versions.
+.legacySnapshotSectionKeys <- c(
+  "projectConfiguration",
+  "modelParameterSets",
+  "Individuals",
+  "Populations",
+  "Scenarios",
+  "Applications",
+  "Plots",
+  "ParameterIdentification"
+)
+
+# TRUE when `jsonData` is the JSON file that `snapshotProjectConfiguration()`
+# saved in esqlabsR 5 (the project's Excel workbooks dumped sheet by sheet as
+# `{column_names, rows}` objects, keyed by workbook name) rather than a current
+# `Project.json`. The discriminator is the absent `schemaVersion` (every
+# current project file carries `"2.0"`) together with the signature
+# `projectConfiguration` sheet and at least one workbook section, so neither a
+# current project file nor an unrelated JSON object is mistaken for one.
+# `loadProject()` uses it to tell the user how to turn such a file into a
+# project of the current format.
+#
+# @keywords internal
+# @noRd
+.isLegacySnapshot <- function(jsonData) {
+  is.list(jsonData) &&
+    is.null(jsonData$schemaVersion) &&
+    !is.null(jsonData[["projectConfiguration"]]) &&
+    length(intersect(names(jsonData), .legacySnapshotSectionKeys)) >= 2L
+}
+
 # The paths of the `.json` files directly inside `destination` that
 # `.isLegacySnapshot()` recognizes as the JSON file
 # `snapshotProjectConfiguration()` saved in esqlabsR 5. A file that does not

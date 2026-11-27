@@ -75,24 +75,20 @@
       importProjectFromExcel(snapshot)
     Condition
       Error in `importProjectFromExcel()`:
-      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5. `importProjectFromExcel()` reads the Excel files of a project, not this file.
-      i In esqlabsR 5.7.0, the last esqlabsR 5 release, restore the project's Excel files from it with `restoreProjectConfiguration()`.
-      i Then, in this version, import the restored 'ProjectConfiguration.xlsx', written beside the JSON file, with `importProjectFromExcel()`.
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
 
-# importProjectFromExcel points the snapshot JSON at the workbook beside it
+---
 
     Code
       importProjectFromExcel(file.path(projectDir, "ProjectConfiguration.json"))
     Condition
       Error in `importProjectFromExcel()`:
-      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5. `importProjectFromExcel()` reads the Excel files of a project, not this file.
-      i Import the 'ProjectConfiguration.xlsx' beside it with `importProjectFromExcel()`.
-      i If those Excel files are older than the JSON file, restore them from it first with `restoreProjectConfiguration()` in esqlabsR 5.7.0.
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
 
-# importProjectFromExcel refuses any other JSON file and writes nothing
+# importProjectFromExcel refuses any other file that is not an Excel file and writes nothing
 
     Code
-      importProjectFromExcel(settings, outputDir = outputDir)
+      importProjectFromExcel(project$info$projectFilePath)
     Condition
       Error in `importProjectFromExcel()`:
       x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
@@ -100,20 +96,18 @@
 ---
 
     Code
-      importProjectFromExcel(project$info$projectFilePath, outputDir = outputDir)
-    Condition
-      Error in `importProjectFromExcel()`:
-      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
-      i It is already a project in the current format. Open it with `loadProject()`.
-
-# importProjectFromExcel says a .json file it cannot parse is unreadable, and writes nothing
-
-    Code
       importProjectFromExcel(broken)
     Condition
       Error in `importProjectFromExcel()`:
       x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
-      ! It could not be read as JSON; it may be incomplete or damaged.
+
+---
+
+    Code
+      importProjectFromExcel(table)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
 
 # exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE
 

@@ -986,18 +986,18 @@ test_that("importProjectFromExcel names itself when the workbook cannot be read"
   )
 })
 
-# The JSON file `snapshotProjectConfiguration()` saved in esqlabsR 5 is not
-# imported (#1417). The refusal says how to get the project's Excel files back,
-# and it comes before anything is written: with the default `outputDir`, the
-# folder holding the file is where the import would have written.
+# `importProjectFromExcel()` reads only Excel files. Any other file gets the
+# same refusal before anything is written: with the default `outputDir`, the
+# folder holding the file is where the import would have written, so that
+# folder must come out unchanged (#1417).
 test_that("importProjectFromExcel refuses the esqlabsR 5 snapshot JSON and writes nothing", {
+  # The JSON file alone.
   dir <- withr::local_tempdir()
   snapshot <- file.path(dir, "ProjectConfiguration.json")
   file.copy(
     test_path("data", "TestProjectExcel", "ProjectConfiguration.json"),
     snapshot
   )
-
   expect_snapshot(
     importProjectFromExcel(snapshot),
     error = TRUE,
@@ -1007,15 +1007,10 @@ test_that("importProjectFromExcel refuses the esqlabsR 5 snapshot JSON and write
     list.files(dir, all.files = TRUE, no.. = TRUE),
     basename(snapshot)
   )
-})
 
-# The usual esqlabsR 5 project folder holds the snapshot JSON beside the Excel
-# files it was saved from. Restoring them first could replace newer edits, so
-# the advice is to import the workbook that is already there (#1417).
-test_that("importProjectFromExcel points the snapshot JSON at the workbook beside it", {
+  # The JSON file beside the Excel files it was saved from.
   projectDir <- localExcelProjectDir()
   before <- list.files(projectDir, recursive = TRUE, all.files = TRUE)
-
   expect_snapshot(
     importProjectFromExcel(file.path(projectDir, "ProjectConfiguration.json")),
     error = TRUE,
@@ -1027,44 +1022,40 @@ test_that("importProjectFromExcel points the snapshot JSON at the workbook besid
   )
 })
 
-# Any other `.json` file is told what the import reads, and a project file of
-# the current format is pointed at `loadProject()`, the call that opens it.
-test_that("importProjectFromExcel refuses any other JSON file and writes nothing", {
-  dir <- withr::local_tempdir()
-  settings <- file.path(dir, "settings.json")
-  jsonlite::write_json(list(solver = "CVODE", tolerance = 1e-6), settings)
-  outputDir <- withr::local_tempdir()
-
-  expect_snapshot(
-    importProjectFromExcel(settings, outputDir = outputDir),
-    error = TRUE,
-    transform = .redactTmpDir
-  )
+test_that("importProjectFromExcel refuses any other file that is not an Excel file and writes nothing", {
+  # A project file of the current format.
   project <- testProject()
+  projectDir <- dirname(project$info$projectFilePath)
+  before <- list.files(projectDir, recursive = TRUE, all.files = TRUE)
   expect_snapshot(
-    importProjectFromExcel(project$info$projectFilePath, outputDir = outputDir),
+    importProjectFromExcel(project$info$projectFilePath),
     error = TRUE,
     transform = .redactTmpDir
   )
   expect_identical(
-    list.files(outputDir, all.files = TRUE, no.. = TRUE),
-    character()
+    list.files(projectDir, recursive = TRUE, all.files = TRUE),
+    before
   )
-})
 
-test_that("importProjectFromExcel says a .json file it cannot parse is unreadable, and writes nothing", {
+  # A `.json` file that does not parse, and a csv table.
   dir <- withr::local_tempdir()
   broken <- file.path(dir, "ProjectConfiguration.json")
   writeLines("{\"projectConfiguration\": {\"column_names\": [", broken)
-
+  table <- file.path(dir, "ObservedData.csv")
+  writeLines(c("Time,Concentration", "0.5,1.2"), table)
   expect_snapshot(
     importProjectFromExcel(broken),
     error = TRUE,
     transform = .redactTmpDir
   )
-  expect_identical(
+  expect_snapshot(
+    importProjectFromExcel(table),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_setequal(
     list.files(dir, all.files = TRUE, no.. = TRUE),
-    basename(broken)
+    basename(c(broken, table))
   )
 })
 

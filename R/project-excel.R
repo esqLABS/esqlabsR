@@ -376,11 +376,17 @@ importProjectFromExcel <- function(
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
-  # A `.json` file is no Excel project. It is answered by what it is, ahead of
-  # the destination checks, rather than by a refusal about where its import
-  # would have been written or by the workbook reader's parse error.
-  if (identical(tolower(fs::path_ext(projectConfigPath)), "json")) {
-    .abortJsonImportSource(projectConfigPath)
+  # A file the workbook reader cannot open as Excel is refused ahead of the
+  # destination checks, rather than by a refusal about where its import would
+  # have been written or by the reader's own error. `readxl::excel_format()`
+  # is what `readxl` decides by: a known Excel extension (any case), otherwise
+  # the file's signature. A file with an Excel extension whose content is not a
+  # workbook passes here and is refused by the reader.
+  if (
+    !fs::is_file(projectConfigPath) ||
+      is.na(readxl::excel_format(projectConfigPath))
+  ) {
+    cli::cli_abort(messages$importNotExcelFile(projectConfigPath))
   }
 
   # Append `.json` rather than `fs::path_ext_set()`, which would *replace* an
@@ -502,69 +508,6 @@ importProjectFromExcel <- function(
   }
 
   invisible(outputPath)
-}
-
-# The top-level keys of the JSON file that `snapshotProjectConfiguration()`
-# saved in esqlabsR 5: the property/path sheet plus one key per configuration
-# workbook. Every esqlabsR 5 release that saved the file wrote this same fixed
-# set (a newer one adds sections such as `ParameterIdentification`; an older
-# one omits them), so recognizing the file on these keys is stable across
-# versions.
-.legacySnapshotSectionKeys <- c(
-  "projectConfiguration",
-  "modelParameterSets",
-  "Individuals",
-  "Populations",
-  "Scenarios",
-  "Applications",
-  "Plots",
-  "ParameterIdentification"
-)
-
-# TRUE when `jsonData` is the JSON file that `snapshotProjectConfiguration()`
-# saved in esqlabsR 5 (the project's Excel workbooks dumped sheet by sheet as
-# `{column_names, rows}` objects, keyed by workbook name) rather than a current
-# `Project.json`. The discriminator is the absent `schemaVersion` (every
-# current project file carries `"2.0"`) together with the signature
-# `projectConfiguration` sheet and at least one workbook section, so neither a
-# current project file nor an unrelated JSON object is mistaken for one.
-# `importProjectFromExcel()` and `loadProject()` use it to tell the user how to
-# turn such a file back into Excel files.
-#
-# @keywords internal
-# @noRd
-.isLegacySnapshot <- function(jsonData) {
-  is.list(jsonData) &&
-    is.null(jsonData$schemaVersion) &&
-    !is.null(jsonData[["projectConfiguration"]]) &&
-    length(intersect(names(jsonData), .legacySnapshotSectionKeys)) >= 2L
-}
-
-# Abort for a `.json` file handed to `importProjectFromExcel()`, which reads
-# only Excel files. The JSON file `snapshotProjectConfiguration()` saved in
-# esqlabsR 5 gets the way back to its Excel files; any other file is told what
-# the import reads, a current project file is pointed at `loadProject()`, and a
-# file that does not parse is said to be unreadable.
-#
-# @keywords internal
-# @noRd
-.abortJsonImportSource <- function(path, .call = rlang::caller_env()) {
-  unreadable <- FALSE
-  jsonData <- tryCatch(
-    jsonlite::fromJSON(path, simplifyVector = FALSE),
-    error = function(e) {
-      unreadable <<- TRUE
-      NULL
-    }
-  )
-  if (.isLegacySnapshot(jsonData)) {
-    cli::cli_abort(messages$importLegacySnapshot(path), call = .call)
-  }
-  isCurrentProject <- is.list(jsonData) && !is.null(jsonData$schemaVersion)
-  cli::cli_abort(
-    messages$importJsonSource(path, isCurrentProject, unreadable),
-    call = .call
-  )
 }
 
 # Read an Excel project into the in-memory `Project.json` shape, doing all of
