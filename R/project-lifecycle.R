@@ -480,6 +480,12 @@ isProjectInitialized <- function(destination = ".") {
     return(fs::path_abs(containers[[1]]))
   }
   if (length(containers) == 0L) {
+    # A folder holding the JSON file `snapshotProjectConfiguration()` saved in
+    # esqlabsR 5 gets the advice for that file rather than the generic one.
+    snapshot <- .legacySnapshotPaths(path)
+    if (length(snapshot) > 0L) {
+      cli::cli_abort(messages$legacySnapshotNotLoadable(snapshot[[1]]))
+    }
     cli::cli_abort(messages$noProjectContainerInFolder(path))
   }
   cli::cli_abort(messages$multipleProjectContainersInFolder(
@@ -524,6 +530,33 @@ isProjectInitialized <- function(destination = ".") {
   )
 
   jsonFiles[isContainer]
+}
+
+# The paths of the `.json` files directly inside `destination` that
+# `.isLegacySnapshot()` recognizes as the JSON file
+# `snapshotProjectConfiguration()` saved in esqlabsR 5. A file that does not
+# parse is not one.
+#
+# @keywords internal
+# @noRd
+.legacySnapshotPaths <- function(destination) {
+  jsonFiles <- as.character(fs::dir_ls(
+    destination,
+    glob = "*.json",
+    type = "file",
+    fail = FALSE
+  ))
+  isSnapshot <- vapply(
+    jsonFiles,
+    function(path) {
+      .isLegacySnapshot(tryCatch(
+        jsonlite::fromJSON(path, simplifyVector = FALSE),
+        error = function(e) NULL
+      ))
+    },
+    logical(1)
+  )
+  jsonFiles[isSnapshot]
 }
 
 # One top-level field of a project container, or `NULL` when the file does not

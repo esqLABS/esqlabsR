@@ -137,6 +137,19 @@ test_that("loadProject() on the esqlabsR 5 snapshot JSON says how to restore and
   )
 })
 
+# A folder that holds no project but the esqlabsR 5 snapshot JSON is most
+# likely an esqlabsR 5 project folder, so it gets the advice for that file
+# rather than the generic "no project found" (#1417).
+test_that("loadProject() on a folder holding only the esqlabsR 5 snapshot JSON gives the restore advice", {
+  dir <- withr::local_tempdir()
+  file.copy(
+    test_path("data", "TestProjectExcel", "ProjectConfiguration.json"),
+    file.path(dir, "ProjectConfiguration.json")
+  )
+
+  expect_snapshot(loadProject(dir), error = TRUE, transform = .redactTmpDir)
+})
+
 test_that("loadProject() warns on a dangling cross-reference", {
   path <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
