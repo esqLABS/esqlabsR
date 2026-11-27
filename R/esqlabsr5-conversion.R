@@ -335,6 +335,76 @@
   )
 }
 
+.esqlabsR5Messages$unmergedPIParameterGroups <- function(taskId, paths) {
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("paths", paths, envir = envir)
+  assign("n", length(paths), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field Group}{?s} of parameter-identification \\
+      task {.val {taskId}} {?does/do} not agree on the bounds, so {?its/their} \\
+      rows were converted as one parameter each: {.val {paths}}.",
+      "i" = "The rows of one {.field Group} are one parameter estimated across \\
+      the scenarios they name, so they share one {.field MinValue}, \\
+      {.field MaxValue} and {.field StartValue}.",
+      "i" = "As converted, each row is estimated independently, which is not \\
+      what the group asked for. To estimate them together, keep one of the \\
+      rows in the {.field PIParameters} sheet of the v6 workbook, give it the \\
+      scenarios of all of them, and import again."
+    ),
+    envir = envir
+  )
+}
+
+.esqlabsR5Messages$incompletePIOutputMappings <- function(taskId, scenarios) {
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("scenarios", scenarios, envir = envir)
+  assign("n", length(scenarios), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} output {?mapping/mappings} of \\
+      parameter-identification task {.val {taskId}} {?has/have} no output path.",
+      stats::setNames(
+        sprintf(
+          "Scenarios cell {.val {scenarios[[%1$d]]}}.",
+          seq_along(scenarios)
+        ),
+        rep("x", length(scenarios))
+      ),
+      "i" = "This {.field PIOutputMappings} sheet has no {.field OutputPath} \\
+      column, so each mapping takes its outputs from the {.field OutputPathsIds} \\
+      of the scenarios it names, and these scenarios name none.",
+      "i" = "The mappings are kept, so {.fn validateProject} reports each one \\
+      until its {.field outputPath} cell in the v6 {.field PIOutputMappings} \\
+      sheet is filled and the workbooks are imported again."
+    ),
+    envir = envir
+  )
+}
+
+.esqlabsR5Messages$missingPIObservedDataSheets <- function(sheets) {
+  envir <- new.env(parent = parent.frame())
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field ObservedDataSheet} {?sheet/sheets} named \\
+      by the {.field PIOutputMappings} sheet {?is/are} not in the data \\
+      workbook: {.val {sheets}}.",
+      "i" = "A v6 project imports every sheet of the data workbook and finds a \\
+      mapping's data set by its name, so the column is not carried over. A \\
+      data set on a sheet the workbook does not have is not in the project: \\
+      the mapping's {.field DataSet} does not resolve, and \\
+      {.fn validateProject} reports it.",
+      "i" = "Point {.field dataFile} at the workbook that holds \\
+      {cli::qty(n)}{?it/them} in the v6 property sheet and import again."
+    ),
+    envir = envir
+  )
+}
+
 .esqlabsR5Messages$folderHoldsProject <- function(dir, found) {
   cliBullets(
     "x" = "{.file {dir}} already holds a v6 project or an earlier conversion: \\
@@ -548,6 +618,21 @@ convertProjectToV6 <- function(
     workbooks$scenariosFile$copy <- FALSE
     workbooks$scenariosFile$sheets <- converted$sheets
     droppedSheets[[sections$scenariosFile$name]] <- converted$dropped
+  }
+  if (!is.null(sections$parameterIdentificationFile)) {
+    converted <- .v5ConvertPIWorkbook(
+      sections$parameterIdentificationFile$path,
+      scenarios,
+      .v5OutputPaths(sections$scenariosFile$path),
+      .v5DataWorkbookSheets(.v5PropertyLookup(propertyTable), projectDir)
+    )
+    if (!is.null(converted)) {
+      workbooks$parameterIdentificationFile$copy <- FALSE
+      workbooks$parameterIdentificationFile$sheets <- converted$sheets
+      droppedSheets[[
+        sections$parameterIdentificationFile$name
+      ]] <- converted$dropped
+    }
   }
   if (!is.null(sections$plotsFile)) {
     converted <- .v5ConvertPlotsWorkbook(sections$plotsFile$path)
@@ -1996,6 +2081,604 @@ convertProjectToV6 <- function(
     ),
     "esqlabsR_importConflictingPlotIdColumns"
   )
+}
+
+# Parameter identification ----
+#
+# The esqlabsR 5 layout keys every sheet by a `PITaskName` column and splits a
+# task's configuration across `PIConfiguration`, `AlgorithmOptions` and
+# `CIOptions`. The conversion reads it into the task records a v6 project holds
+# and writes them with the export's own sheet writer
+# (`.parameterIdentificationToExcelSheets()`), so the v6 sheets are exactly the
+# ones an export writes.
+
+# The sheets of the esqlabsR 5 parameter-identification layout.
+.v5PISheets <- c(
+  "PIParameters",
+  "PIOutputMappings",
+  "PIConfiguration",
+  "AlgorithmOptions",
+  "CIOptions"
+)
+
+# The parameter-identification workbook in the v6 layout: the `PITasks`,
+# `PIParameters` and `PIOutputMappings` sheets.
+#
+# @param file The esqlabsR 5 parameter-identification workbook.
+# @param scenarios The scenario records.
+# @param outputPaths The output paths, a named list `id -> path`.
+# @param dataSheets The sheets of the data workbook, or `NULL` when it cannot be
+#   read.
+# @returns `list(sheets, dropped)`, or `NULL` for a workbook that already has the
+#   v6 `PITasks` sheet, which is carried over as it is.
+# @keywords internal
+# @noRd
+.v5ConvertPIWorkbook <- function(file, scenarios, outputPaths, dataSheets) {
+  sheetNames <- readxl::excel_sheets(file)
+  if ("PITasks" %in% sheetNames) {
+    return(NULL)
+  }
+  tasks <- .v5ParsePI(file, sheetNames, scenarios)
+  # A mapping may name its output by the model path of an output path; the v6
+  # sheet names it by the output path's id.
+  tasks <- .v5ResolvePIOutputPathRefs(tasks, outputPaths)
+  .v5WarnMissingPIObservedDataSheets(
+    .v5PIObservedDataSheets(file),
+    dataSheets
+  )
+  list(
+    sheets = .parameterIdentificationToExcelSheets(tasks),
+    dropped = setdiff(sheetNames, .v5PISheets)
+  )
+}
+
+# The `OutputPaths` sheet of the esqlabsR 5 scenarios workbook, as a named list
+# `id -> path`.
+#
+# @keywords internal
+# @noRd
+.v5OutputPaths <- function(scenariosFile) {
+  if (
+    is.null(scenariosFile) ||
+      !("OutputPaths" %in% readxl::excel_sheets(scenariosFile))
+  ) {
+    return(list())
+  }
+  df <- readExcel(scenariosFile, sheet = "OutputPaths")
+  as.list(stats::setNames(
+    as.character(df$OutputPath),
+    as.character(df$OutputPathId)
+  ))
+}
+
+# The sheets of the project's data workbook, or `NULL` when the project names
+# none or it cannot be read, in which case the import reports it.
+#
+# @param props The property lookup, with the folder values the v6 sheet holds.
+# @param projectDir The project folder.
+# @keywords internal
+# @noRd
+.v5DataWorkbookSheets <- function(props, projectDir) {
+  dataFile <- props("dataFile")
+  if (is.null(dataFile)) {
+    return(NULL)
+  }
+  dataFolder <- props("dataFolder") %||% "."
+  if (.declaresEnvVarPath(dataFolder)) {
+    dataFolder <- .replaceEnvVarPath(dataFolder)
+  }
+  dataFolder <- .absoluteAgainstRoot(dataFolder, projectDir)
+  if (.pathEscapesRoot(dataFile, dataFolder)) {
+    return(NULL)
+  }
+  path <- .absoluteAgainstRoot(dataFile, dataFolder)
+  if (!file.exists(path)) {
+    return(NULL)
+  }
+  tryCatch(readxl::excel_sheets(path), error = function(e) NULL)
+}
+
+# The distinct `ObservedDataSheet` cells of the `PIOutputMappings` sheet.
+#
+# The column names the sheet of the data workbook a mapping's data set is read
+# from. A v6 project lists the data sheets in its observed-data definition and
+# finds a data set by its name, so the column is not carried over.
+#
+# @keywords internal
+# @noRd
+.v5PIObservedDataSheets <- function(piFile) {
+  if (!("PIOutputMappings" %in% readxl::excel_sheets(piFile))) {
+    return(character())
+  }
+  df <- readExcel(piFile, sheet = "PIOutputMappings")
+  if (!("ObservedDataSheet" %in% names(df)) || nrow(df) == 0L) {
+    return(character())
+  }
+  declared <- unique(as.character(df$ObservedDataSheet))
+  declared[!is.na(declared) & nzchar(declared)]
+}
+
+# Report an `ObservedDataSheet` that is not a sheet of the data workbook: the
+# data sets on it are not in the project. Silent when the data workbook cannot be
+# read, which the import reports on its own.
+#
+# @param declared The sheets the `ObservedDataSheet` column names.
+# @param dataSheets The sheets of the data workbook, or `NULL`.
+# @keywords internal
+# @noRd
+.v5WarnMissingPIObservedDataSheets <- function(declared, dataSheets) {
+  if (length(declared) == 0L || is.null(dataSheets)) {
+    return(invisible(NULL))
+  }
+  missing <- setdiff(declared, dataSheets)
+  if (length(missing) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    .esqlabsR5Messages$missingPIObservedDataSheets(missing),
+    "esqlabsR_importUnimportedPIObservedDataSheets"
+  )
+}
+
+# Read the esqlabsR 5 parameter-identification layout into task records. One
+# task is built per distinct `PITaskName`, gathering its parameters, output
+# mappings and configuration from the five sheets, as
+# `{id, scenarios[], parameters[], outputMappings[], configuration}`.
+#
+# @param piFile The workbook.
+# @param sheets Its sheet names.
+# @param scenarios The scenario records, which the oldest mapping layout takes
+#   its output paths from.
+# @returns An unnamed list of task records (empty when no sheet names a task).
+# @keywords internal
+# @noRd
+.v5ParsePI <- function(piFile, sheets, scenarios = NULL) {
+  readSheet <- function(name) {
+    if (name %in% sheets) readExcel(piFile, sheet = name) else NULL
+  }
+  paramDf <- readSheet("PIParameters")
+  mappingDf <- readSheet("PIOutputMappings")
+  configDf <- readSheet("PIConfiguration")
+  algDf <- readSheet("AlgorithmOptions")
+  ciDf <- readSheet("CIOptions")
+
+  # Gathered unquoted, as `.v5PITaskRows()` matches them, so a sheet quoting a
+  # task name still describes the same task.
+  taskNames <- unique(unlist(lapply(
+    list(mappingDf, paramDf, configDf, algDf, ciDf),
+    function(df) {
+      if (!is.null(df) && "PITaskName" %in% names(df)) {
+        .stripWrappingQuotes(as.character(df$PITaskName))
+      }
+    }
+  )))
+  taskNames <- taskNames[!is.na(taskNames)]
+  if (length(taskNames) == 0L) {
+    return(list())
+  }
+
+  lapply(taskNames, function(task) {
+    params <- .v5ParsePIParams(paramDf, task)
+    mappings <- .v5ParsePIMappings(mappingDf, task, scenarios)
+    # A task's scenarios are those its parameters and mappings name: the layout
+    # has no list of its own.
+    taskScenarios <- unique(unlist(lapply(
+      c(params, mappings),
+      function(x) unlist(x$scenarios)
+    )))
+    list(
+      id = task,
+      scenarios = as.list(taskScenarios),
+      parameters = params,
+      outputMappings = mappings,
+      configuration = .v5ParsePIConfig(configDf, algDf, ciDf, task)
+    )
+  })
+}
+
+# One task's parameters from the `PIParameters` rows. `Container Path` and
+# `Parameter Name` become the `path`, and the id is coined from the parameter
+# name, unique within the task. The rows sharing a `Group` are one parameter
+# estimated across the scenarios they name (see `.v5PIParameterGroups()`).
+#
+# @keywords internal
+# @noRd
+.v5ParsePIParams <- function(df, task) {
+  rows <- .v5PITaskRows(df, task)
+  ids <- character()
+  lapply(.v5PIParameterGroups(rows, task), function(group) {
+    row <- rows[group[[1]], ]
+    id <- .v5UniqueImportedId(as.character(row[["Parameter Name"]]), ids)
+    ids[[length(ids) + 1L]] <<- id
+    scenarios <- unique(unlist(lapply(group, function(i) {
+      .parseCommaListToArray(rows[i, ][["Scenarios"]])
+    })))
+    .v5DropNulls(list(
+      id = id,
+      scenarios = as.list(scenarios),
+      path = .v5PIPath(row[["Container Path"]], row[["Parameter Name"]]),
+      units = .naToNull(as.character(row[["Units"]])),
+      minValue = .naToNull(as.numeric(row[["MinValue"]])),
+      maxValue = .naToNull(as.numeric(row[["MaxValue"]])),
+      startValue = .naToNull(as.numeric(row[["StartValue"]]))
+    ))
+  })
+}
+
+# Which rows of a task's `PIParameters` sheet are one parameter.
+#
+# Rows sharing a `Group`, a container path and a parameter name are one
+# parameter estimated across the scenarios they name between them. A blank
+# `Group` is a parameter of its own, and two rows of one group at different
+# paths are two parameters, as esqlabsR 5 read the sheet. One parameter has one
+# set of bounds, so a group whose rows disagree about them is left unmerged (one
+# parameter per row) and named in a warning; esqlabsR 5 refused such a task.
+#
+# @param rows One task's rows of the sheet.
+# @param task The task id, for the warning.
+# @returns A list of integer vectors of row indices, one per parameter.
+# @keywords internal
+# @noRd
+.v5PIParameterGroups <- function(rows, task) {
+  if (nrow(rows) == 0L) {
+    return(list())
+  }
+  cell <- function(column, i) as.character(.v5CellValue(rows, column, i))
+  # `\r` cannot occur in an Excel cell, so it separates the key parts without a
+  # path or a name holding the separator merging two parameters.
+  keys <- vapply(
+    seq_len(nrow(rows)),
+    function(i) {
+      group <- .v5CellValue(rows, "Group", i)
+      if (.isBlankCell(group)) {
+        return(paste0("\r", i))
+      }
+      paste(
+        as.character(group),
+        cell("Container Path", i),
+        cell("Parameter Name", i),
+        sep = "\r"
+      )
+    },
+    character(1)
+  )
+  boundsOf <- function(i) {
+    vapply(
+      c("MinValue", "MaxValue", "StartValue"),
+      function(column) {
+        suppressWarnings(as.numeric(.v5CellValue(rows, column, i)))
+      },
+      numeric(1)
+    )
+  }
+
+  groups <- list()
+  mismatched <- character()
+  for (key in unique(keys)) {
+    members <- which(keys == key)
+    bounds <- boundsOf(members[[1]])
+    agree <- all(vapply(
+      members,
+      function(i) isTRUE(all.equal(bounds, boundsOf(i))),
+      logical(1)
+    ))
+    if (agree) {
+      groups[[length(groups) + 1L]] <- members
+      next
+    }
+    mismatched <- c(
+      mismatched,
+      .v5PIPath(
+        cell("Container Path", members[[1]]),
+        cell("Parameter Name", members[[1]])
+      ) %||%
+        cell("Parameter Name", members[[1]])
+    )
+    for (i in members) {
+      groups[[length(groups) + 1L]] <- i
+    }
+  }
+
+  if (length(mismatched) > 0L) {
+    .warnFormatted(
+      .esqlabsR5Messages$unmergedPIParameterGroups(task, mismatched),
+      "esqlabsR_importUnmergedPIParameterGroups"
+    )
+  }
+  groups
+}
+
+# One task's output mappings from the `PIOutputMappings` rows. The id is coined
+# from the output path's last part, unique within the task.
+#
+# The oldest revision of the sheet has no `OutputPath` column: it identified a
+# mapping's outputs through the scenarios it names, and
+# `.v5PIDerivedMappingRows()` does the same. A blank cell in a present column is
+# an authoring gap instead, left for `validateProject()` to report.
+#
+# @keywords internal
+# @noRd
+.v5ParsePIMappings <- function(df, task, scenarios = NULL) {
+  rows <- .v5PITaskRows(df, task)
+  if (nrow(rows) > 0L && !("OutputPath" %in% names(rows))) {
+    rows <- .v5PIDerivedMappingRows(rows, task, scenarios)
+  }
+  ids <- character()
+  lapply(seq_len(nrow(rows)), function(i) {
+    row <- rows[i, ]
+    outputPath <- as.character(row[["OutputPath"]])
+    id <- .v5UniqueImportedId(sub(".*\\|", "", outputPath), ids)
+    ids[[length(ids) + 1L]] <<- id
+    .v5DropNulls(list(
+      id = id,
+      scenarios = as.list(.parseCommaListToArray(row[["Scenarios"]])),
+      outputPath = .naToNull(outputPath),
+      observedData = .naToNull(as.character(row[["DataSet"]])),
+      scaling = .naToNull(as.character(row[["Scaling"]])),
+      xOffset = .naToNull(as.numeric(row[["xOffset"]])),
+      yOffset = .naToNull(as.numeric(row[["yOffset"]])),
+      xFactor = .naToNull(as.numeric(row[["xFactor"]])),
+      yFactor = .naToNull(as.numeric(row[["yFactor"]])),
+      weight = .naToNull(as.numeric(row[["Weight"]]))
+    ))
+  })
+}
+
+# Give the rows of an `OutputPath`-less `PIOutputMappings` sheet that column,
+# taking each row's outputs from the scenarios it names.
+#
+# A row becomes one row per output path its scenarios declare, naming the
+# scenarios that declare it. A row whose scenarios declare none still yields one
+# row, with no path, and is named in a warning, which can say which cell to fill
+# as validation cannot. Scenarios are matched on the canonical id, since the two
+# sheets are maintained separately.
+#
+# @param rows One task's rows of the sheet.
+# @param task The task id, for the warning.
+# @param scenarios The scenario records.
+# @returns The rows with an `OutputPath` column.
+# @keywords internal
+# @noRd
+.v5PIDerivedMappingRows <- function(rows, task, scenarios) {
+  canonical <- vapply(
+    scenarios %||% list(),
+    function(scenario) .canonicalizeOneId(as.character(scenario$id)),
+    character(1)
+  )
+  outputPathsOf <- function(name) {
+    match <- which(canonical == .canonicalizeOneId(name))
+    if (length(match) == 0L) {
+      return(NULL)
+    }
+    unlist(scenarios[[match[[1]]]]$outputPaths)
+  }
+
+  derived <- list()
+  unresolved <- character()
+  for (i in seq_len(nrow(rows))) {
+    named <- .parseCommaListToArray(rows[i, ][["Scenarios"]])
+    byPath <- list()
+    for (name in named %||% character()) {
+      for (path in outputPathsOf(name)) {
+        byPath[[path]] <- c(byPath[[path]], name)
+      }
+    }
+    if (length(byPath) == 0L) {
+      unresolved <- c(
+        unresolved,
+        if (length(named) == 0L) "" else paste(named, collapse = ", ")
+      )
+      byPath <- stats::setNames(list(named), NA_character_)
+    }
+    for (path in names(byPath)) {
+      row <- rows[i, , drop = FALSE]
+      row[["OutputPath"]] <- path
+      row[["Scenarios"]] <- .formatArrayToCommaList(byPath[[path]])
+      derived[[length(derived) + 1L]] <- row
+    }
+  }
+
+  if (length(unresolved) > 0L) {
+    .warnFormatted(
+      .esqlabsR5Messages$incompletePIOutputMappings(task, unresolved),
+      "esqlabsR_importIncompletePIOutputMappings"
+    )
+  }
+  if (length(derived) == 0L) {
+    return(rows[0, , drop = FALSE])
+  }
+  as.data.frame(dplyr::bind_rows(derived))
+}
+
+# One task's `configuration`, from its `PIConfiguration` row and its
+# `AlgorithmOptions` / `CIOptions` rows. Blank values are left out.
+#
+# @keywords internal
+# @noRd
+.v5ParsePIConfig <- function(configDf, algDf, ciDf, task) {
+  configuration <- list()
+  configRows <- .v5PITaskRows(configDf, task)
+  if (nrow(configRows) > 0L) {
+    row <- configRows[1, ]
+    scalar <- list(
+      algorithm = .naToNull(as.character(row[["Algorithm"]])),
+      ciMethod = .naToNull(as.character(row[["CIMethod"]])),
+      autoEstimateCI = .naToNull(
+        .v5ToLogical(row[["AutoEstimateCI"]], "AutoEstimateCI")
+      ),
+      printEvaluationFeedback = .naToNull(
+        .v5ToLogical(
+          row[["PrintEvaluationFeedback"]],
+          "PrintEvaluationFeedback"
+        )
+      )
+    )
+    for (nm in names(scalar)) {
+      if (!is.null(scalar[[nm]])) configuration[[nm]] <- scalar[[nm]]
+    }
+
+    objective <- .v5DropNulls(list(
+      type = .naToNull(as.character(row[["ObjectiveFunctionType"]])),
+      residualWeightingMethod = .naToNull(
+        as.character(row[["ResidualWeightingMethod"]])
+      ),
+      robustMethod = .naToNull(as.character(row[["RobustMethod"]])),
+      scaleVar = .naToNull(as.character(row[["ScaleVar"]])),
+      linScaleCV = .naToNull(as.numeric(row[["LinScaleCV"]])),
+      logScaleSD = .naToNull(as.numeric(row[["LogScaleSD"]]))
+    ))
+    if (length(objective) > 0L) {
+      configuration$objectiveFunction <- objective
+    }
+
+    runOptions <- .v5DropNulls(list(
+      numberOfCores = .naToNull(as.numeric(row[["numberOfCores"]])),
+      checkForNegativeValues = .naToNull(
+        .v5ToLogical(row[["checkForNegativeValues"]], "checkForNegativeValues")
+      )
+    ))
+    if (length(runOptions) > 0L) {
+      configuration$simulationRunOptions <- runOptions
+    }
+  }
+
+  algorithmOptions <- .v5PIOptionRows(algDf, task)
+  if (length(algorithmOptions) > 0L) {
+    configuration$algorithmOptions <- algorithmOptions
+  }
+  ciOptions <- .v5PIOptionRows(ciDf, task)
+  if (length(ciOptions) > 0L) {
+    configuration$ciOptions <- ciOptions
+  }
+  configuration
+}
+
+# The rows of a sheet belonging to one task (none when the sheet is absent).
+#
+# @keywords internal
+# @noRd
+.v5PITaskRows <- function(df, task) {
+  if (is.null(df)) {
+    return(data.frame())
+  }
+  if (!("PITaskName" %in% names(df)) || nrow(df) == 0L) {
+    return(df[0, , drop = FALSE])
+  }
+  df[
+    !is.na(df$PITaskName) &
+      .stripWrappingQuotes(as.character(df$PITaskName)) == task,
+    ,
+    drop = FALSE
+  ]
+}
+
+# The `OptionName` -> `OptionValue` rows of an `AlgorithmOptions` / `CIOptions`
+# sheet for one task, as a named list. A number stays a number (so a `1` / `0`
+# option is not read as a boolean), `true` / `false` becomes a logical, and
+# anything else stays text.
+#
+# @keywords internal
+# @noRd
+.v5PIOptionRows <- function(df, task) {
+  rows <- .v5PITaskRows(df, task)
+  if (nrow(rows) == 0L) {
+    return(list())
+  }
+  options <- list()
+  for (i in seq_len(nrow(rows))) {
+    name <- .v5CellValue(rows, "OptionName", i)
+    if (.isBlankCell(name)) {
+      next
+    }
+    name <- as.character(name)
+    raw <- .v5CellValue(rows, "OptionValue", i)
+    numeric <- suppressWarnings(as.numeric(raw))
+    token <- tolower(trimws(as.character(raw)))
+    options[[name]] <- if (!is.na(numeric)) {
+      numeric
+    } else if (token %in% c("true", "false")) {
+      token == "true"
+    } else {
+      as.character(raw)
+    }
+  }
+  options
+}
+
+# Join a container path and a parameter name into a parameter `path`
+# (`<container>|<parameter>`). A blank container gives the parameter name, and a
+# blank parameter name gives `NULL`, so validation reports the incomplete
+# parameter instead of a `<container>|NA` path that names nothing.
+#
+# @keywords internal
+# @noRd
+.v5PIPath <- function(containerPath, parameterName) {
+  if (.isBlankCell(parameterName)) {
+    return(NULL)
+  }
+  parameter <- as.character(parameterName)
+  if (.isBlankCell(containerPath)) {
+    return(parameter)
+  }
+  paste(as.character(containerPath), parameter, sep = "|")
+}
+
+# An id unique within `existing`, coined from `base` canonicalized, with `_2`,
+# `_3`, ... added on a clash. Used for the parameter and output-mapping ids the
+# esqlabsR 5 sheets have no column for.
+#
+# @keywords internal
+# @noRd
+.v5UniqueImportedId <- function(base, existing) {
+  base <- if (.isBlankCell(base)) "item" else as.character(base)
+  base <- .canonicalizeOneId(base)
+  candidate <- base
+  n <- 1L
+  while (candidate %in% existing) {
+    n <- n + 1L
+    candidate <- paste0(base, "_", n)
+  }
+  candidate
+}
+
+# Drop the `NULL` elements of a list, so an optional field stays absent.
+#
+# @keywords internal
+# @noRd
+.v5DropNulls <- function(x) {
+  x[!vapply(x, is.null, logical(1))]
+}
+
+# Write the `outputPath` of each output mapping that holds the model path of an
+# output path as that output path's id. A value no output path has is kept, and
+# validation reports it.
+#
+# @param tasks The task records.
+# @param outputPaths The output paths, a named list `id -> path`.
+# @keywords internal
+# @noRd
+.v5ResolvePIOutputPathRefs <- function(tasks, outputPaths) {
+  if (length(tasks) == 0L || length(outputPaths) == 0L) {
+    return(tasks)
+  }
+  scalar <- vapply(outputPaths, \(x) length(x) == 1L, logical(1))
+  if (!any(scalar)) {
+    return(tasks)
+  }
+  valueToId <- stats::setNames(
+    names(outputPaths)[scalar],
+    vapply(outputPaths[scalar], as.character, character(1))
+  )
+  lapply(tasks, function(task) {
+    task$outputMappings <- lapply(task$outputMappings, function(mapping) {
+      path <- mapping$outputPath
+      if (length(path) == 1L && path %in% names(valueToId)) {
+        mapping$outputPath <- valueToId[[path]]
+      }
+      mapping
+    })
+    task
+  })
 }
 
 # Individuals and populations ----

@@ -738,3 +738,68 @@ test_that("a true-or-false plot setting that is no boolean spelling is kept for 
     c("FALSE", "sometimes", NA)
   )
 })
+
+# Parameter identification ----
+
+test_that("convertProjectToV6() writes the parameter-identification sheets an export writes", {
+  .localSnapshotOptions()
+  projectDir <- localLegacyExcelProject()
+  converted <- convertExcelProject(projectDir)
+  piFile <- file.path(
+    projectDir,
+    "Configurations",
+    "ParameterIdentification.xlsx"
+  )
+
+  expect_snapshot(
+    for (sheet in readxl::excel_sheets(piFile)) {
+      cat(sheet, "\n")
+      print(as.data.frame(readExcel(piFile, sheet = sheet)))
+    }
+  )
+
+  # The export of the converted project writes the same task back.
+  exported <- .parameterIdentificationToExcelSheets(.unwrapDefinitionList(
+    converted$project$definitions$parameterIdentification
+  ))
+  expect_identical(
+    exported$PIParameters$id,
+    readExcel(piFile, sheet = "PIParameters")$id
+  )
+})
+
+test_that("an ObservedDataSheet the data workbook has is not reported", {
+  projectDir <- localLegacyExcelProject()
+  expect_false(any(grepl(
+    "ObservedDataSheet",
+    convertExcelProject(projectDir)$warnings,
+    fixed = TRUE
+  )))
+})
+
+test_that("an ObservedDataSheet the data workbook lacks is reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIOutputMappings$ObservedDataSheet <- "Laskin 1982.Group B"
+      sheets
+    }
+  )
+
+  warning <- expect_warning(
+    convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE),
+    class = "esqlabsR_importUnimportedPIObservedDataSheets"
+  )
+  expect_snapshot(cat(conditionMessage(warning)))
+})
+
+test_that("a missing data workbook leaves the ObservedDataSheet check to the import", {
+  projectDir <- localLegacyExcelProject()
+  unlink(file.path(projectDir, "Data"), recursive = TRUE)
+
+  converted <- convertExcelProject(projectDir)
+
+  expect_false(any(grepl("ObservedDataSheet", converted$warnings)))
+  expect_true(any(grepl("was not found", converted$warnings)))
+})

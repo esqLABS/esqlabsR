@@ -75,11 +75,9 @@
       Configurations/ModelParameters.xlsx [Aciclovir_iv_250mg] 1 rows: Container Path | Parameter Name | Value | Units
       Configurations/ModelParameters.xlsx [Protocol_250mg] 1 rows: Container Path | Parameter Name | Value | Units
       Configurations/ModelParameters.xlsx [Protocol_500mg] 1 rows: Container Path | Parameter Name | Value | Units
-      Configurations/ParameterIdentification.xlsx [PIOutputMappings] 4 rows: PITaskName | Scenarios | OutputPath | ObservedDataSheet | DataSet | Scaling | xOffset | yOffset | xFactor | yFactor | Weight
-      Configurations/ParameterIdentification.xlsx [PIParameters] 6 rows: PITaskName | Scenarios | Container Path | Parameter Name | Units | MinValue | MaxValue | StartValue | Group
-      Configurations/ParameterIdentification.xlsx [PIConfiguration] 1 rows: PITaskName | Algorithm | CIMethod | PrintEvaluationFeedback | AutoEstimateCI | numberOfCores | checkForNegativeValues | ObjectiveFunctionType | ResidualWeightingMethod | RobustMethod | ScaleVar | LinScaleCV | LogScaleSD
-      Configurations/ParameterIdentification.xlsx [AlgorithmOptions] 2 rows: PITaskName | OptionName | OptionValue
-      Configurations/ParameterIdentification.xlsx [CIOptions] 1 rows: PITaskName | OptionName | OptionValue
+      Configurations/ParameterIdentification.xlsx [PITasks] 3 rows: taskId | scenarios | config.algorithm | config.ciMethod | config.autoEstimateCI | config.printEvaluationFeedback | config.algorithmOptions.maxeval | config.algorithmOptions.ftol_rel | config.ciOptions.confLevel
+      Configurations/ParameterIdentification.xlsx [PIParameters] 5 rows: taskId | id | scenarios | path | units | minValue | maxValue | startValue
+      Configurations/ParameterIdentification.xlsx [PIOutputMappings] 4 rows: taskId | id | scenarios | outputPath | observedData | scaling | xOffset | yOffset | xFactor | yFactor | weight
       Configurations/Plots.xlsx [DataCombined] 4 rows: DataCombinedName | dataType | label | scenario | path | dataSet | group | xOffsets | xOffsetsUnits | yOffsets | yOffsetsUnits | xScaleFactors | yScaleFactors
       Configurations/Plots.xlsx [plotConfiguration] 4 rows: plotId | dataCombined | plotType | title | xUnit | yUnit | xAxisScale | yAxisScale | xValuesLimits | yValuesLimits | aggregation | quantiles | nsd | foldDistance | subtitle
       Configurations/Plots.xlsx [plotGrids] 3 rows: plotGridId | plots | title | subtitle
@@ -217,4 +215,51 @@
       Error in `convertProjectToV6()`:
       x Cannot read the SteadyState value "maybe" in '<tmp-path>' as true or false.
       i Use "TRUE" / "FALSE", "1" / "0" or "Yes" / "No", then convert again.
+
+# convertProjectToV6() writes the parameter-identification sheets an export writes
+
+    Code
+      for (sheet in readxl::excel_sheets(piFile)) {
+        cat(sheet, "\n")
+        print(as.data.frame(readExcel(piFile, sheet = sheet)))
+      }
+    Output
+      PITasks 
+              taskId               scenarios config.algorithm config.ciMethod
+      1 AciclovirFit PIScenario, PIScenario2           BOBYQA         hessian
+        config.autoEstimateCI config.printEvaluationFeedback
+      1                 FALSE                           TRUE
+        config.algorithmOptions.maxeval config.algorithmOptions.ftol_rel
+      1                             100                                0
+        config.ciOptions.confLevel
+      1                       0.95
+      PIParameters 
+              taskId            id               scenarios
+      1 AciclovirFit lipophilicity              PIScenario
+      2 AciclovirFit        tsspec PIScenario, PIScenario2
+                                                                                     path
+      1                                                           Aciclovir|Lipophilicity
+      2 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir|TSspec
+            units minValue maxValue startValue
+      1 Log Units      -10       10        1.0
+      2        mg        0       10        0.5
+      PIOutputMappings 
+              taskId                                 id   scenarios    outputPath
+      1 AciclovirFit   plasma_(peripheral_venous_blood)  PIScenario Aciclovir_PVB
+      2 AciclovirFit plasma_(peripheral_venous_blood)_2 PIScenario2 Aciclovir_PVB
+                                                                                 observedData
+      1 Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_
+      2 Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_
+        scaling xOffset yOffset xFactor yFactor weight
+      1     lin      NA      NA      NA      NA     NA
+      2     lin      NA      NA      NA      NA     NA
+
+# an ObservedDataSheet the data workbook lacks is reported
+
+    Code
+      cat(conditionMessage(warning))
+    Output
+      ! 1 ObservedDataSheet sheet named by the PIOutputMappings sheet is not in the data workbook: "Laskin 1982.Group B".
+      i A v6 project imports every sheet of the data workbook and finds a mapping's data set by its name, so the column is not carried over. A data set on a sheet the workbook does not have is not in the project: the mapping's DataSet does not resolve, and `validateProject()` reports it.
+      i Point dataFile at the workbook that holds it in the v6 property sheet and import again.
 
