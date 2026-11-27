@@ -1,8 +1,8 @@
 # The bundled `TestProjectExcel/ProjectConfiguration.json` is a monolithic
 # snapshot written by a previous esqlabsR version, so it exercises the
 # previous-version upgrade path end to end.
-.legacySnapshotFixture <- function() {
-  test_path("data", "TestProjectExcel", "ProjectConfiguration.json")
+.legacySnapshotFixture <- function(envir = parent.frame()) {
+  file.path(localExcelProjectDir(envir), "ProjectConfiguration.json")
 }
 
 test_that(".isLegacySnapshot recognizes a previous-version monolithic snapshot", {

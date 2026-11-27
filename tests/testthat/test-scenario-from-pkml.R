@@ -1,10 +1,10 @@
-pkmlFixture <- test_path(
-  "data",
-  "TestProject",
-  "Models",
-  "Simulations",
+# The test model in a folder of its own, outside any project. A copy, because
+# several tests point a project's `simulationsFolder` at its folder.
+pkmlFixture <- file.path(
+  withr::local_tempdir(.local_envir = testthat::teardown_env()),
   "Aciclovir.pkml"
 )
+file.copy(testModelPath(), pkmlFixture)
 
 # createScenariosFromPKML: input handling ----
 
@@ -584,6 +584,7 @@ test_that("NULL simulationsFolder falls back to the absolute pkml path with a wa
   project <- .fakeProject()
   expect_null(project$paths$simulationsFolder)
   expect_snapshot(
+    transform = .redactTmpDir,
     suppressMessages(createScenariosFromPKML(
       pkmlFixture,
       project = project,

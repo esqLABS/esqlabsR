@@ -20,12 +20,41 @@
 #                         spelling of each. Reached via
 #                         localLegacyExcelProject().
 #
+# None of the three project fixtures holds its model: they all run the example
+# project's `Aciclovir.pkml` (testModelPath()), which each helper above copies
+# into the throwaway copy it makes. A test that reads a fixture in place
+# therefore sees no model.
+#
 # For a writable, throwaway project use with_temp_project(), which calls
 # initProject(type = "example", createExcel = TRUE) in a temp dir.
 
 #' Get path to a file in `tests/testthat/data/`.
 getTestDataFilePath <- function(fileName = "") {
   testthat::test_path("data", fileName)
+}
+
+#' Path to the Aciclovir model the project fixtures run: the example project's.
+#'
+#' It resolves into `inst/` under `devtools::test()` and into the installed
+#' package under `R CMD check`. Never write to it; copy it first.
+testModelPath <- function() {
+  file.path(
+    dirname(exampleProjectPath()),
+    "Models",
+    "Simulations",
+    "Aciclovir.pkml"
+  )
+}
+
+#' Copy the test model into a copied fixture's `Models/Simulations/` folder and
+#' return the project directory.
+.addTestModel <- function(projectDir) {
+  copied <- file.copy(
+    testModelPath(),
+    file.path(projectDir, "Models", "Simulations", "Aciclovir.pkml")
+  )
+  stopifnot(copied)
+  projectDir
 }
 
 #' Load the canonical test `Project` from a throwaway copy.
@@ -124,8 +153,8 @@ testPITask <- function(...) {
 }
 
 # The Aciclovir PKML fixture that lives INSIDE a copied test project (under its
-# own `simulationsFolder`). Use this, rather than the source-tree `pkmlFixture`,
-# when a test builds an on-disk `testProject()` and calls
+# own `simulationsFolder`). Use this, rather than `pkmlFixture` (a copy outside
+# any project), when a test builds an on-disk `testProject()` and calls
 # `createScenariosFromPKML()`, so the stored `modelFile` stays inside the
 # project and does not trip the out-of-folder warning.
 pkmlInProject <- function(project) {
@@ -147,8 +176,9 @@ local_projectPath <- function(envir = parent.frame()) {
   )
 }
 
-#' Copy the canonical TestProject fixture to a throwaway directory and
-#' return that directory. Cleaned up when the calling test finishes.
+#' Copy the canonical TestProject fixture, with the test model, to a throwaway
+#' directory and return that directory. Cleaned up when the calling test
+#' finishes.
 .copyTestProjectDir <- function(envir = parent.frame()) {
   src <- testthat::test_path("data", "TestProject")
   dest <- withr::local_tempdir("TestProject_", .local_envir = envir)
@@ -157,7 +187,7 @@ local_projectPath <- function(envir = parent.frame()) {
     dest,
     recursive = TRUE
   )
-  dest
+  .addTestModel(dest)
 }
 
 #' Load the bundled example `Project` from a throwaway copy.
@@ -202,15 +232,20 @@ scenarioSheetRow <- function(...) {
   data.frame(row, stringsAsFactors = FALSE)
 }
 
-#' A writable copy of the `TestProjectExcel` fixture, returning its directory.
+#' A writable copy of the `TestProjectExcel` fixture, with the test model,
+#' returning its directory.
 #'
 #' The Excel-bridge tests import, export and re-import in place, so they need a
 #' throwaway copy rather than the version-controlled fixture. The copy is
 #' removed when the calling test finishes.
 localExcelProjectDir <- function(envir = parent.frame()) {
   workDir <- withr::local_tempdir(.local_envir = envir)
-  file.copy(dirname(testProjectExcelPath()), workDir, recursive = TRUE)
-  file.path(workDir, "TestProjectExcel")
+  file.copy(
+    testthat::test_path("data", "TestProjectExcel"),
+    workDir,
+    recursive = TRUE
+  )
+  .addTestModel(file.path(workDir, "TestProjectExcel"))
 }
 
 #' Export a project to Excel and read it back, returning the re-imported one.
@@ -268,14 +303,15 @@ excelProjectProperties <- function(workbookPath) {
   )
 }
 
-#' Path to the legacy Excel `ProjectConfiguration.xlsx` fixture, used by
-#' Excel-bridge round-trip tests.
-testProjectExcelPath <- function() {
-  testthat::test_path(
-    "data",
-    "TestProjectExcel",
-    "ProjectConfiguration.xlsx"
-  )
+#' Path to the `ProjectConfiguration.xlsx` of a throwaway copy of the
+#' `TestProjectExcel` fixture, used by Excel-bridge round-trip tests.
+#'
+#' A copy rather than the fixture itself, because `importProjectFromExcel()`
+#' copies the project's folders, the model among them, into its `outputDir`, and
+#' the fixture holds no model. The copy is removed when the calling test
+#' finishes.
+testProjectExcelPath <- function(envir = parent.frame()) {
+  file.path(localExcelProjectDir(envir), "ProjectConfiguration.xlsx")
 }
 
 # Legacy Excel fixture (issue #1213) ----
@@ -292,10 +328,9 @@ testProjectExcelPath <- function() {
 
 #' Copy the legacy Excel fixture to a throwaway directory and return it.
 #'
-#' The committed fixture holds no `.pkml`: the 7 MB public Aciclovir model the
-#' sibling `TestProjectExcel/` fixture already carries is copied into the throwaway
-#' project's `Models/Simulations/` here, so the copy is a complete, runnable
-#' project without a second copy of that binary in the repository.
+#' Like the other project fixtures, the committed fixture holds no `.pkml`: the
+#' test model is copied into the throwaway project's `Models/Simulations/`, so
+#' the copy is a complete, runnable project.
 #'
 #' The copy is removed when the calling test finishes. Mutate one workbook of it
 #' with [editWorkbookSheets()] to derive a per-defect variant.
@@ -303,17 +338,7 @@ localLegacyExcelProject <- function(envir = parent.frame()) {
   src <- testthat::test_path("data", "TestProjectExcelLegacy")
   dest <- withr::local_tempdir("LegacyExcel_", .local_envir = envir)
   file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
-  file.copy(
-    testthat::test_path(
-      "data",
-      "TestProjectExcel",
-      "Models",
-      "Simulations",
-      "Aciclovir.pkml"
-    ),
-    file.path(dest, "Models", "Simulations", "Aciclovir.pkml")
-  )
-  dest
+  .addTestModel(dest)
 }
 
 #' Path to the legacy fixture's entry workbook inside a copied project.

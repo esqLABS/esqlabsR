@@ -351,3 +351,6 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
 - 2026-11-25 16:24: Formatted the message catalog with Air.
 - 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
+- 2026-11-26 15:56: Tests take the Aciclovir model from the example project and copy it into each throwaway copy of a fixture. (#1405)
+- 2026-11-26 15:56: Removed the two test copies of Aciclovir.pkml. (#1405)
+- 2026-11-26 18:08: Brought the single-model branch up to date with v6. (#1405)

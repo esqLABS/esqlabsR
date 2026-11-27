@@ -1036,6 +1036,7 @@ test_that("exportProjectToExcel aborts over existing workbooks unless overwrite 
     work,
     recursive = TRUE
   )
+  .addTestModel(work)
   xlsx <- file.path(work, "ProjectConfiguration.xlsx")
   df <- as.data.frame(readxl::read_excel(xlsx))
   if (property %in% df$Property) {
@@ -1524,6 +1525,7 @@ test_that("an unpairable ontogeny declaration warns instead of dropping it in si
     work,
     recursive = TRUE
   )
+  .addTestModel(work)
   rewrite <- function(workbook, sheet, proteins, ontogenies) {
     path <- file.path(work, "Configurations", workbook)
     names <- readxl::excel_sheets(path)
@@ -2054,13 +2056,7 @@ test_that("a skipped sheet named after an individual is not linked to that indiv
 # abort (matching interactive authoring) rather than silently let a downstream
 # rename drop the second definition.
 test_that("importProjectFromExcel aborts when two ids canonicalize to the same value", {
-  work_dir <- withr::local_tempdir()
-  file.copy(
-    dirname(testProjectExcelPath()),
-    work_dir,
-    recursive = TRUE
-  )
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   scenariosFile <- file.path(projectDir, "Configurations", "Scenarios.xlsx")
 
   # Rewrite the OutputPaths sheet so two ids (`Aciclovir_PVB` and its
@@ -3099,6 +3095,7 @@ test_that("projectStatus() does not abort on a side-car canonicalization collisi
     work,
     recursive = TRUE
   )
+  .addTestModel(work)
 
   jsonPath <- suppressWarnings(importProjectFromExcel(
     file.path(work, "ProjectConfiguration.xlsx"),
