@@ -314,7 +314,7 @@ loadObservedData <- function(project) {
     logical(1)
   )
   ids <- names(observedData)[isProgrammatic]
-  setdiff(ids[!is.na(ids) & nzchar(ids)], storeIds)
+  setdiff(ids, storeIds)
 }
 
 # The session's DataSets, which the store keeps under their source ids, named
@@ -525,7 +525,7 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
     # (`.mergeObservedDataSets()`).
     namesCache <- private$.observedDataNamesCache
     knownNames <- setdiff(
-      union(namesCache, names(.programmaticDataSetsByName(store))),
+      union(namesCache, vapply(store, \(ds) ds$name, character(1))),
       replacedName
     )
     if (name %in% knownNames) {
@@ -708,10 +708,8 @@ removeObservedData <- function(project, id) {
   # source id). That includes a source a failed save has already rewritten as
   # `pkml` while its DataSet is still held.
   storedIds <- intersect(removedIds, names(private$.programmaticDataSets))
-  private$.setSection(
-    "observedData",
-    observedData[!(sectionIds %in% removedIds)]
-  )
+  observedData[removedIds] <- NULL
+  private$.setSection("observedData", observedData)
   for (storedId in storedIds) {
     private$.programmaticDataSets[[storedId]] <- NULL
   }
@@ -1003,19 +1001,15 @@ removeObservedData <- function(project, id) {
     )
   }
   # No write may land on a file another source reads its data from (whatever
-  # that source's id), or on a file another write in this batch lands on. The
-  # paths are compared as `.observedDataResolvedFiles()` resolves them: on the
-  # text alone, ignoring case. Two names for one file through a symbolic or
-  # hard link are not detected.
+  # that source's id). The paths are compared as `.observedDataResolvedFiles()`
+  # resolves them: on the text alone, ignoring case. Two names for one file
+  # through a symbolic or hard link are not detected.
   targetFiles <- .observedDataResolvedFiles(fileNames, dataFolder)
   otherFiles <- .observedDataResolvedFiles(
     .observedDataSourceFiles(observedData[-toPersist]),
     dataFolder
   )
-  readByOther <- targetFiles %in% otherFiles
-  sharedInBatch <- duplicated(targetFiles) |
-    duplicated(targetFiles, fromLast = TRUE)
-  clashingFiles <- fileNames[readByOther | sharedInBatch]
+  clashingFiles <- fileNames[targetFiles %in% otherFiles]
   if (length(clashingFiles) > 0) {
     cli::cli_abort(messages$observedDataPersistFileCollision(clashingFiles))
   }
