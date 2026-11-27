@@ -647,7 +647,9 @@ test_that("convertProjectToV6() writes a variable naming a folder of the project
   withr::local_envvar(
     OBSDATA = "Data",
     MDL = "Models",
-    POPCSV = "Configurations/PopulationsCSV",
+    # esqlabsR 5 reads the populations folder inside the configurations
+    # folder.
+    POPCSV = "PopulationsCSV",
     OUT = "Results"
   )
   .setProperty(projectDir, "dataFolder", "OBSDATA")
@@ -667,7 +669,7 @@ test_that("convertProjectToV6() writes a variable naming a folder of the project
     list(
       dataFolder = "${OBSDATA}",
       simulationsFolder = "${MDL}/Simulations/",
-      populationsFolder = "${POPCSV}",
+      populationsFolder = "Configurations/${POPCSV}",
       outputFolder = "${OUT}/"
     )
   )

@@ -585,14 +585,13 @@ convertProjectToV6 <- function(
   projectConfigPath <- as.character(fs::path_abs(projectConfigPath))
   projectDir <- dirname(projectConfigPath)
   table <- .v5PropertyTable(properties)
-  envVarRewrites <- .v5EnvVarFolders(table)
-  table$Value <- envVarRewrites$values
-  props <- .v5PropertyLookup(table)
   configsFolder <- .v5ConfigurationsFolder(
-    props("configurationsFolder"),
+    .v5PropertyLookup(table)("configurationsFolder"),
     projectDir,
     .call
   )
+  envVarRewrites <- .v5EnvVarFolders(table, projectDir, configsFolder)
+  table$Value <- envVarRewrites$values
   table <- .v5WorkingFolders(table, projectDir, configsFolder, .call)
   props <- .v5PropertyLookup(table)
   targets <- .v5SectionTargets(props, configsFolder, .call)
@@ -783,12 +782,19 @@ convertProjectToV6 <- function(
 # variable is used on their computer. A part that is not a valid variable name
 # for `${NAME}` is kept as written.
 #
+# esqlabsR 5 reads `populationsFolder` inside the configurations folder, unless
+# the variable makes it an absolute path, while a v6 project reads it from the
+# project folder. So a rewritten `populationsFolder` whose value is relative is
+# written under the configurations folder (`Configurations/${POPCSV}`).
+#
 # @param table The property table.
+# @param projectDir The project folder.
+# @param configsFolder The configurations folder, or `NULL`.
 # @returns `list(values, rewrites)`: the `Value` column with the rewritten
 #   folders, and a data frame of the rewrites (`property`, `from`, `to`).
 # @keywords internal
 # @noRd
-.v5EnvVarFolders <- function(table) {
+.v5EnvVarFolders <- function(table, projectDir, configsFolder) {
   values <- table$Value
   folder <- table$Property %in%
     .v5EnvVarFolderProperties &
@@ -799,6 +805,22 @@ convertProjectToV6 <- function(
     character(1),
     USE.NAMES = FALSE
   )
+  configsRelative <- if (is.null(configsFolder)) {
+    "."
+  } else {
+    as.character(fs::path_rel(configsFolder, projectDir))
+  }
+  populations <- which(
+    table$Property == "populationsFolder" & folder & values != table$Value
+  )
+  for (i in populations) {
+    if (
+      configsRelative != "." &&
+        !fs::is_absolute_path(.replaceEnvVarPath(values[[i]]))
+    ) {
+      values[[i]] <- paste(configsRelative, values[[i]], sep = "/")
+    }
+  }
   changed <- folder & values != table$Value
   list(
     values = values,
