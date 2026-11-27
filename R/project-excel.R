@@ -299,8 +299,10 @@
 #'
 #' Only Excel files are read. The JSON file that
 #' `snapshotProjectConfiguration()` saved in esqlabsR 5 (usually
-#' `ProjectConfiguration.json`) is refused before anything is written. If that
-#' file is all you have of a project, restore its Excel files first with
+#' `ProjectConfiguration.json`) is refused before anything is written. When the
+#' Excel files it was saved from are still beside it, as in a usual esqlabsR 5
+#' project folder, import those. If that file is all you have of a project,
+#' restore its Excel files first with
 #' `restoreProjectConfiguration()` in esqlabsR 5.7.0, the last esqlabsR 5
 #' release, then import the restored workbook (`ProjectConfiguration.xlsx` for
 #' `ProjectConfiguration.json`) with this function in the current version.
