@@ -208,9 +208,10 @@ print.ObservedDataSource <- function(x, ...) {
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
 #' `DataSet` added at runtime with [addObservedData()]; its data lives in
 #' the session until you save, and [saveProject()] persists it to a PKML
-#' file and rewrites the entry as a `pkml` source. A project file cannot
-#' declare a `programmatic` source: its `DataSet` exists only in the session
-#' that added it, so [loadProject()] stops with an error that names it.
+#' file and rewrites the entry as a `pkml` source. A `programmatic` source
+#' cannot be declared in the project's files: its `DataSet` exists only in the
+#' R session that added it, so [loadProject()] stops with an error that names
+#' it.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when

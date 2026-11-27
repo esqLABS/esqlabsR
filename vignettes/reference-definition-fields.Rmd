@@ -228,7 +228,7 @@ Required fields by `type`:
 | --- | --- | --- |
 | `excel` | `file`, `importerConfiguration`, `sheets` | Sheets of a workbook through an OSPS data-importer configuration. |
 | `pkml` | `file` | A `DataSet` saved to a PKML file. |
-| `programmatic` | none | A `DataSet` built in the session. Never declared in a project file: `saveProject()` writes it as a `pkml` source, and `loadProject()` stops with an error on a project file that declares one. |
+| `programmatic` | none | A `DataSet` built in the session. Never declared in the project's files: `saveProject()` writes it as a `pkml` source, and `loadProject()` stops with an error when the files declare one. |
 
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
