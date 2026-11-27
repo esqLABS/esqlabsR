@@ -7,6 +7,27 @@
       x Invalid type "invalid_type" in `observedData` entry.
       i Must be one of: "excel", "pkml", or "programmatic".
 
+# loadProject refuses a project file declaring programmatic sources
+
+    Code
+      loadProject(tmp)
+    Condition
+      Error:
+      x Observed-data sources "Aciclovir_plasma_iv", "Aciclovir_plasma_po", and "(no id)" are declared as `programmatic`, but there is no <DataSet> for them.
+      i A `programmatic` source is a <DataSet> added with `addObservedData()` in the current R session, never one read from a file. `saveProject()` writes it to a PKML file in the data folder and declares it as a `pkml` source.
+      i Declare the data as a `pkml` or `excel` source, or remove these declarations.
+
+# loadProject names the definition files declaring programmatic sources
+
+    Code
+      loadProject(path)
+    Condition
+      Error:
+      x Observed-data sources "Aciclovir_plasma_digitized" and "Aciclovir_urine_digitized" are declared as `programmatic`, but there is no <DataSet> for them.
+      i A `programmatic` source is a <DataSet> added with `addObservedData()` in the current R session, never one read from a file. `saveProject()` writes it to a PKML file in the data folder and declares it as a `pkml` source.
+      i Declare the data as a `pkml` or `excel` source, or remove these declarations.
+      i Check '<project>/definitions/observed-data/Aciclovir_plasma_digitized.json' and '<project>/definitions/observed-data/Aciclovir_urine_digitized.json'.
+
 # loadObservedData errors when excel entry is missing required fields
 
     Code

@@ -13,9 +13,11 @@
 #   - programmatic : DataSets added at runtime via addObservedData(project).
 #                    The DataSet itself is not JSON-serializable, so it
 #                    is held on the Project's private slot
-#                    (.programmaticDataSets) and the JSON sentinel
-#                    `{type: "programmatic", name: ...}` is what
-#                    survives a round-trip.
+#                    (.programmaticDataSets) under the sentinel
+#                    `{type: "programmatic", name: ...}` until
+#                    saveProject() writes it to a PKML file and rewrites
+#                    the sentinel as a `pkml` source. A project file that
+#                    declares a sentinel does not load.
 
 # Print ----
 
@@ -208,10 +210,10 @@ print.ObservedDataSource <- function(x, ...) {
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
 #' `DataSet` added at runtime with [addObservedData()]; its data lives in
 #' the session until you save, and [saveProject()] persists it to a PKML
-#' file and rewrites the entry as a `pkml` source. A `programmatic` sentinel
-#' read from disk with no matching in-session `DataSet` (a hand-authored
-#' declaration, or a project opened before it was ever saved) resolves to
-#' nothing, and the load warns you by name.
+#' file and rewrites the entry as a `pkml` source. A `programmatic` source
+#' cannot be declared in the project's files: its `DataSet` exists only in the
+#' R session that added it, so [loadProject()] stops with an error that names
+#' it.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
@@ -261,59 +263,8 @@ loadObservedData <- function(project) {
     allDataSets,
     private$.programmaticDataSets
   )
-  # A `programmatic` sentinel resolves to nothing unless this session added its
-  # DataSet: the data lives only in the runtime store, so a sentinel read from
-  # disk (a reload, or a project opened elsewhere) has no backing DataSet and
-  # would silently vanish from the result. Warn by name so the drop is loud
-  # instead of surfacing later as an obscure dangling DataCombined reference.
-  unresolved <- .unresolvedProgrammaticNames(
-    self$definitions$observedData,
-    names(allDataSets)
-  )
-  if (length(unresolved) > 0) {
-    # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
-    # and `addObservedData()`, and on every `createDataCombined()`/`createPlots()`),
-    # so throttle to once per session per project rather than firing on every call.
-    cli::cli_warn(
-      messages$observedDataProgrammaticUnresolved(unresolved),
-      .frequency = "once",
-      .frequency_id = paste0(
-        "esqlabsR_observed_data_unresolved_programmatic_",
-        .projectWarningKey(self)
-      )
-    )
-  }
   private$.observedDataNamesCache <- names(allDataSets)
   allDataSets
-}
-
-# A stable per-project key for once-per-session warning frequency ids, so a
-# throttled warning fires once per project rather than once globally: two
-# projects in the same session each get their own warning. Falls back to a
-# constant for a session-only project (no file on disk to key on).
-#
-# @keywords internal
-# @noRd
-.projectWarningKey <- function(self) {
-  self$info$projectFilePath %||% "session"
-}
-
-# Names of `programmatic` sentinels with no backing DataSet in the resolved set
-# (their data was never added this session, or was lost across a reload).
-#
-# @keywords internal
-# @noRd
-.unresolvedProgrammaticNames <- function(observedData, resolvedNames) {
-  programmatic <- Filter(
-    function(e) identical(e$type, "programmatic"),
-    observedData
-  )
-  names <- vapply(
-    programmatic,
-    function(e) e$name %||% NA_character_,
-    character(1)
-  )
-  setdiff(names[!is.na(names)], resolvedNames)
 }
 
 # Merge a batch of loaded DataSets into the accumulator, aborting on a name
@@ -878,7 +829,8 @@ removeObservedData <- function(project, id) {
 # written: for each `programmatic` entry whose DataSet is in the runtime store,
 # write `<dataFolder>/<name>.pkml` and rewrite the section entry to a `pkml`
 # source pointing at that file. A programmatic entry with no DataSet in the store
-# (an orphan sentinel read from disk) is left untouched.
+# is left untouched; only a section set directly (as tests do) can hold one, since
+# a project file declaring a programmatic source does not load.
 #
 # Returns the character vector of persisted DataSet names; the caller drops these
 # from the runtime store only after the whole save commits, so an abort partway
@@ -892,10 +844,10 @@ removeObservedData <- function(project, id) {
   toPersist <- which(vapply(
     observedData,
     function(e) {
-      # A hand-authored `programmatic` sentinel may carry no `name`; guard it
-      # before indexing the store (`store[[NULL]]` aborts). A name-less sentinel
-      # has no backing DataSet, so it is left untouched, matching this function's
-      # orphan-sentinel contract.
+      # A `programmatic` sentinel set directly on the section may carry no
+      # `name`; guard it before indexing the store (`store[[NULL]]` aborts). A
+      # name-less sentinel has no backing DataSet, so it is left untouched, like
+      # any entry whose DataSet is not in the store.
       identical(e$type, "programmatic") &&
         !is.null(e$name) &&
         !is.null(private$.programmaticDataSets[[e$name]])

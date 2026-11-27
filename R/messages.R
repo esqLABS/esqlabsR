@@ -2116,12 +2116,20 @@ messages$observedDataFileNotFound <- function(filePath) {
   )
 }
 
-messages$observedDataProgrammaticUnresolved <- function(names) {
-  cliBullets(
-    "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
-    "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
+# `names` are the ids of the declarations, `NA` for one with no name; `files`
+# the definition files they were read from, empty for a project file that holds
+# the section inline.
+messages$observedDataProgrammaticInProjectFile <- function(names, files) {
+  names[is.na(names)] <- "(no id)"
+  bullets <- c(
+    "x" = "{cli::qty(names)}Observed-data source{?s} {.val {names}} {?is/are} declared as {.code programmatic}, but there is no {.cls DataSet} for {?it/them}.",
+    "i" = "A {.code programmatic} source is a {.cls DataSet} added with {.fn addObservedData} in the current R session, never one read from a file. {.fn saveProject} writes it to a PKML file in the data folder and declares it as a {.code pkml} source.",
+    "i" = "Declare the data as a {.code pkml} or {.code excel} source, or remove {cli::qty(names)}{?the/these} declaration{?s}."
   )
+  if (length(files) > 0L) {
+    bullets <- c(bullets, "i" = "Check {.file {files}}.")
+  }
+  cliBullets(bullets)
 }
 
 messages$observedDataDataFolderNotDeclared <- function(file) {

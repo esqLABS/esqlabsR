@@ -68,7 +68,9 @@ test_that("loadObservedData errors when an entry has invalid type", {
   expect_snapshot(error = TRUE, loadObservedData(project))
 })
 
-test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory DataSet)", {
+# A programmatic source's DataSet lives only in the R session that added it, so
+# a project file that declares one has no data for it and does not load.
+test_that("loadProject refuses a project file declaring programmatic sources", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(
@@ -76,22 +78,32 @@ test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "programmatic", name = "x"))
+      observedData = list(
+        list(type = "programmatic", name = "Aciclovir_plasma_iv"),
+        list(type = "programmatic", name = "Aciclovir_plasma_po"),
+        list(type = "programmatic")
+      )
     ),
     tmp,
     auto_unbox = TRUE,
     null = "null"
   )
-  project <- loadProject(tmp)
-  # A reloaded project sees the sentinel entry but has no in-memory DataSet to
-  # back it (DataSets do not survive a JSON round-trip). loadObservedData warns
-  # that the source resolved to nothing and returns an empty result;
-  # addObservedData is the supported path for re-attaching the runtime DataSet.
-  expect_warning(
-    result <- loadObservedData(project),
-    "resolved to no data"
-  )
-  expect_length(result, 0L)
+  expect_snapshot(loadProject(tmp), error = TRUE)
+})
+
+test_that("loadProject names the definition files declaring programmatic sources", {
+  project <- exampleProject()
+  for (name in c("Aciclovir_plasma_digitized", "Aciclovir_urine_digitized")) {
+    dataSet <- ospsuite::DataSet$new(name = name)
+    dataSet$setValues(xValues = c(0, 1), yValues = c(1, 2))
+    addObservedData(project, dataSet)
+  }
+  dir <- withr::local_tempdir("Handwritten_")
+  # Writing the tree directly keeps the `programmatic` declarations on disk, as
+  # hand-written files would; `saveProject()` writes them as `pkml` sources.
+  path <- .writeProjectTree(project, dir)
+
+  expect_snapshot(loadProject(path), error = TRUE, transform = .redactTmpPath)
 })
 
 test_that("loadObservedData errors when excel entry is missing required fields", {
@@ -481,8 +493,9 @@ test_that("addObservedData rejects a DataSet name that is not a safe filename", 
   expect_error(addObservedData(project, ds), "safe filename segment")
 })
 
-# A hand-authored `programmatic` sentinel with no `name` is schema-legal (a
-# programmatic entry has no required fields). The persist step must not crash on
+# A `programmatic` sentinel with no `name` is set directly on the section here,
+# since a project file declaring one does not load (a programmatic entry has no
+# required fields). The persist step must not crash on
 # `store[[NULL]]`; a name-less entry has no id to name its definition file, so
 # the save aborts with the serializer's clear "no id" message, not an opaque
 # `subscript out of bounds`.
