@@ -434,3 +434,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 21:29: DataSets added in the session are kept under their source id and loaded under their own name, so the two no longer have to be the same string. (#1368)
 - 2026-11-27 21:41: The example and test projects file their observed-data source under the id aciclovir_timevaluesdata. (#1368)
 - 2026-11-27 21:55: addObservedData() takes an id argument, every observed-data id is lowercased and made a safe file name, including one taken from the file or the DataSet name, and removeObservedData() finds a source the way the other remove functions do. (#1368)
+- 2026-11-27 22:03: An observed-data definition without an id stops the load like any other definition, and a programmatic source is no longer read by a name field. (#1368)

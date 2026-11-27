@@ -99,24 +99,34 @@
       x id is "differentname" but the file is "populationscenario".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
 
+# an observedData file without an id aborts
+
+    Code
+      loadProject(project$info$projectFilePath)
+    Condition
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
+      i Check '<project>/definitions/observed-data/cohort_b.json'.
+
 # an observedData file whose id disagrees with its filename aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
-      Error in `.assertObservedDataTreeRecordId()`:
-      ! An observedData definition file has an id that disagrees with its filename.
-      x The declaration's id is "elsewhere" but the file is "mismatch".json.
-      i The filename stem is the declaration's id; rename the file, or the id it declares (or the file it derives one from), so they match. Check '<project>/definitions/observed-data/mismatch.json'.
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has a stored id that disagrees with its filename.
+      x id is "elsewhere" but the file is "mismatch".json.
+      i The filename stem is the definition's id; rename the file or the id so they match. Check '<project>/definitions/observed-data/mismatch.json'.
 
 # an observedData file whose id is not a string aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
-      Error in `.assertObservedDataTreeRecordId()`:
-      ! An observedData definition file has an unusable id.
-      x id must be a single non-empty string (it names the declaration and its file).
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
       i Check '<project>/definitions/observed-data/obs.pkml.json'.
 
 # a non-scalar scalar field fails load naming the scenario and field
@@ -145,7 +155,7 @@
       .serializeObservedDataSet(entries)
     Condition
       Error in `.serializeObservedDataSet()`:
-      x Two observed-data sources would be saved to the same definition file 'laskin 1982.pkml.json'.
+      x Two observed-data sources would be saved to the same definition file 'laskin 1982.json'.
       i Each source is saved to a file named after its id. Give the sources distinct ids, or remove one with `removeObservedData()`.
 
 # a programmatic observedData id that escapes its directory aborts

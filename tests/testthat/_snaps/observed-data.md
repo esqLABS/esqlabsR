@@ -305,7 +305,7 @@
       saveProject(project)
     Condition
       Error in `.serializeObservedDataSet()`:
-      x Two observed-data sources would be saved to the same definition file 'obs.pkml.json'.
+      x Two observed-data sources would be saved to the same definition file 'obs.json'.
       i Each source is saved to a file named after its id. Give the sources distinct ids, or remove one with `removeObservedData()`.
 
 # every observed-data source stores its id first and the section is keyed by it
@@ -317,6 +317,24 @@
       ! observedData is read-only and cannot be assigned into.
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
       i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
+
+# an observed-data record without an id in a project file aborts the load
+
+    Code
+      loadProject(tmp)
+    Condition
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
+
+---
+
+    Code
+      loadProject(tmp)
+    Condition
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
 
 # a DataSet replaces a programmatic source with no data only with overwrite
 

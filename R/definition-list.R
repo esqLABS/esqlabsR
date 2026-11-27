@@ -69,9 +69,7 @@ format.DefinitionList <- function(x, ...) {
 
 # The ids a section shows when it prints. The scenarios section adds each
 # scenario's label (`.scenarioListIds()`). Every other section is a named list
-# keyed by id, so its ids are its names. An observed-data declaration that
-# carries nothing to derive an id from is named `""` and shows as `(no id)`;
-# `validateProject()` is what reports it as under-specified.
+# keyed by id, so its ids are its names.
 #
 # @keywords internal
 # @noRd
@@ -79,12 +77,7 @@ format.DefinitionList <- function(x, ...) {
   if (identical(attr(x, "definitionKind"), "scenarios")) {
     return(.scenarioListIds(x))
   }
-  ids <- names(x)
-  if (is.null(ids)) {
-    return(ids)
-  }
-  ids[!is.na(ids) & !nzchar(ids)] <- "(no id)"
-  ids
+  names(x)
 }
 
 # The ids the scenarios section prints: each id, followed by the scenario's label

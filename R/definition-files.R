@@ -900,7 +900,7 @@
   observedData <- observedData %||% list()
   out <- list()
   for (entry in observedData) {
-    id <- .observedDataEntryId(entry, call = call)
+    id <- .keyedTreeRecordId(entry, "id", "observedData")
     .validateObservedDataId(id, call = call)
     # Two declarations filed under one id would overwrite each other's file (one
     # file on disk, the second declaration lost on reload).
@@ -910,7 +910,8 @@
         call = call
       )
     }
-    out[[id]] <- .observedDataRecordWithId(entry)
+    entry <- unclass(entry)
+    out[[id]] <- c(list(id = id), entry[names(entry) != "id"])
   }
   out
 }
@@ -923,7 +924,7 @@
     return(list())
   }
   records <- lapply(records, function(rec) {
-    .assertObservedDataTreeRecordId(rec)
+    .keyedTreeRecordId(rec, "id", "observedData")
     # Drop the transient `.definitionFile` load tag the tree loader attaches; it
     # is used only for error messages, and must not leak into the in-memory
     # record (which would make a tree-loaded section differ from an
@@ -934,88 +935,27 @@
   .observedDataSectionById(records)
 }
 
-# The in-memory shape of the `observedData` section: every declaration stores
-# its id (`.observedDataEntryIdOrNA()`) as its first field and the list is named
-# by those ids, like every other section. A declaration with nothing to take an
-# id from stores none and is named `""`; `validateProject()` reports the fields
-# it is missing. Each is stamped `ObservedDataSource` so a single source
-# dispatches its print method (the serializers strip it before JSON).
-# `.setSection()` runs every write of the section through this.
+# The in-memory shape of the `observedData` section: every declaration has its
+# id as its first field and the list is named by those ids, like every other
+# section. Each is stamped `ObservedDataSource` so a single source dispatches
+# its print method (the serializers strip it before JSON). `.setSection()` runs
+# every write of the section through this.
 #
 # @keywords internal
 # @noRd
 .observedDataSectionById <- function(observedData) {
   records <- lapply(observedData %||% list(), function(entry) {
-    .asObservedDataSource(.observedDataRecordWithId(entry))
+    entry <- unclass(entry)
+    first <- names(entry) == "id"
+    .asObservedDataSource(c(entry[first], entry[!first]))
   })
   names(records) <- vapply(
     records,
-    \(e) .usableObservedDataId(e[["id"]]) %||% "",
+    \(e) .usableObservedDataString(e[["id"]]) %||% NA_character_,
     character(1),
     USE.NAMES = FALSE
   )
   records
-}
-
-# One declaration as a plain list with its id first. A `programmatic`
-# declaration may carry its DataSet name under `name` instead of `id`; it is
-# read as the id and stored as `id`.
-#
-# @keywords internal
-# @noRd
-.observedDataRecordWithId <- function(entry) {
-  entry <- unclass(entry)
-  id <- .observedDataEntryIdOrNA(entry)
-  if (identical(entry$type, "programmatic")) {
-    entry$name <- NULL
-  }
-  if (is.na(id)) {
-    return(entry)
-  }
-  c(list(id = id), entry[names(entry) != "id"])
-}
-
-# The load-side counterpart of `.keyedTreeRecordId()` for observedData, whose
-# file may store no id, and then takes it from its source. Either way the id
-# must agree with the filename, or the next `saveProject()` files the
-# declaration under a different name and reconciles the loaded file away, and
-# two files that derive one id load fine but make the save abort. Checked only
-# for a record read from a tree file; a record from an inline project file has
-# no filename to check against.
-#
-# A declaration with no derivable id at all passes here: reporting an
-# under-specified source is `validateProject()`'s job, not the loader's.
-#
-# @keywords internal
-# @noRd
-.assertObservedDataTreeRecordId <- function(record) {
-  file <- attr(record, ".definitionFile")
-  if (is.null(file)) {
-    return(invisible(NULL))
-  }
-  stored <- record[["id"]]
-  if (!is.null(stored) && is.null(.usableObservedDataId(stored))) {
-    cli::cli_abort(c(
-      "An observedData definition file has an unusable {.field id}.",
-      "x" = "{.field id} must be a single non-empty string (it names the \\
-      declaration and its file).",
-      "i" = "Check {.file {file}}."
-    ))
-  }
-  id <- .observedDataEntryIdOrNA(record)
-  stem <- tools::file_path_sans_ext(basename(file))
-  if (!is.na(id) && !identical(id, stem)) {
-    cli::cli_abort(c(
-      "An observedData definition file has an id that disagrees with its \\
-      filename.",
-      "x" = "The declaration's id is {.val {id}} but the file is \\
-      {.val {stem}}.json.",
-      "i" = "The filename stem is the declaration's id; rename the file, or \\
-      the {.field id} it declares (or the {.field file} it derives one from), \\
-      so they match. Check {.file {file}}."
-    ))
-  }
-  invisible(NULL)
 }
 
 # Stamp an observed-data declaration with `c("ObservedDataSource", "list")`.
@@ -1030,57 +970,15 @@
   entry
 }
 
-# The id of an observed-data declaration: its own `id` field, else (for a
-# declaration that stores none) the file basename for `excel`/`pkml` and
-# the DataSet name a `programmatic` declaration stored under `name`. This is
-# the id `removeObservedData()` matches on and the stem of the definition file.
-#
-# @keywords internal
-# @noRd
-.observedDataEntryId <- function(entry, call = rlang::caller_env()) {
-  id <- .observedDataEntryIdOrNA(entry)
-  if (is.na(id)) {
-    cli::cli_abort(
-      c(
-        "An observedData declaration has no id to name its definition file.",
-        "i" = "Give it an {.field id}, or a {.field file} to take the id from."
-      ),
-      call = call
-    )
-  }
-  id
-}
-
-# The same id, `NA` when the declaration carries nothing usable to derive one
-# from. Used where a declaration without an id is a normal case to skip past
-# (matching an id against the section) rather than a failure.
-#
-# @keywords internal
-# @noRd
-.observedDataEntryIdOrNA <- function(entry) {
-  id <- .usableObservedDataId(entry[["id"]])
-  if (is.null(id)) {
-    if (identical(entry$type, "programmatic")) {
-      # A `programmatic` declaration may carry its DataSet name under `name`
-      # instead of `id`.
-      id <- .usableObservedDataId(entry[["name"]])
-    } else {
-      file <- .usableObservedDataId(entry[["file"]])
-      id <- if (is.null(file)) NULL else .usableObservedDataId(basename(file))
-    }
-  }
-  id %||% NA_character_
-}
-
-# A declaration field can name the declaration only as a single non-empty,
+# A declaration field such as `file` is usable only as a single non-empty,
 # non-NA string. Anything else (absent, `""`, `NA`, or a number or array a
-# hand-edited definition file left behind) is no id at all: returning `NULL`
-# here lets the caller fall back to the next source, or report `NA`, rather than
-# pass a non-string on to `basename()` or a `character(1)` `vapply()`.
+# hand-edited definition file left behind) gives `NULL`, so the caller reports
+# it rather than pass a non-string on to `basename()` or a `character(1)`
+# `vapply()`.
 #
 # @keywords internal
 # @noRd
-.usableObservedDataId <- function(value) {
+.usableObservedDataString <- function(value) {
   if (
     !is.character(value) ||
       length(value) != 1L ||

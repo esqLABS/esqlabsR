@@ -391,9 +391,25 @@ test_that("a scenario file whose id disagrees with its filename aborts", {
   )
 })
 
-# observedData is keyed like every other section, except its id may be derived
-# rather than stored. Both forms must still agree with the filename, or the next
-# save files the declaration elsewhere and reconciles the loaded file away.
+# observedData is keyed like every other section: the stored id must agree with
+# the filename, or the next save files the declaration elsewhere and reconciles
+# the loaded file away.
+test_that("an observedData file without an id aborts", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(type = "pkml", file = "cohort_b.pkml"),
+    file.path(dir, "cohort_b.json"),
+    auto_unbox = TRUE
+  )
+
+  expect_snapshot(
+    loadProject(project$info$projectFilePath),
+    error = TRUE,
+    transform = .redactTmpPath
+  )
+})
+
 test_that("an observedData file whose id disagrees with its filename aborts", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
@@ -571,8 +587,8 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
 # Ids that differ only in case are one definition file on Windows and macOS.
 test_that("observedData declarations whose ids differ only in case cannot be saved", {
   entries <- list(
-    list(type = "pkml", file = "Laskin 1982.pkml"),
-    list(type = "pkml", file = "sub/laskin 1982.pkml")
+    list(id = "Laskin 1982", type = "pkml", file = "Laskin 1982.pkml"),
+    list(id = "laskin 1982", type = "pkml", file = "sub/laskin 1982.pkml")
   )
 
   expect_snapshot(.serializeObservedDataSet(entries), error = TRUE)

@@ -58,7 +58,7 @@ test_that("loadObservedData errors when an entry has invalid type", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "invalid_type", file = "x"))
+      observedData = list(list(id = "x", type = "invalid_type", file = "x"))
     ),
     tmp,
     auto_unbox = TRUE,
@@ -76,7 +76,7 @@ test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "programmatic", name = "x"))
+      observedData = list(list(id = "x", type = "programmatic"))
     ),
     tmp,
     auto_unbox = TRUE,
@@ -102,7 +102,7 @@ test_that("loadObservedData errors when excel entry is missing required fields",
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "excel", file = "x.xlsx"))
+      observedData = list(list(id = "x", type = "excel", file = "x.xlsx"))
     ),
     tmp,
     auto_unbox = TRUE,
@@ -120,7 +120,9 @@ test_that("loadObservedData errors when source file is missing", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "pkml", file = "no-such-file.pkml"))
+      observedData = list(
+        list(id = "no_such_file", type = "pkml", file = "no-such-file.pkml")
+      )
     ),
     tmp,
     auto_unbox = TRUE,
@@ -142,7 +144,7 @@ test_that("loadObservedData rejects an observed-data file that escapes the data 
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
       observedData = list(
-        list(type = "pkml", file = "../../../../etc/passwd")
+        list(id = "passwd", type = "pkml", file = "../../../../etc/passwd")
       )
     ),
     tmp,
@@ -172,7 +174,9 @@ test_that("loadObservedData loads pkml observed data", {
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "pkml", file = "Aciclovir.pkml"))
+      observedData = list(
+        list(id = "aciclovir", type = "pkml", file = "Aciclovir.pkml")
+      )
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -203,8 +207,8 @@ test_that("loadObservedData aborts on a name collision across sources", {
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
       observedData = list(
-        list(type = "pkml", file = "dup1.pkml"),
-        list(type = "pkml", file = "dup2.pkml")
+        list(id = "dup1", type = "pkml", file = "dup1.pkml"),
+        list(id = "dup2", type = "pkml", file = "dup2.pkml")
       )
     ),
     jsonPath,
@@ -268,7 +272,7 @@ test_that("loadObservedData errors when dataFolder is not declared", {
       filePaths = structure(list(), names = character(0)),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "pkml", file = "x.pkml"))
+      observedData = list(list(id = "x", type = "pkml", file = "x.pkml"))
     ),
     jsonPath,
     auto_unbox = TRUE,
@@ -806,20 +810,6 @@ test_that("a DataSet whose name is not a safe file name is saved under a safe id
   )
 })
 
-# A hand-authored `programmatic` sentinel with no `id` is schema-legal (a
-# programmatic entry has no required fields). The persist step must not crash on
-# it; an id-less entry has nothing to name its definition file, so the save
-# aborts with the serializer's clear "no id" message, not an opaque
-# `subscript out of bounds`.
-test_that("saveProject rejects an id-less programmatic sentinel with a clear error", {
-  project <- testProject()
-  observedData <- .getSection(project, "observedData")
-  observedData <- c(observedData, list(list(type = "programmatic")))
-  .setSection(project, "observedData", observedData)
-
-  expect_error(saveProject(project), "no id to name its definition file")
-})
-
 # A save that aborts partway through the tree write must not lose a session-added
 # DataSet: the persist step writes the PKML but keeps the DataSet in the runtime
 # store until the whole save commits, so the data is recoverable after the abort.
@@ -1240,8 +1230,8 @@ test_that("removeObservedData mutates memory only; a surviving collision aborts 
   # Seed a colliding pair of surviving entries directly into the backing field.
   state$.observedData <- .observedDataSectionById(list(
     list(id = "myprogset", type = "programmatic"),
-    list(type = "pkml", file = "dirA/obs.pkml"),
-    list(type = "pkml", file = "dirB/obs.pkml")
+    list(id = "obs", type = "pkml", file = "dirA/obs.pkml"),
+    list(id = "obs", type = "pkml", file = "dirB/obs.pkml")
   ))
 
   # The removal succeeds in memory (the DataSet is dropped from the runtime
@@ -1344,79 +1334,27 @@ test_that("saveProject writes the id first into every definition file and a Data
   expect_false(file.exists(file.path(dir, "scratch_measurement.json")))
 })
 
-test_that("a definition file that stores no id, or a programmatic name, still loads", {
-  # Written by hand, or saved before every file stored its id.
-  project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
-  jsonlite::write_json(
-    list(type = "pkml", file = "Cohort B.pkml"),
-    file.path(dir, "Cohort B.pkml.json"),
-    auto_unbox = TRUE
-  )
-  jsonlite::write_json(
-    list(type = "programmatic", name = "Scratch measurement"),
-    file.path(dir, "Scratch measurement.json"),
-    auto_unbox = TRUE
-  )
-
-  reloaded <- loadProject(project$info$projectFilePath)
-  sources <- .unwrapDefinitionList(reloaded$definitions$observedData)
-  expect_identical(
-    lapply(sources[c("Cohort B.pkml", "Scratch measurement")], unclass),
-    list(
-      "Cohort B.pkml" = list(
-        id = "Cohort B.pkml",
-        type = "pkml",
-        file = "Cohort B.pkml"
+test_that("an observed-data record without an id in a project file aborts the load", {
+  for (record in list(
+    list(type = "pkml", file = "cohort_b.pkml"),
+    list(type = "programmatic", name = "Scratch measurement")
+  )) {
+    tmp <- withr::local_tempfile(fileext = ".json")
+    jsonlite::write_json(
+      list(
+        schemaVersion = "2.0",
+        filePaths = list(dataFolder = "."),
+        outputPaths = structure(list(), names = character(0)),
+        scenarios = list(),
+        observedData = list(record)
       ),
-      "Scratch measurement" = list(
-        id = "Scratch measurement",
-        type = "programmatic"
-      )
+      tmp,
+      auto_unbox = TRUE,
+      null = "null"
     )
-  )
 
-  # A save after a change stores the id in both files, and no `name`.
-  .markModified(reloaded)
-  saveProject(reloaded)
-  expect_identical(
-    jsonlite::read_json(file.path(dir, "Cohort B.pkml.json")),
-    list(id = "Cohort B.pkml", type = "pkml", file = "Cohort B.pkml")
-  )
-  expect_identical(
-    jsonlite::read_json(file.path(dir, "Scratch measurement.json")),
-    list(id = "Scratch measurement", type = "programmatic")
-  )
-})
-
-test_that("a programmatic name in a project snapshot loads as its id", {
-  tmp <- withr::local_tempfile(fileext = ".json")
-  jsonlite::write_json(
-    list(
-      schemaVersion = "2.0",
-      filePaths = list(dataFolder = "."),
-      outputPaths = structure(list(), names = character(0)),
-      scenarios = list(),
-      observedData = list(
-        list(type = "programmatic", name = "Scratch measurement")
-      )
-    ),
-    tmp,
-    auto_unbox = TRUE,
-    null = "null"
-  )
-
-  project <- loadProject(tmp)
-
-  expect_identical(
-    lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
-    list(
-      "Scratch measurement" = list(
-        id = "Scratch measurement",
-        type = "programmatic"
-      )
-    )
-  )
+    expect_snapshot(loadProject(tmp), error = TRUE)
+  }
 })
 
 test_that("an inline project file stores observed data as an array of records with ids", {

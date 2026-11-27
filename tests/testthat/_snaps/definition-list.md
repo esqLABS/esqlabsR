@@ -63,6 +63,6 @@
     Output
       <DefinitionList>
       observedData (2 definitions):
-        * Laskin_1982.xlsx
+        * laskin_1982
         * simulated_plasma
 

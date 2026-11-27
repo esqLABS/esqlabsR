@@ -611,12 +611,12 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
   isDataSet <- inherits(entry, "DataSet")
   typed <- id %||% (if (!isDataSet) entry[["id"]])
   if (!is.null(typed)) {
-    if (is.null(.usableObservedDataId(typed))) {
+    if (is.null(.usableObservedDataString(typed))) {
       cli::cli_abort(messages$observedDataInvalidId(), call = call)
     }
     return(.canonicalizeId(typed))
   }
-  source <- .usableObservedDataId(
+  source <- .usableObservedDataString(
     if (isDataSet) entry$name else entry[["file"]]
   )
   if (is.null(source)) {
@@ -799,7 +799,7 @@ removeObservedData <- function(project, id) {
 .observedDataSourceFiles <- function(observedData) {
   vapply(
     observedData %||% list(),
-    \(e) .usableObservedDataId(e[["file"]]) %||% NA_character_,
+    \(e) .usableObservedDataString(e[["file"]]) %||% NA_character_,
     character(1)
   )
 }
@@ -932,9 +932,6 @@ removeObservedData <- function(project, id) {
   rlang::local_error_call(call)
   observedData <- private$.getSection("observedData")
   sectionIds <- names(observedData) %||% character()
-  # A hand-authored `programmatic` sentinel may carry no id; it has no backing
-  # DataSet, so it is left untouched, matching this function's orphan-sentinel
-  # contract.
   toPersist <- which(
     vapply(
       observedData,

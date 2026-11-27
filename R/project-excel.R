@@ -1141,7 +1141,7 @@ exportProjectToExcel <- function(
       messages$exportUndeclaredObservedData(
         vapply(
           unrepresented,
-          .observedDataEntryIdOrNA,
+          \(e) e$id,
           character(1L),
           USE.NAMES = FALSE
         )

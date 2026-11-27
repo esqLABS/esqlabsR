@@ -118,8 +118,12 @@ test_that(".definitionListIds takes a keyed section's ids from its names", {
 test_that(".definitionListIds takes the observedData ids from the names the section is keyed by", {
   section <- .asDefinitionList(
     .observedDataSectionById(list(
-      list(type = "excel", file = "Laskin_1982.xlsx"),
-      list(type = "pkml", file = "aciclovir_plasma.pkml"),
+      list(id = "laskin_1982", type = "excel", file = "Laskin_1982.xlsx"),
+      list(
+        id = "aciclovir_plasma",
+        type = "pkml",
+        file = "aciclovir_plasma.pkml"
+      ),
       list(id = "simulated_plasma", type = "programmatic")
     )),
     "observedData"
@@ -127,17 +131,8 @@ test_that(".definitionListIds takes the observedData ids from the names the sect
 
   expect_equal(
     .definitionListIds(section),
-    c("Laskin_1982.xlsx", "aciclovir_plasma.pkml", "simulated_plasma")
+    c("laskin_1982", "aciclovir_plasma", "simulated_plasma")
   )
-})
-
-test_that(".definitionListIds labels an observedData declaration with no derivable id", {
-  section <- .asDefinitionList(
-    .observedDataSectionById(list(list(type = "pkml"))),
-    "observedData"
-  )
-
-  expect_equal(.definitionListIds(section), "(no id)")
 })
 
 test_that(".definitionListIds returns no ids for an empty observedData section", {
@@ -152,7 +147,7 @@ test_that(".definitionListIds returns no ids for an empty observedData section",
 test_that("printing the observedData section shows its ids", {
   section <- .asDefinitionList(
     .observedDataSectionById(list(
-      list(type = "excel", file = "Laskin_1982.xlsx"),
+      list(id = "laskin_1982", type = "excel", file = "Laskin_1982.xlsx"),
       list(id = "simulated_plasma", type = "programmatic")
     )),
     "observedData"
