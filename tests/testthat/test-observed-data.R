@@ -218,6 +218,39 @@ test_that("loadObservedData aborts on a name collision across sources", {
   )
 })
 
+test_that("loadObservedData aborts on two session DataSets renamed to one name", {
+  project <- testProject()
+  plasma <- ospsuite::DataSet$new(name = "Plasma cohort A")
+  plasma$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  urine <- ospsuite::DataSet$new(name = "Urine cohort A")
+  urine$setValues(xValues = c(0, 1), yValues = c(3, 4))
+  suppressMessages({
+    addObservedData(project, plasma)
+    addObservedData(project, urine)
+  })
+  urine$name <- "Plasma cohort A"
+
+  expect_error(
+    suppressWarnings(loadObservedData(project)),
+    "Duplicate observed-data set name"
+  )
+})
+
+test_that("loadObservedData returns a session DataSet under its current name", {
+  project <- testProject()
+  plasma <- ospsuite::DataSet$new(name = "Plasma cohort A")
+  plasma$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  suppressMessages(addObservedData(project, plasma))
+  plasma$name <- "Plasma cohort A, corrected"
+
+  expect_no_warning(loaded <- loadObservedData(project))
+  expect_identical(
+    names(loaded),
+    c(testObservedDataId, "Plasma cohort A, corrected")
+  )
+  expect_identical(loaded[["Plasma cohort A, corrected"]], plasma)
+})
+
 test_that("addObservedData rejects a script entry", {
   project <- testProject()
   expect_snapshot(

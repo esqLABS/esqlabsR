@@ -13,7 +13,7 @@
 #   - programmatic : DataSets added at runtime via addObservedData(project).
 #                    The DataSet itself is not JSON-serializable, so it
 #                    is held on the Project's private slot
-#                    (.programmaticDataSets), keyed by its name, and the
+#                    (.programmaticDataSets), keyed by its source id, and the
 #                    JSON sentinel `{id: <DataSet name>, type: "programmatic"}`
 #                    is what survives a round-trip.
 #
@@ -262,16 +262,16 @@ loadObservedData <- function(project) {
   # Merge runtime programmatic store, then cache names.
   allDataSets <- .mergeObservedDataSets(
     allDataSets,
-    private$.programmaticDataSets
+    .programmaticDataSetsByName(private$.programmaticDataSets)
   )
   # A `programmatic` sentinel resolves to nothing unless this session added its
   # DataSet: the data lives only in the runtime store, so a sentinel read from
   # disk (a reload, or a project opened elsewhere) has no backing DataSet and
-  # would silently vanish from the result. Warn by name so the drop is loud
+  # would silently vanish from the result. Warn by id so the drop is loud
   # instead of surfacing later as an obscure dangling DataCombined reference.
-  unresolved <- .unresolvedProgrammaticNames(
+  unresolved <- .unresolvedProgrammaticIds(
     self$definitions$observedData,
-    names(allDataSets)
+    names(private$.programmaticDataSets)
   )
   if (length(unresolved) > 0) {
     # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
@@ -301,28 +301,39 @@ loadObservedData <- function(project) {
   self$info$projectFilePath %||% "session"
 }
 
-# Names of `programmatic` sentinels with no backing DataSet in the resolved set
-# (their data was never added this session, or was lost across a reload).
+# Ids of `programmatic` sentinels with no DataSet in the session's store, which
+# is keyed by source id (their data was never added this session, or was lost
+# across a reload).
 #
 # @keywords internal
 # @noRd
-.unresolvedProgrammaticNames <- function(observedData, resolvedNames) {
-  programmatic <- Filter(
-    function(e) identical(e$type, "programmatic"),
-    observedData
+.unresolvedProgrammaticIds <- function(observedData, storeIds) {
+  isProgrammatic <- vapply(
+    observedData %||% list(),
+    \(e) identical(e$type, "programmatic"),
+    logical(1)
   )
-  names <- vapply(
-    programmatic,
-    .observedDataEntryIdOrNA,
-    character(1),
-    USE.NAMES = FALSE
+  ids <- names(observedData)[isProgrammatic]
+  setdiff(ids[!is.na(ids) & nzchar(ids)], storeIds)
+}
+
+# The session's DataSets, which the store keeps under their source ids, named
+# by their own current names: a `DataSet` can be renamed after it is added, and
+# a load returns every data set under its name.
+#
+# @keywords internal
+# @noRd
+.programmaticDataSetsByName <- function(store) {
+  stats::setNames(
+    unname(store),
+    vapply(store, \(ds) ds$name, character(1), USE.NAMES = FALSE)
   )
-  setdiff(names[!is.na(names)], resolvedNames)
 }
 
 # Merge a batch of loaded DataSets into the accumulator, aborting on a name
 # collision instead of letting `c()` silently keep both (a duplicate name would
-# then shadow the earlier set when the list is indexed by name).
+# then shadow the earlier set when the list is indexed by name). A batch can
+# repeat a name itself: two session DataSets renamed to one name.
 #' @keywords internal
 #' @noRd
 .mergeObservedDataSets <- function(
@@ -333,7 +344,11 @@ loadObservedData <- function(project) {
   if (length(incoming) == 0) {
     return(accumulated)
   }
-  duplicates <- intersect(names(accumulated), names(incoming))
+  incomingNames <- names(incoming)
+  duplicates <- unique(c(
+    intersect(names(accumulated), incomingNames),
+    incomingNames[duplicated(incomingNames)]
+  ))
   if (length(duplicates) > 0) {
     cli::cli_abort(messages$observedDataNameCollision(duplicates), call = call)
   }
@@ -453,7 +468,10 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # with a name inside a source not read yet aborts the next load instead
     # (`.mergeObservedDataSets()`).
     namesCache <- private$.observedDataNamesCache
-    existingNames <- union(namesCache, names(private$.programmaticDataSets))
+    existingNames <- union(
+      namesCache,
+      names(.programmaticDataSetsByName(private$.programmaticDataSets))
+    )
     # Besides the name its data resolves under (`existingNames`), a DataSet
     # collides with the id of another source, whose definition file it would
     # share; a config entry can carry an id without resolving a data set of that
@@ -733,20 +751,25 @@ removeObservedData <- function(project, id) {
   if (length(missingIds) > 0L) {
     cli::cli_warn("observedData entry {.val {missingIds}} not found; no-op.")
   }
-  # Warn once per removed id that is still referenced, then drop everything in a
-  # single in-memory update. A not-found id contributes nothing to the update.
-  for (one in setdiff(id, missingIds)) {
-    .warnIfObservedDataReferenced(self, one)
-  }
   if (length(dropIdx) == 0L) {
     return(invisible(self))
   }
 
   dropIdx <- unique(dropIdx)
-  # A removed source takes its DataSet out of the session (keyed by the DataSet
-  # name, which is the source's id). That includes a source a failed save has
-  # already rewritten as `pkml` while its DataSet is still held.
-  programmaticNames <- intersect(
+  # Warn once per removed id that is still referenced, then drop everything in a
+  # single in-memory update. The DataSet name is read from the session's store
+  # before the removal takes the DataSet out.
+  for (removedId in sectionIds[dropIdx]) {
+    .warnIfObservedDataReferenced(
+      self,
+      removedId,
+      private$.programmaticDataSets[[removedId]]$name
+    )
+  }
+  # A removed source takes its DataSet out of the session (the store is keyed by
+  # source id). That includes a source a failed save has already rewritten as
+  # `pkml` while its DataSet is still held.
+  storedIds <- intersect(
     sectionIds[dropIdx],
     names(private$.programmaticDataSets)
   )
@@ -754,22 +777,28 @@ removeObservedData <- function(project, id) {
   # in-memory mutations under explicit-save; nothing touches disk until
   # `saveProject()`).
   private$.setSection("observedData", observedData[-dropIdx])
-  for (name in programmaticNames) {
-    private$.programmaticDataSets[[name]] <- NULL
+  for (storedId in storedIds) {
+    private$.programmaticDataSets[[storedId]] <- NULL
   }
   private$.observedDataNamesCache <- NULL
   invisible(self)
 }
 
-# Warn when a removed observedData name is still referenced as a
+# Warn when a removed observed-data source is still referenced as a
 # `dataSet` by any `dataCombined` observed entry. Removal proceeds
 # anyway, leaving the dangling reference for the next validateProject()
 # call to surface, matching the .warnIfReferenced() convention used by
 # the other remove*() mutators.
 #
+# A `dataSet` reference names a data set, not a source, so it counts when it is
+# the name of the source's DataSet held in this session (`dataSetName`), or
+# when it canonicalizes to the source's id, as the name of a DataSet saved under
+# the id taken from that name does. A data set inside a file source is known
+# only by reading the file, which a removal does not do.
+#
 # @keywords internal
 # @noRd
-.warnIfObservedDataReferenced <- function(project, name) {
+.warnIfObservedDataReferenced <- function(project, id, dataSetName = NULL) {
   dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined) %||%
     list()
   holders <- character()
@@ -780,13 +809,20 @@ removeObservedData <- function(project, id) {
       function(e) as.character(e$dataSet %||% NA_character_),
       character(1)
     )
-    if (name %in% refs) {
+    refs <- refs[!is.na(refs)]
+    canonicalRefs <- vapply(
+      refs,
+      .canonicalizeOneId,
+      character(1),
+      USE.NAMES = FALSE
+    )
+    if (any(refs %in% dataSetName) || id %in% canonicalRefs) {
       holders <- c(holders, dcName)
     }
   }
   if (length(holders) > 0) {
     cli::cli_warn(c(
-      "Removed observedData {.val {name}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
+      "Removed observedData {.val {id}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
       "*" = "{holders}",
       "i" = "These dataCombined entries now have a dangling reference. Update or remove them."
     ))
@@ -978,11 +1014,11 @@ removeObservedData <- function(project, id) {
 # project, so it survives a reload. Called from the save path before the tree is
 # written: for each `programmatic` entry whose DataSet is in the runtime store,
 # write `<dataFolder>/<id>.pkml` and rewrite the section entry to a `pkml` source
-# reading that file, under the same id (the DataSet name). A programmatic entry
+# reading that file, under the same id. A programmatic entry
 # with no DataSet in the store (an orphan sentinel read from disk) is left
 # untouched.
 #
-# Returns the character vector of persisted DataSet names; the caller drops these
+# Returns the character vector of persisted source ids; the caller drops these
 # from the runtime store only after the whole save commits, so an abort partway
 # through the tree write leaves the DataSet recoverable (worst case is an orphan
 # PKML file, never lost data).
@@ -1016,11 +1052,11 @@ removeObservedData <- function(project, id) {
     return(character(0))
   }
 
-  persistedNames <- unname(sectionIds[toPersist])
+  persistedIds <- unname(sectionIds[toPersist])
   dataFolder <- self$paths$dataFolder
   if (is.null(dataFolder)) {
     cli::cli_abort(messages$observedDataPersistNoDataFolder(
-      persistedNames[[1]]
+      private$.programmaticDataSets[[persistedIds[[1]]]]$name
     ))
   }
 
@@ -1030,10 +1066,10 @@ removeObservedData <- function(project, id) {
   # write below is known to land on a fresh, collision-free path. This upholds
   # the all-or-nothing save contract for the on-disk data files, not just the
   # definition tree.
-  fileNames <- paste0(persistedNames, ".pkml")
+  fileNames <- paste0(persistedIds, ".pkml")
   for (i in seq_along(toPersist)) {
     observedData[[toPersist[[i]]]] <- list(
-      id = persistedNames[[i]],
+      id = persistedIds[[i]],
       type = "pkml",
       file = fileNames[[i]]
     )
@@ -1067,7 +1103,7 @@ removeObservedData <- function(project, id) {
   for (i in seq_along(toPersist)) {
     filePath <- .resolveProjectPath(fileNames[[i]], dataFolder, "file")
     ospsuite::saveDataSetToPKML(
-      private$.programmaticDataSets[[persistedNames[[i]]]],
+      private$.programmaticDataSets[[persistedIds[[i]]]],
       filePath
     )
   }
@@ -1078,5 +1114,5 @@ removeObservedData <- function(project, id) {
   # next read is correct. The runtime-store entries stay until the whole save
   # commits (dropped by the caller after the tree write succeeds), so a save that
   # aborts mid-tree-write leaves the DataSet recoverable rather than lost.
-  persistedNames
+  persistedIds
 }

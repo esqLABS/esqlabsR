@@ -431,3 +431,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 17:47: The new base branch, which removes snapshotProject() and restoreProject(), is merged in; the help pages are regenerated. (#1367)
 - 2026-11-27 17:50: The parent branch's new base, which removes snapshotProject() and restoreProject(), is merged in; the test that checked the array shape of observed data in a snapshot checks it in an inline project file instead. (#1368)
 - 2026-11-27 21:24: The id of an observed-data source taken from its file is worked out by one helper, which the Excel import uses. (#1368)
+- 2026-11-27 21:29: DataSets added in the session are kept under their source id and loaded under their own name, so the two no longer have to be the same string. (#1368)
