@@ -437,3 +437,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:03: An observed-data definition without an id stops the load like any other definition, and a programmatic source is no longer read by a name field. (#1368)
 - 2026-11-27 22:10: Saving checks an observed-data id like every other definition id, and the step that renamed a definition file whose id changed only in case is gone. (#1368)
 - 2026-11-27 22:11: The observed-data articles and NEWS describe the id argument of addObservedData() and the one id rule shared with the other definitions. (#1368)
+- 2026-11-27 22:11: The help pages of addObservedData(), removeObservedData(), loadObservedData() and Project are regenerated. (#1368)

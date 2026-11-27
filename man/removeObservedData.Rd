@@ -9,14 +9,10 @@ removeObservedData(project, id)
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{id}{Character vector of ids. An observed-data id is the \code{id} you gave
-the source, or, when you gave none, comes from the data source itself (the
-name of a \code{DataSet} added with \code{\link[=addObservedData]{addObservedData()}}, or the file basename
-for a file-based source). Each is matched as the declaration stores it and,
-failing that, as \code{\link[=addObservedData]{addObservedData()}} would have canonicalized it, so an id
-taken from the source is found by the source's own spelling and one you
-gave by either the form you authored or the canonical form you were given
-back.}
+\item{id}{Character vector of ids. Like every other definition id, each is
+lowercased and made a safe file name before it is looked up, with a
+warning when that changes it, so \code{"Scratch measurement"} finds the source
+\code{scratch_measurement}.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -28,9 +24,6 @@ vector of ids and removes them all at once; \code{\link[=saveProject]{saveProjec
 their definition files. Warns and skips any id with no matching entry.
 }
 \details{
-A \code{DataSet} added with \code{\link[=addObservedData]{addObservedData()}} has its name as its id, before
-and after \code{\link[=saveProject]{saveProject()}} writes it to \verb{<name>.pkml}.
-
 Unlike the other authoring functions, \code{addObservedData()} is not
 vectorized over ids: its second argument is a \code{DataSet} or a configuration
 list, not an id, so it adds a single source per call. Add several sources

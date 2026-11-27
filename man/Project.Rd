@@ -110,7 +110,7 @@ field group. Each section is one field: \code{outputPaths}, \code{scenarios},
 \code{project$definitions$scenarios} (returned as a printable, read-only
 named list keyed by id). An observed-data source is read by its id
 like any other definition
-(\code{project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]}),
+(\code{project$definitions$observedData[["aciclovir_timevaluesdata"]]}),
 the id \code{\link[=removeObservedData]{removeObservedData()}} takes.
 The group is read-only from the handle: every assignment form aborts.
 The only sanctioned way to change a section is
@@ -942,7 +942,7 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
   Add observed data. See \code{\link[=addObservedData]{addObservedData()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addObservedData(entry, overwrite = FALSE)}
+    \preformatted{Project$addObservedData(entry, id = NULL, overwrite = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -950,6 +950,7 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
     \describe{
       \item{\code{entry}}{An observed-data source: a \code{DataSet} or a configuration list.
 See \code{\link[=addObservedData]{addObservedData()}}.}
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
       \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
 the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
