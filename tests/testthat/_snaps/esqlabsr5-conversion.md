@@ -135,6 +135,16 @@
       x plotsFile "../Plots.xlsx" resolves outside the project folder.
       i It must stay under '<tmp-path>'. A project file cannot reference a path outside the project.
 
+# convertProjectToV6() refuses the esqlabsR 5 workbooks a conversion kept
+
+    Code
+      convertProjectToV6(file.path(projectDir, "esqlabsR5",
+        "ProjectConfiguration.xlsx"))
+    Condition
+      Error in `convertProjectToV6()`:
+      x '<tmp-path>' is in the 'esqlabsR5' folder of the converted project '<tmp-path>', which keeps the esqlabsR 5 workbooks of that conversion.
+      i Load the converted project with `loadProject()`. To convert the esqlabsR 5 workbooks again, first move them back to where they were in the project folder, and the files of the v6 project out of it.
+
 # convertProjectToV6() refuses a folder outside the project folder
 
     Code

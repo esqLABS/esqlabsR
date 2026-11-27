@@ -548,6 +548,21 @@ test_that("convertProjectToV6() refuses a workbook file name outside the configu
   expect_identical(.folderState(projectDir), before)
 })
 
+test_that("convertProjectToV6() refuses the esqlabsR 5 workbooks a conversion kept", {
+  projectDir <- localLegacyExcelProject()
+  convertExcelProject(projectDir)
+  before <- .folderState(projectDir)
+
+  expect_snapshot(
+    convertProjectToV6(
+      file.path(projectDir, "esqlabsR5", "ProjectConfiguration.xlsx")
+    ),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(.folderState(projectDir), before)
+})
+
 test_that("convertProjectToV6() refuses a folder outside the project folder", {
   shared <- withr::local_tempdir()
   cases <- list(

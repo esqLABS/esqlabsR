@@ -98,6 +98,17 @@
   )
 }
 
+.esqlabsR5Messages$archiveOfConversion <- function(path, projectDir) {
+  cliBullets(
+    "x" = "{.file {path}} is in the {.file esqlabsR5} folder of the converted \\
+    project {.file {projectDir}}, which keeps the esqlabsR 5 workbooks of that \\
+    conversion.",
+    "i" = "Load the converted project with {.fn loadProject}. To convert the \\
+    esqlabsR 5 workbooks again, first move them back to where they were in \\
+    the project folder, and the files of the v6 project out of it."
+  )
+}
+
 .esqlabsR5Messages$converted <- function(folder) {
   cliBullets(
     "v" = "Converted the esqlabsR 5 project. Its esqlabsR 5 workbooks are now \\
@@ -461,27 +472,48 @@ convertProjectToV6 <- function(
   }
 
   projectDir <- dirname(fs::path_abs(projectConfigPath))
-  definitionFiles <- list.files(
-    file.path(projectDir, "definitions"),
-    pattern = "\\.json$",
-    recursive = TRUE
-  )
+  # The `esqlabsR5/` folder of a converted project holds esqlabsR 5 workbooks
+  # too; converting them there would put a second project inside the first.
+  if (
+    identical(basename(projectDir), .esqlabsR5Folder) &&
+      length(.v5ProjectFiles(dirname(projectDir))) > 0L
+  ) {
+    cli::cli_abort(.esqlabsR5Messages$archiveOfConversion(
+      projectConfigPath,
+      dirname(projectDir)
+    ))
+  }
+  found <- .v5ProjectFiles(projectDir)
   # The esqlabsR 5 workbook may itself be called `Project.xlsx`; it moves away
   # before the v6 one is written, so only another file of that name is in the
   # way.
-  v6Workbook <- file.path(projectDir, "Project.xlsx")
-  found <- c(
-    if (file.exists(file.path(projectDir, "Project.json"))) "Project.json",
-    if (file.exists(v6Workbook) && !.samePath(v6Workbook, projectConfigPath)) {
-      "Project.xlsx"
-    },
-    if (length(definitionFiles) > 0L) "definitions",
-    if (file.exists(file.path(projectDir, .esqlabsR5Folder))) .esqlabsR5Folder
-  )
+  if (.samePath(file.path(projectDir, "Project.xlsx"), projectConfigPath)) {
+    found <- setdiff(found, "Project.xlsx")
+  }
+  if (file.exists(file.path(projectDir, .esqlabsR5Folder))) {
+    found <- c(found, .esqlabsR5Folder)
+  }
   if (length(found) > 0L) {
     cli::cli_abort(.esqlabsR5Messages$folderHoldsProject(projectDir, found))
   }
   as.data.frame(properties)
+}
+
+# The files of a v6 project a folder holds: `Project.json`, `Project.xlsx`, and
+# `definitions` when that folder holds a definition file.
+#
+# @keywords internal
+# @noRd
+.v5ProjectFiles <- function(dir) {
+  definitionFiles <- list.files(
+    file.path(dir, "definitions"),
+    pattern = "\\.json$",
+    recursive = TRUE
+  )
+  c(
+    intersect(c("Project.json", "Project.xlsx"), list.files(dir)),
+    if (length(definitionFiles) > 0L) "definitions"
+  )
 }
 
 # The workbook of each section of an esqlabsR 5 project, named by the property

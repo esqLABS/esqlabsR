@@ -416,3 +416,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:03: Regenerated the help pages and NAMESPACE, which export convertProjectToV6(). (#1426)
 - 2026-11-27 22:36: convertProjectToV6() builds each workbook's place once, reads each esqlabsR 5 sheet once, lists the workbooks to write directly and builds its messages with cliBullets(); what it writes is unchanged. (#1426)
 - 2026-11-27 22:38: convertProjectToV6() refuses a workbook that lies outside the project folder once links are followed (a linked configurations folder, or a property workbook that is a link), instead of moving it out of the folder the link points into. (#1426)
+- 2026-11-27 22:40: convertProjectToV6() refuses the esqlabsR 5 workbooks in the esqlabsR5/ folder of a converted project, which it converted into a second project nested in the first. (#1426)
