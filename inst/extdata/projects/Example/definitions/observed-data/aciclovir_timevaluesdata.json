@@ -1,5 +1,5 @@
 {
-  "id": "Aciclovir_TimeValuesData.xlsx",
+  "id": "aciclovir_timevaluesdata",
   "type": "excel",
   "file": "Aciclovir_TimeValuesData.xlsx",
   "importerConfiguration": "esqlabs_dataImporter_configuration.xml",

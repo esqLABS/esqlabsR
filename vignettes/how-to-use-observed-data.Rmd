@@ -38,7 +38,7 @@ project <- loadProject(file.path(project_dir, "Project.json"))
 The example already ships with one observed-data source, an Excel source. You can see it as a definition on the project, read by its id:
 
 ```{r}
-project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
+project$definitions$observedData[["aciclovir_timevaluesdata"]]
 ```
 
 ## Choose the name a source is known by

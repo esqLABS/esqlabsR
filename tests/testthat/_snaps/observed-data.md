@@ -51,12 +51,12 @@
 # addObservedData rejects a duplicate config entry file
 
     Code
-      addObservedData(project, list(type = "excel", file = "Aciclovir_TimeValuesData.xlsx",
-        importerConfiguration = "esqlabs_dataImporter_configuration.xml", sheets = list(
-          "Laskin 1982.Group A")))
+      addObservedData(project, list(id = "aciclovir_timevaluesdata", type = "excel",
+        file = "Aciclovir_TimeValuesData.xlsx", importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+        sheets = list("Laskin 1982.Group A")))
     Condition
       Error in `addObservedData()`:
-      ! observedData entry with id "Aciclovir_TimeValuesData.xlsx" already exists.
+      ! observedData entry with id "aciclovir_timevaluesdata" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # addObservedData aborts on a duplicate DataSet name, replaces with overwrite
@@ -210,10 +210,10 @@
       ! observedData entry with name "cohort_b" already exists.
       i Pass `overwrite = TRUE` to replace it.
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx"))
+      addObservedData(project, ospsuite::DataSet$new(name = "aciclovir_timevaluesdata"))
     Condition
       Error in `addObservedData()`:
-      ! observedData entry with name "Aciclovir_TimeValuesData.xlsx" already exists.
+      ! observedData entry with name "aciclovir_timevaluesdata" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
@@ -293,7 +293,7 @@
       print(project$definitions$observedData[[1]])
     Output
       <ObservedDataSource>
-        * Id: Aciclovir_TimeValuesData.xlsx
+        * Id: aciclovir_timevaluesdata
         * Type: excel
         * File: Aciclovir_TimeValuesData.xlsx
         * Importer Configuration: esqlabs_dataImporter_configuration.xml
@@ -306,6 +306,6 @@
     Output
       <DefinitionList>
       observedData (2 definitions):
-        * Aciclovir_TimeValuesData.xlsx
+        * aciclovir_timevaluesdata
         * simulated_plasma
 

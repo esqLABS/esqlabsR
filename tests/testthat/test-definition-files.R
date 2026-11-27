@@ -649,7 +649,7 @@ test_that("saveProject files an observed-data id that changes only in case under
 
   expect_identical(
     sort(list.files(dir)),
-    c("Aciclovir_TimeValuesData.xlsx.json", "laskin 1982.pkml.json")
+    c("aciclovir_timevaluesdata.json", "laskin 1982.pkml.json")
   )
   expect_identical(
     jsonlite::read_json(file.path(dir, "laskin 1982.pkml.json"))$id,

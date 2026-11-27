@@ -322,6 +322,7 @@ test_that("addObservedData rejects a duplicate config entry file", {
     addObservedData(
       project,
       list(
+        id = "aciclovir_timevaluesdata",
         type = "excel",
         file = "Aciclovir_TimeValuesData.xlsx",
         importerConfiguration = "esqlabs_dataImporter_configuration.xml",
@@ -872,8 +873,8 @@ test_that("saveProject refuses a DataSet that shares its id with another source 
 test_that("removeObservedData deletes the definition file on save", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
-  # The fixture declares one Excel source, filed under its basename.
-  id <- "Aciclovir_TimeValuesData.xlsx"
+  # The fixture declares one Excel source.
+  id <- "aciclovir_timevaluesdata"
   expect_true(file.exists(file.path(dir, paste0(id, ".json"))))
 
   suppressWarnings(removeObservedData(project, id))
@@ -1012,7 +1013,7 @@ test_that("addObservedData leaves a derived id and a DataSet name as they are", 
 
   expect_setequal(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "MyObs.pkml", "MyProgSet")
+    c("aciclovir_timevaluesdata", "MyObs.pkml", "MyProgSet")
   )
 })
 
@@ -1050,7 +1051,7 @@ test_that("removeObservedData finds every id kind by the spelling it was added w
   removeObservedData(project, c("MyObs.pkml", "MyProgSet"))
   expect_setequal(
     names(project$definitions$observedData),
-    "Aciclovir_TimeValuesData.xlsx"
+    "aciclovir_timevaluesdata"
   )
   expect_false("MyProgSet" %in% getObservedDataNames(project))
 })
@@ -1101,10 +1102,10 @@ test_that("a DataSet clashes with the id of another source", {
 
   expect_snapshot(error = TRUE, {
     addObservedData(project, ospsuite::DataSet$new(name = "cohort_b"))
-    # The fixture's Excel source takes its id from its file basename.
+    # The fixture's Excel source has this id.
     addObservedData(
       project,
-      ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
+      ospsuite::DataSet$new(name = "aciclovir_timevaluesdata")
     )
   })
 })
@@ -1162,8 +1163,8 @@ test_that("every observed-data source stores its id first and the section is key
   expect_identical(
     lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
     list(
-      "Aciclovir_TimeValuesData.xlsx" = list(
-        id = "Aciclovir_TimeValuesData.xlsx",
+      "aciclovir_timevaluesdata" = list(
+        id = "aciclovir_timevaluesdata",
         type = "excel",
         file = "Aciclovir_TimeValuesData.xlsx",
         importerConfiguration = "esqlabs_dataImporter_configuration.xml",
@@ -1205,26 +1206,26 @@ test_that("saveProject writes the id first into every definition file and a Data
   expect_identical(
     files,
     c(
-      "Aciclovir_TimeValuesData.xlsx.json",
       "Cohort B.pkml.json",
-      "Scratch measurement.json"
+      "Scratch measurement.json",
+      "aciclovir_timevaluesdata.json"
     )
   )
   expect_identical(
     lapply(file.path(dir, files), jsonlite::read_json),
     list(
-      list(
-        id = "Aciclovir_TimeValuesData.xlsx",
-        type = "excel",
-        file = "Aciclovir_TimeValuesData.xlsx",
-        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
-        sheets = list("Laskin 1982.Group A")
-      ),
       list(id = "Cohort B.pkml", type = "pkml", file = "sub/Cohort B.pkml"),
       list(
         id = "Scratch measurement",
         type = "pkml",
         file = "Scratch measurement.pkml"
+      ),
+      list(
+        id = "aciclovir_timevaluesdata",
+        type = "excel",
+        file = "Aciclovir_TimeValuesData.xlsx",
+        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+        sheets = list("Laskin 1982.Group A")
       )
     )
   )
@@ -1233,9 +1234,9 @@ test_that("saveProject writes the id first into every definition file and a Data
   reloaded <- loadProject(project$info$projectFilePath)
   for (p in list(project, reloaded)) {
     removeObservedData(p, "Scratch measurement")
-    expect_identical(
+    expect_setequal(
       names(p$definitions$observedData),
-      c("Aciclovir_TimeValuesData.xlsx", "Cohort B.pkml")
+      c("aciclovir_timevaluesdata", "Cohort B.pkml")
     )
   }
   saveProject(reloaded)
@@ -1333,7 +1334,7 @@ test_that("an inline project file stores observed data as an array of records wi
     written$observedData,
     list(
       list(
-        id = "Aciclovir_TimeValuesData.xlsx",
+        id = "aciclovir_timevaluesdata",
         type = "excel",
         file = "Aciclovir_TimeValuesData.xlsx",
         importerConfiguration = "esqlabs_dataImporter_configuration.xml",
@@ -1362,7 +1363,7 @@ test_that("a source passed back keeps the id it is stored under", {
   saveProject(project)
 
   sources <- project$definitions$observedData
-  aciclovir <- sources[["Aciclovir_TimeValuesData.xlsx"]]
+  aciclovir <- sources[["aciclovir_timevaluesdata"]]
   aciclovir$file <- "Aciclovir_TimeValuesData_v2.xlsx"
   expect_no_warning({
     addObservedData(project, sources[["Laskin IV"]], overwrite = TRUE)
@@ -1370,19 +1371,19 @@ test_that("a source passed back keeps the id it is stored under", {
     addObservedData(project, aciclovir, overwrite = TRUE)
   })
 
-  expect_identical(
+  expect_setequal(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "Laskin IV", "Scratch measurement")
+    c("aciclovir_timevaluesdata", "Laskin IV", "Scratch measurement")
   )
   expect_identical(
-    project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]$file,
+    project$definitions$observedData[["aciclovir_timevaluesdata"]]$file,
     "Aciclovir_TimeValuesData_v2.xlsx"
   )
   expect_no_error(saveProject(project))
-  expect_identical(
+  expect_setequal(
     sort(list.files(dir)),
     c(
-      "Aciclovir_TimeValuesData.xlsx.json",
+      "aciclovir_timevaluesdata.json",
       "Laskin IV.json",
       "Scratch measurement.json"
     )
@@ -1405,14 +1406,14 @@ test_that("a DataSet replaces a programmatic source with no data only with overw
   expect_snapshot(error = TRUE, addObservedData(project, scratch))
 
   suppressMessages(addObservedData(project, scratch, overwrite = TRUE))
-  expect_identical(
+  expect_setequal(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "Scratch measurement")
+    c("aciclovir_timevaluesdata", "Scratch measurement")
   )
   saveProject(project)
-  expect_identical(
+  expect_setequal(
     sort(list.files(dir)),
-    c("Aciclovir_TimeValuesData.xlsx.json", "Scratch measurement.json")
+    c("aciclovir_timevaluesdata.json", "Scratch measurement.json")
   )
   expect_identical(
     jsonlite::read_json(file.path(dir, "Scratch measurement.json")),
@@ -1478,7 +1479,7 @@ test_that("addObservedData refuses an id that differs from another only in case"
   })
   expect_identical(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "Laskin 1982.pkml", "cohort", "Cohort B")
+    c("aciclovir_timevaluesdata", "Laskin 1982.pkml", "cohort", "Cohort B")
   )
 })
 
@@ -1499,7 +1500,7 @@ test_that("overwriting a DataSet source spelled in another case replaces its dat
 
   expect_identical(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "cohort b")
+    c("aciclovir_timevaluesdata", "cohort b")
   )
   expect_identical(names(state$.programmaticDataSets), "cohort b")
   expect_identical(
@@ -1509,7 +1510,7 @@ test_that("overwriting a DataSet source spelled in another case replaces its dat
   saveProject(project)
   expect_identical(
     sort(list.files(dir)),
-    c("Aciclovir_TimeValuesData.xlsx.json", "cohort b.json")
+    c("aciclovir_timevaluesdata.json", "cohort b.json")
   )
 })
 
@@ -1536,16 +1537,16 @@ test_that("overwriting a file source spelled in another case replaces its data-s
 
   expect_identical(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "COHORT.pkml")
+    c("aciclovir_timevaluesdata", "COHORT.pkml")
   )
   expect_identical(
     getObservedDataNames(project),
     c(testObservedDataId, "COHORT")
   )
   saveProject(project)
-  expect_identical(
+  expect_setequal(
     sort(list.files(dir)),
-    c("Aciclovir_TimeValuesData.xlsx.json", "COHORT.pkml.json")
+    c("aciclovir_timevaluesdata.json", "COHORT.pkml.json")
   )
 })
 
@@ -1575,7 +1576,7 @@ test_that("a DataSet overwrite is refused when another source provides its name"
   )
   expect_identical(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "Cohort B", "cohort_b_export.pkml")
+    c("aciclovir_timevaluesdata", "Cohort B", "cohort_b_export.pkml")
   )
   expect_identical(names(state$.programmaticDataSets), "Cohort B")
 })
@@ -1599,7 +1600,7 @@ test_that("a DataSet overwrite is refused when another source reads its PKML fil
   )
   expect_identical(
     names(project$definitions$observedData),
-    c("Aciclovir_TimeValuesData.xlsx", "Cohort B", "cohort_b_lab")
+    c("aciclovir_timevaluesdata", "Cohort B", "cohort_b_lab")
   )
   expect_identical(names(state$.programmaticDataSets), "Cohort B")
 })

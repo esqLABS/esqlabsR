@@ -203,7 +203,7 @@ Project <- R6::R6Class(
     #'   `project$definitions$scenarios` (returned as a printable, read-only
     #'   named list keyed by id). An observed-data source is read by its id
     #'   like any other definition
-    #'   (`project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]`),
+    #'   (`project$definitions$observedData[["aciclovir_timevaluesdata"]]`),
     #'   the id [removeObservedData()] takes.
     #'   The group is read-only from the handle: every assignment form aborts.
     #'   The only sanctioned way to change a section is
