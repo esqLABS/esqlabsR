@@ -149,24 +149,29 @@
       x id is "myset" but the file is "otherset".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
 
-# observedData declarations whose ids differ only in case cannot be saved
+# observedData declarations that share an id cannot be saved
 
     Code
       .serializeObservedDataSet(entries)
     Condition
       Error in `.serializeObservedDataSet()`:
-      x Two observed-data sources would be saved to the same definition file 'laskin 1982.json'.
+      x Two observed-data sources would be saved to the same definition file 'laskin_1982.json'.
       i Each source is saved to a file named after its id. Give the sources distinct ids, or remove one with `removeObservedData()`.
 
-# a programmatic observedData id that escapes its directory aborts
+# an observedData id that is not canonical cannot be saved
 
     Code
-      .serializeObservedDataSet(entries)
+      .serializeObservedDataSet(list(list(id = "Laskin", type = "pkml", file = "laskin.pkml")))
     Condition
-      Error in `.serializeObservedDataSet()`:
-      ! observedData id "../escape" is not a single safe filename segment.
-      x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
-      i Give the declaration an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
+      Error in `.validateDefinitionTreeKey()`:
+      ! observedData id "Laskin" is not a canonical definition-file id.
+      i Use the add/set API, which canonicalizes it to "laskin", or store the definition under the key "laskin".
+    Code
+      .serializeObservedDataSet(list(list(id = "../escape", type = "programmatic")))
+    Condition
+      Error in `.validateDefinitionTreeKey()`:
+      ! observedData id "../escape" is not a canonical definition-file id.
+      i Use the add/set API, which canonicalizes it to "_escape", or store the definition under the key "_escape".
 
 # a full-tree write aborts when a stale file cannot be removed
 

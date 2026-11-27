@@ -489,31 +489,18 @@
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
-  keep <- paste0(names(serialized), ".json")
-  plan <- .definitionTreeFilePlan(list.files(dir, pattern = "\\.json$"), keep)
-  # Rename a file whose id changed only in case before writing it, so the file
-  # carries the id's spelling (writing alone keeps the old spelling where names
-  # ignore case). A rename that fails aborts like a failed delete below.
-  if (length(plan$renames) > 0L) {
-    renamed <- file.rename(
-      file.path(dir, names(plan$renames)),
-      file.path(dir, plan$renames)
-    )
-    if (!all(renamed)) {
-      cli::cli_abort(messages$failedToRenameDefinitionFiles(
-        file.path(dir, names(plan$renames)[!renamed])
-      ))
-    }
-  }
+  keep <- character()
   for (id in names(serialized)) {
     .writeDefinitionJson(serialized[[id]], .definitionFilePath(dir, id))
+    keep <- c(keep, paste0(id, ".json"))
   }
+  existing <- list.files(dir, pattern = "\\.json$")
   # Delete stale files, checking each `file.remove()` result: a stale entry
   # that fails to delete (a permission or lock problem) would silently survive
   # and re-enter the section on the next `loadProject()`, so the section would
   # not match the set just written. Abort naming the file(s) rather than let a
   # ghost definition reappear.
-  stale <- plan$stale
+  stale <- setdiff(existing, keep)
   if (length(stale) > 0L) {
     removed <- file.remove(file.path(dir, stale))
     if (!all(removed)) {
@@ -523,35 +510,6 @@
     }
   }
   invisible(NULL)
-}
-
-# What `.writeDefinitionTree()` does to the files a `<kind>/` folder already
-# holds (`existing`), given the files it is about to write (`keep`). A file whose
-# name matches one to write only when case is ignored is renamed to that
-# spelling (`renames`, old name -> new name): on Windows and macOS the two are
-# one file, so it must neither be deleted as outdated nor keep its old
-# spelling. That is never done onto a file that exists under the exact name
-# (two spellings are two files only where names keep case); there the other
-# spelling is outdated. Every other file not written is outdated (`stale`). Ids
-# that are always lowercase never need a rename.
-#
-# @keywords internal
-# @noRd
-.definitionTreeFilePlan <- function(existing, keep) {
-  candidates <- existing[
-    !(existing %in% keep) & tolower(existing) %in% tolower(keep)
-  ]
-  targets <- keep[match(tolower(candidates), tolower(keep))]
-  rename <- !(targets %in% existing) & !duplicated(tolower(candidates))
-  renames <- if (any(rename)) {
-    stats::setNames(targets[rename], candidates[rename])
-  } else {
-    character(0)
-  }
-  list(
-    renames = renames,
-    stale = setdiff(existing, c(keep, names(renames)))
-  )
 }
 
 # Scenario tree helpers ----
@@ -901,10 +859,10 @@
   out <- list()
   for (entry in observedData) {
     id <- .keyedTreeRecordId(entry, "id", "observedData")
-    .validateObservedDataId(id, call = call)
+    .validateDefinitionTreeKey(id, "observedData")
     # Two declarations filed under one id would overwrite each other's file (one
     # file on disk, the second declaration lost on reload).
-    if (any(.observedDataIdMatches(id, names(out)))) {
+    if (id %in% names(out)) {
       cli::cli_abort(
         messages$observedDataDefinitionFileCollision(id),
         call = call
@@ -988,33 +946,6 @@
     return(NULL)
   }
   value
-}
-
-# The observed-data id becomes a filename via `.definitionFilePath(dir, id)`, so it
-# must be a single safe path segment or it could escape the kind directory. A
-# derived id (a file basename, a DataSet name) and an `id` read from a file reach
-# this verbatim (unlike the other keyed kinds, whose key is validated by
-# `.validateDefinitionTreeKey`). Reject rather than rewrite: the id doubles as
-# the match key for `removeObservedData()`, so canonicalizing it would desync the
-# on-disk filename from the match key.
-#
-# @keywords internal
-# @noRd
-.validateObservedDataId <- function(id, call = rlang::caller_env()) {
-  if (grepl("[/\\]", id) || id %in% c(".", "..") || basename(id) != id) {
-    cli::cli_abort(
-      c(
-        "observedData id {.val {id}} is not a single safe filename segment.",
-        "x" = "It must not contain a path separator or be {.val .} / {.val ..}, \\
-        so it cannot escape the observed-data definition directory.",
-        "i" = "Give the declaration an {.field id} that is a single safe \\
-        filename segment, or rename what it takes its id from: a {.field file} \\
-        basename, or the name of a {.cls DataSet}."
-      ),
-      call = call
-    )
-  }
-  invisible(NULL)
 }
 
 # plots: three keyed kinds, one part of the `plots` definitions trio each.

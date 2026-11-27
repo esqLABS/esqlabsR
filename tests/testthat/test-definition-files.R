@@ -584,74 +584,33 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
   expect_snapshot(spec$parse(list(rec), NULL), error = TRUE)
 })
 
-# Ids that differ only in case are one definition file on Windows and macOS.
-test_that("observedData declarations whose ids differ only in case cannot be saved", {
+# Two declarations filed under one id would share one definition file.
+test_that("observedData declarations that share an id cannot be saved", {
   entries <- list(
-    list(id = "Laskin 1982", type = "pkml", file = "Laskin 1982.pkml"),
-    list(id = "laskin 1982", type = "pkml", file = "sub/laskin 1982.pkml")
+    list(id = "laskin_1982", type = "pkml", file = "Laskin 1982.pkml"),
+    list(id = "laskin_1982", type = "pkml", file = "sub/laskin 1982.pkml")
   )
 
   expect_snapshot(.serializeObservedDataSet(entries), error = TRUE)
 })
 
-# observed-data id escape guard ----
+# observed-data id guard ----
 
-# The observed-data id becomes a filename, and a programmatic source's id (its
-# DataSet name) reaches it verbatim. An id carrying a path separator (or `..`)
-# must be rejected so it cannot escape the observed-data definition directory.
-test_that("a programmatic observedData id that escapes its directory aborts", {
-  entries <- list(
-    list(id = "../escape", type = "programmatic")
-  )
-
-  expect_snapshot(
-    .serializeObservedDataSet(entries),
-    error = TRUE
-  )
+# The observed-data id becomes a filename, so it is checked like every other
+# definition id: it must already be canonical, which also keeps a path
+# separator or `..` from escaping the observed-data definition directory.
+test_that("an observedData id that is not canonical cannot be saved", {
+  expect_snapshot(error = TRUE, {
+    .serializeObservedDataSet(list(
+      list(id = "Laskin", type = "pkml", file = "laskin.pkml")
+    ))
+    .serializeObservedDataSet(list(
+      list(id = "../escape", type = "programmatic")
+    ))
+  })
 })
 
 # Stale-file policy: the full-tree reconciler owns the `<kind>/` directory ----
-
-# On Windows and macOS a name that differs only in case is the same file: writing
-# `laskin 1982.pkml.json` over `Laskin 1982.pkml.json` keeps the old spelling, and
-# deleting that spelling as outdated would delete the definition just written.
-# The plan renames such a file to the id's spelling before writing instead, and
-# never counts it as outdated. These cases decide the plan from the names alone,
-# so they hold on a file system that tells the two spellings apart as well.
-test_that(".definitionTreeFilePlan renames a file whose name changes only in case", {
-  expect_identical(
-    .definitionTreeFilePlan(
-      existing = c("Laskin 1982.pkml.json", "removed.json", "kept.json"),
-      keep = c("laskin 1982.pkml.json", "kept.json")
-    ),
-    list(
-      renames = c("Laskin 1982.pkml.json" = "laskin 1982.pkml.json"),
-      stale = "removed.json"
-    )
-  )
-})
-
-test_that(".definitionTreeFilePlan renames nothing when ids are lowercase", {
-  expect_identical(
-    .definitionTreeFilePlan(
-      existing = c("aciclovir_iv.json", "orphan.json"),
-      keep = c("aciclovir_iv.json", "aciclovir_po.json")
-    ),
-    list(renames = character(0), stale = "orphan.json")
-  )
-})
-
-test_that(".definitionTreeFilePlan does not rename onto a file that exists", {
-  # Only possible where two spellings are two files; the exact name is written
-  # and the other spelling is outdated.
-  expect_identical(
-    .definitionTreeFilePlan(
-      existing = c("Laskin.json", "laskin.json", "LASKIN.json"),
-      keep = "laskin.json"
-    ),
-    list(renames = character(0), stale = c("Laskin.json", "LASKIN.json"))
-  )
-})
 
 # A minimal on-disk tree project with one scenario, loaded without the
 # cross-reference warning pass, so these tests exercise the definition-tree writers

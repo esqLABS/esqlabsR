@@ -772,16 +772,6 @@ removeObservedData <- function(project, id) {
   )
 }
 
-# Which of `sectionIds` name the same definition file as `id`. Ids that differ
-# only in case are one file on Windows and macOS, so they are the same id.
-# Saving uses this to refuse two sources filed under one definition file.
-#
-# @keywords internal
-# @noRd
-.observedDataIdMatches <- function(id, sectionIds) {
-  !is.na(sectionIds) & tolower(sectionIds) == tolower(id)
-}
-
 # The id an observed-data source takes from its data file: the basename without
 # its extension, canonicalized without a warning, since the user typed no id.
 #
@@ -953,11 +943,11 @@ removeObservedData <- function(project, id) {
   }
 
   # Rewrite the whole section in memory and validate it clean BEFORE writing any
-  # PKML file, so a save that aborts (an unsafe name, a data file another source
-  # reads, or an id another source has) never overwrites an existing file: every
-  # write below is known to land on a fresh, collision-free path. This upholds
-  # the all-or-nothing save contract for the on-disk data files, not just the
-  # definition tree.
+  # PKML file, so a save that aborts (an id that is not canonical, a data file
+  # another source reads, or an id another source has) never overwrites an
+  # existing file: every write below is known to land on a fresh, collision-free
+  # path. This upholds the all-or-nothing save contract for the on-disk data
+  # files, not just the definition tree.
   fileNames <- paste0(persistedIds, ".pkml")
   for (i in seq_along(toPersist)) {
     observedData[[toPersist[[i]]]] <- list(
@@ -983,8 +973,8 @@ removeObservedData <- function(project, id) {
   if (length(clashingFiles) > 0) {
     cli::cli_abort(messages$observedDataPersistFileCollision(clashingFiles))
   }
-  # The serializer's checks, run up front: every id a safe filename segment, and
-  # no two entries filed under one id.
+  # The serializer's checks, run up front: every id canonical, and no two
+  # entries filed under one id.
   .serializeObservedDataSet(observedData, call = call)
 
   # Materialize the folder (a from-scratch project may declare one that has no
