@@ -93,7 +93,7 @@ names(observed)
 
 ## Source type 1: Excel
 
-An `excel` source names a workbook, an importer configuration, and the sheets to read. The bundled example's source is exactly this. To add another, point at a file under the project's data folder and supply the importer configuration and sheet names:
+An `excel` source names a workbook, an importer configuration, and optionally the sheets to read. The bundled example's source is exactly this. To add another, point at a file under the project's data folder and supply the importer configuration and sheet names:
 
 ```{r, eval = FALSE}
 # shown but not run: the example already declares this exact source, and a
@@ -109,7 +109,7 @@ addObservedData(
 )
 ```
 
-The importer configuration is an OSPS data-importer XML that describes how the columns map to time, value, and metadata; the `sheets` field lists which sheets to import. The file paths are relative to the project's data folder (`project$paths$dataFolder`).
+The importer configuration is an OSPS data-importer XML that describes how the columns map to time, value, and metadata; the `sheets` field lists which sheets to import. With `sheets` left out or empty, every sheet of the workbook is imported. Sheets listed in the importer configuration file are not used: the `sheets` field alone decides. When every sheet is imported, each one has to fit the importer configuration: a sheet that does not, such as a sheet of notes or one with differently named columns, makes loading the observed data fail, so list the sheets to import in `sheets` instead. The file paths are relative to the project's data folder (`project$paths$dataFolder`).
 
 ## Source type 2: PKML
 

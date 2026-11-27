@@ -9,57 +9,46 @@ addObservedData(project, entry, overwrite = FALSE)
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{entry}{An \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object, or a configuration list
-carrying a \code{type} (\code{"excel"} or \code{"pkml"}) and that type's
-fields, as described above.}
+\item{entry}{An \code{\link[ospsuite:DataSet]{ospsuite::DataSet}}, or a list with a \code{type} and that
+type's fields (see the table above).}
 
-\item{overwrite}{Logical scalar. When \code{FALSE} (default), a source whose id
-already exists (a \code{DataSet} name, or a configuration list's \code{id} or \code{file}
-basename) aborts. When \code{TRUE}, the existing source with that id is replaced
-(last-write-wins) as long as both are the same kind. A cross-kind
-replacement is refused in either direction, because it would either strand
-the session's \code{DataSet} or leave two sources resolving to one name: remove
-the existing source with \code{\link[=removeObservedData]{removeObservedData()}} first, then add the new
-one.}
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id or \code{DataSet}
+name that already exists aborts. When \code{TRUE}, the existing source is
+replaced, but only by one of the same kind (a \code{DataSet} by a \code{DataSet}, a
+list by a list). To replace one kind with the other, remove the existing
+source with \code{\link[=removeObservedData]{removeObservedData()}} first.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Adds one observed-data declaration. \code{entry} is either an
-\code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object (which becomes a \code{type = "programmatic"}
-declaration keyed by \code{dataSet$name}) or a list describing where the data is
-read from.
-
-Such a list always carries a \code{type}, plus the fields that type needs:\tabular{lll}{
+Adds one observed-data source. \code{entry} is either an \code{\link[ospsuite:DataSet]{ospsuite::DataSet}}
+built in the session, or a list naming the file the data is read from:\tabular{lll}{
    \code{type} \tab required fields \tab optional fields \cr
-   \code{"excel"} \tab \code{file}, \code{importerConfiguration}, \code{sheets} \tab \code{id} \cr
+   \code{"excel"} \tab \code{file}, \code{importerConfiguration} \tab \code{sheets}, \code{id} \cr
    \code{"pkml"} \tab \code{file} \tab \code{id} \cr
 }
 
 
-\code{file} and \code{importerConfiguration} are paths \emph{relative to the project's data
-folder} (\code{project$paths$dataFolder}). A file sitting directly in that folder
-is \code{"observed.xlsx"}, not \code{"Data/observed.xlsx"}; one in a subfolder of it is
-\code{"subfolder/observed.xlsx"}. \code{sheets} lists the Excel sheet names to import.
+Paths are relative to the project's data folder: \code{"observed.xlsx"}, not
+\code{"Data/observed.xlsx"}.
 
-\code{id} names the declaration itself: it becomes the declaration's file under
-the project's definitions folder (\verb{definitions/observed-data/<id>.json} in
-the default layout) and is the id \code{\link[=removeObservedData]{removeObservedData()}} matches on. It is
-canonicalized like every other definition id (lowercased and made a safe
-filename segment), and you are told when that changes it. Left out, the
-\code{file} basename serves as both, kept exactly as the source spells it.
+\code{sheets} names the Excel sheets to import; the sheets listed in the importer
+configuration are not used. Left out or empty, every sheet is imported, and
+each one must then fit the importer configuration: a sheet that does not,
+such as a sheet of notes, makes loading fail, so list the sheets instead.
 
-An id is not the name the data is known by: each imported
-\code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source gives it (the data-set name
-in an Excel sheet, the name inside a PKML file), and that name, not the
-declaration's id, is what a \code{dataCombined} entry references.
-
-A \code{DataSet} you pass lives in the R session until you save. On
-\code{\link[=saveProject]{saveProject()}} it is written to a PKML file named \verb{<DataSet name>.pkml}
-under the project's data folder and its entry becomes a \code{pkml} source, so
-the data survives a reload. Saving therefore needs a data folder to be
-declared in the project's file paths.
+\code{id} names the source: it is the name of its definition file and what
+\code{\link[=removeObservedData]{removeObservedData()}} takes. It is lowercased and made a safe file name,
+with a message when that changes it. Left out, the \code{file} basename is used
+as it is. A \code{dataCombined} entry refers to the name of a data set inside the
+source, not to this id.
+}
+\details{
+A \code{DataSet} is stored as a \code{type = "programmatic"} entry whose id is its
+name, and its data stays in the R session until \code{\link[=saveProject]{saveProject()}} writes it to
+\verb{<name>.pkml} in the data folder. Saving therefore needs a data folder. From
+then on it is a \code{pkml} source with the id \verb{<name>.pkml}.
 }
 \seealso{
 Other observedData:

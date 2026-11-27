@@ -22,6 +22,11 @@
 #' @exportS3Method
 #' @noRd
 print.ObservedDataSource <- function(x, ...) {
+  sheets <- unlist(x$sheets)
+  # An Excel source that lists no sheets loads every sheet of its workbook.
+  if (identical(x$type, "excel") && length(sheets) == 0L) {
+    sheets <- "all sheets"
+  }
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
     list(
@@ -29,7 +34,7 @@ print.ObservedDataSource <- function(x, ...) {
       "File" = x$file %||% "",
       "Name" = x$name %||% "",
       "Importer Configuration" = x$importerConfiguration %||% "",
-      "Sheets" = paste(unlist(x$sheets), collapse = ", ")
+      "Sheets" = paste(sheets, collapse = ", ")
     ),
     print_empty = TRUE
   )
@@ -52,10 +57,10 @@ print.ObservedDataSource <- function(x, ...) {
 # adapter, and `.validateObservedDataEntry`, the load/add-time guard) so they
 # can never disagree about which fields a source type requires.
 #
-# The rule an Excel source carries `sheets` (the sheet names to import), while
-# a `pkml` source is a single file and `programmatic` is a runtime
-# sentinel with no source fields at all. `sheets` is a required field for
-# `excel` in BOTH entry points.
+# An Excel source needs its workbook and importer configuration; its `sheets`
+# (the sheet names to import) are optional, since a missing or empty list loads
+# every sheet. A `pkml` source is a single file and `programmatic` is a runtime
+# sentinel with no source fields at all.
 #
 # @keywords internal
 # @noRd
@@ -64,16 +69,16 @@ print.ObservedDataSource <- function(x, ...) {
 .observedDataRequiredFields <- function(type) {
   switch(
     type,
-    "excel" = c("file", "importerConfiguration", "sheets"),
+    "excel" = c("file", "importerConfiguration"),
     "pkml" = "file",
     "programmatic" = character(0),
     character(0)
   )
 }
 
-# A field is "missing" when it is absent (`NULL`) or an empty collection
-# (`length 0`, e.g. `sheets = list()`). Both entry points use this one
-# predicate so an empty-but-present `sheets` is treated the same everywhere.
+# A field is "missing" when it is absent (`NULL`) or empty (`length 0`, e.g.
+# `file = character()`). Both entry points use this one predicate so an
+# empty-but-present required field is treated the same everywhere.
 #
 # @keywords internal
 # @noRd
@@ -131,7 +136,7 @@ print.ObservedDataSource <- function(x, ...) {
 
     # Required-field list is the single source of truth shared with the
     # load/add path (`.validateObservedDataEntry`), so the two entry points
-    # never disagree about, e.g., whether an Excel source needs `sheets`.
+    # never disagree about which fields a source type needs.
     for (field in .observedDataRequiredFields(entry$type)) {
       if (.observedDataFieldMissing(entry, field)) {
         result$addCriticalError(
@@ -368,53 +373,42 @@ getObservedDataNames <- function(project) {
 #' Add observed data to a Project
 #'
 #' @description
-#' Adds one observed-data declaration. `entry` is either an
-#' [`ospsuite::DataSet`] object (which becomes a `type = "programmatic"`
-#' declaration keyed by `dataSet$name`) or a list describing where the data is
-#' read from.
-#'
-#' Such a list always carries a `type`, plus the fields that type needs:
+#' Adds one observed-data source. `entry` is either an [`ospsuite::DataSet`]
+#' built in the session, or a list naming the file the data is read from:
 #'
 #' | `type` | required fields | optional fields |
 #' | --- | --- | --- |
-#' | `"excel"` | `file`, `importerConfiguration`, `sheets` | `id` |
+#' | `"excel"` | `file`, `importerConfiguration` | `sheets`, `id` |
 #' | `"pkml"` | `file` | `id` |
 #'
-#' `file` and `importerConfiguration` are paths *relative to the project's data
-#' folder* (`project$paths$dataFolder`). A file sitting directly in that folder
-#' is `"observed.xlsx"`, not `"Data/observed.xlsx"`; one in a subfolder of it is
-#' `"subfolder/observed.xlsx"`. `sheets` lists the Excel sheet names to import.
+#' Paths are relative to the project's data folder: `"observed.xlsx"`, not
+#' `"Data/observed.xlsx"`.
 #'
-#' `id` names the declaration itself: it becomes the declaration's file under
-#' the project's definitions folder (`definitions/observed-data/<id>.json` in
-#' the default layout) and is the id [removeObservedData()] matches on. It is
-#' canonicalized like every other definition id (lowercased and made a safe
-#' filename segment), and you are told when that changes it. Left out, the
-#' `file` basename serves as both, kept exactly as the source spells it.
+#' `sheets` names the Excel sheets to import; the sheets listed in the importer
+#' configuration are not used. Left out or empty, every sheet is imported, and
+#' each one must then fit the importer configuration: a sheet that does not,
+#' such as a sheet of notes, makes loading fail, so list the sheets instead.
 #'
-#' An id is not the name the data is known by: each imported
-#' [`ospsuite::DataSet`] carries the name its source gives it (the data-set name
-#' in an Excel sheet, the name inside a PKML file), and that name, not the
-#' declaration's id, is what a `dataCombined` entry references.
+#' `id` names the source: it is the name of its definition file and what
+#' [removeObservedData()] takes. It is lowercased and made a safe file name,
+#' with a message when that changes it. Left out, the `file` basename is used
+#' as it is. A `dataCombined` entry refers to the name of a data set inside the
+#' source, not to this id.
 #'
-#' A `DataSet` you pass lives in the R session until you save. On
-#' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
-#' under the project's data folder and its entry becomes a `pkml` source, so
-#' the data survives a reload. Saving therefore needs a data folder to be
-#' declared in the project's file paths.
+#' @details
+#' A `DataSet` is stored as a `type = "programmatic"` entry whose id is its
+#' name, and its data stays in the R session until [saveProject()] writes it to
+#' `<name>.pkml` in the data folder. Saving therefore needs a data folder. From
+#' then on it is a `pkml` source with the id `<name>.pkml`.
 #'
 #' @param project A `Project` object.
-#' @param entry An [`ospsuite::DataSet`] object, or a configuration list
-#'   carrying a `type` (`"excel"` or `"pkml"`) and that type's
-#'   fields, as described above.
-#' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
-#'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
-#'   basename) aborts. When `TRUE`, the existing source with that id is replaced
-#'   (last-write-wins) as long as both are the same kind. A cross-kind
-#'   replacement is refused in either direction, because it would either strand
-#'   the session's `DataSet` or leave two sources resolving to one name: remove
-#'   the existing source with [removeObservedData()] first, then add the new
-#'   one.
+#' @param entry An [`ospsuite::DataSet`], or a list with a `type` and that
+#'   type's fields (see the table above).
+#' @param overwrite Logical scalar. When `FALSE` (default), an id or `DataSet`
+#'   name that already exists aborts. When `TRUE`, the existing source is
+#'   replaced, but only by one of the same kind (a `DataSet` by a `DataSet`, a
+#'   list by a list). To replace one kind with the other, remove the existing
+#'   source with [removeObservedData()] first.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -814,9 +808,8 @@ removeObservedData <- function(project, id) {
     )
   }
   # Same required-field spec and same "missing" rule as the project validator
-  # (`.validateObservedData`), so a present-but-empty `sheets` on an Excel
-  # source is rejected here too rather than passing add/load and failing later
-  # under `validateProject()`.
+  # (`.validateObservedData`), so an entry rejected there is rejected here too
+  # rather than passing add/load and failing later under `validateProject()`.
   #
   # Every missing field is reported at once. Aborting on the first one made an
   # under-specified entry take one call per field to discover, although the
@@ -859,11 +852,14 @@ removeObservedData <- function(project, id) {
   importerConfig <- ospsuite::loadDataImporterConfiguration(
     configurationFilePath = importerPath
   )
-  importerConfig$sheets <- unlist(entry$sheets)
+  # The sheets come from the declaration only, never from the importer
+  # configuration: with the configuration's own list cleared, a missing or empty
+  # `sheets` makes ospsuite load every sheet of the workbook.
+  importerConfig$sheets <- NULL
   ospsuite::loadDataSetsFromExcel(
     xlsFilePath = filePath,
     importerConfigurationOrPath = importerConfig,
-    importAllSheets = FALSE
+    sheets = unlist(entry$sheets)
   )
 }
 

@@ -50,6 +50,77 @@ test_that("loadObservedData loads excel observed data from TestProject", {
   expect_true(all(vapply(result, inherits, logical(1), "DataSet")))
 })
 
+# Excel sources without a sheet list (#1371) ----
+
+# The test project's workbook holds two sheets the importer configuration can
+# read, while its declaration lists only the Laskin 1982 one. Without a sheet
+# list, the glucose sheet loads as well, ahead of it in workbook order.
+allFixtureSheetNames <- c(
+  "ESQ-ID-001_Glucose_001-002_Human_MALE_Venous Blood_PLASMA_Dapa 5 mg QD_po_",
+  testObservedDataId
+)
+
+test_that("an excel source added without sheets loads every sheet", {
+  project <- testProject()
+  removeObservedData(project, "Aciclovir_TimeValuesData.xlsx")
+
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = "Aciclovir_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    )
+  )
+
+  # Nothing is stored for the omitted field.
+  expect_equal(
+    unclass(project$definitions$observedData[[1]]),
+    list(
+      type = "excel",
+      file = "Aciclovir_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    )
+  )
+  expect_identical(names(loadObservedData(project)), allFixtureSheetNames)
+  expect_false(isAnyCriticalErrors(validateProject(project)))
+})
+
+test_that("an excel definition file with an empty sheet list loads every sheet", {
+  projectDir <- .copyTestProjectDir()
+  definitionFile <- file.path(
+    projectDir,
+    "definitions",
+    "observed-data",
+    "Aciclovir_TimeValuesData.xlsx.json"
+  )
+  definition <- jsonlite::read_json(definitionFile)
+  definition$sheets <- list()
+  jsonlite::write_json(definition, definitionFile, auto_unbox = TRUE)
+
+  project <- loadProject(file.path(projectDir, "Project.json"))
+
+  expect_identical(names(loadObservedData(project)), allFixtureSheetNames)
+})
+
+test_that("an excel source with a non-character sheet name fails to load", {
+  project <- testProject()
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = "Aciclovir_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list(2)
+    ),
+    overwrite = TRUE
+  )
+  # The error comes from ospsuite, which names the top-level call of the
+  # session rather than `loadObservedData()`, so a snapshot would differ
+  # between test runners.
+  expect_error(loadObservedData(project), "character")
+})
+
 test_that("loadObservedData errors when an entry has invalid type", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
@@ -258,8 +329,7 @@ test_that("addObservedData appends a valid config entry", {
 })
 
 test_that("addObservedData rejects an under-specified config entry, naming every gap at once", {
-  # An Excel source needs three fields; reporting one per attempt made a bare
-  # `list(type = "excel")` take three calls to complete (#1213).
+  # An Excel source needs two fields; both are named in one error (#1213).
   project <- testProject()
   expect_snapshot(
     error = TRUE,
@@ -823,6 +893,21 @@ test_that("removeObservedData mutates memory only; a surviving collision aborts 
 test_that("print.ObservedDataSource renders the source declaration", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$definitions$observedData[[1]]))
+})
+
+test_that("print.ObservedDataSource says an excel source without sheets loads all sheets", {
+  project <- testProject()
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = "Aciclovir_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    ),
+    overwrite = TRUE
+  )
   local_reproducible_output()
   expect_snapshot(print(project$definitions$observedData[[1]]))
 })

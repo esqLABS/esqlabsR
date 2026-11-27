@@ -680,6 +680,48 @@ test_that("exporting a JSON-authored project declares its data and PI workbooks"
   )
 })
 
+# An Excel source that lists no sheets loads every sheet of its workbook. The
+# Property table has no column for sheets, and the import lists every sheet of
+# the data workbook, so the round trip writes them out without changing what
+# loads (#1371).
+test_that("an Excel source without sheets round-trips through Excel as every sheet of its workbook", {
+  project <- exampleProject()
+  projectDir <- project$info$projectDirPath
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = "Aciclovir_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    ),
+    overwrite = TRUE
+  )
+  loadedNames <- names(loadObservedData(project))
+
+  # Exported into the project's own folder, so the exported `dataFolder` still
+  # names the folder the data workbook actually sits in.
+  exportProjectToExcel(
+    project,
+    outputDir = projectDir,
+    overwrite = TRUE,
+    silent = TRUE
+  )
+  reimported <- loadProject(importProjectFromExcel(
+    file.path(projectDir, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+
+  source <- .unwrapDefinitionList(reimported$definitions$observedData)[[1]]
+  expect_identical(
+    source$sheets,
+    as.list(readxl::excel_sheets(
+      file.path(project$paths$dataFolder, "Aciclovir_TimeValuesData.xlsx")
+    ))
+  )
+  expect_identical(names(loadObservedData(reimported)), loadedNames)
+})
+
 # The Property table names one experimental-data workbook, so a project
 # declaring several observed-data sources cannot state them all. The first
 # `excel` source is written and the rest are named in a warning, rather than one

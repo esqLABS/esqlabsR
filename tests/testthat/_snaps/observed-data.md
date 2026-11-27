@@ -13,7 +13,7 @@
       loadObservedData(project)
     Condition
       Error in `loadObservedData()`:
-      ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
+      ! `observedData` entry 1 (type "excel") is missing required field importerConfiguration.
 
 # addObservedData rejects a script entry
 
@@ -38,7 +38,7 @@
       addObservedData(project, list(type = "excel", file = "x.xlsx"))
     Condition
       Error in `addObservedData()`:
-      ! `observedData` entry 2 (type "excel") is missing required fields importerConfiguration and sheets.
+      ! `observedData` entry 2 (type "excel") is missing required field importerConfiguration.
 
 ---
 
@@ -46,7 +46,7 @@
       addObservedData(project, list(type = "excel"))
     Condition
       Error in `addObservedData()`:
-      ! `observedData` entry 2 (type "excel") is missing required fields file, importerConfiguration, and sheets.
+      ! `observedData` entry 2 (type "excel") is missing required fields file and importerConfiguration.
 
 # addObservedData rejects a duplicate config entry file
 
@@ -137,6 +137,18 @@
         * Name: <empty string>
         * Importer Configuration: esqlabs_dataImporter_configuration.xml
         * Sheets: Laskin 1982.Group A
+
+# print.ObservedDataSource says an excel source without sheets loads all sheets
+
+    Code
+      print(project$definitions$observedData[[1]])
+    Output
+      <ObservedDataSource>
+        * Type: excel
+        * File: Aciclovir_TimeValuesData.xlsx
+        * Name: <empty string>
+        * Importer Configuration: esqlabs_dataImporter_configuration.xml
+        * Sheets: all sheets
 
 # printing the observedData section lists the declaration ids
 
