@@ -297,31 +297,15 @@
 #' import and names the sheet. A workbook without the sheet gives a project
 #' without `defaultSolverSettings`.
 #'
-#' Only Excel files are read: any other file stops the import before anything
-#' is written. This includes the JSON file that
-#' `snapshotProjectConfiguration()` saved in esqlabsR 5 (usually
-#' `ProjectConfiguration.json`). When the Excel files it was saved from are
-#' still beside it, as in a usual esqlabsR 5 project folder, import those. If
-#' the JSON file is all you have of a project, restore its Excel files first
-#' with `restoreProjectConfiguration()` in esqlabsR 5.7.0, the last esqlabsR 5
-#' release, then import the restored workbook (`ProjectConfiguration.xlsx` for
-#' `ProjectConfiguration.json`) with this function in the current version.
-#'
 #' @param projectConfigPath Path to the project's top-level Excel file,
-#'   `Project.xlsx` (`ProjectConfiguration.xlsx` in a project created before
-#'   that file was renamed). Defaults to `"Project.xlsx"`.
+#'   `Project.xlsx` (`ProjectConfiguration.xlsx` in projects ccreated with v5 esqlabsR). Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
 #'   (default), it is created in the same directory as the Excel file.
 #' @param overwrite Logical. Guards against silently replacing an existing JSON
 #'   project. With `overwrite = FALSE` (default), the import aborts when a
 #'   project file or a non-empty `definitions/` tree already exists in
-#'   `outputDir`, because importing again replaces the JSON project with the
-#'   Excel state and deletes every definition the Excel files do not contain,
-#'   including one you added to the JSON project since. Pass `overwrite = TRUE`
-#'   to replace the existing JSON project. The same flag governs the folders
-#'   and observed-data files copied into another folder (see `copyAssets`):
-#'   with `overwrite = FALSE`, one that `outputDir` already holds is kept as it
-#'   is and named in a warning; with `overwrite = TRUE`, it is replaced.
+#'   `outputDir`. Pass `overwrite = TRUE`
+#'   to replace the existing JSON project.
 #' @param silent Logical. If `TRUE`, suppresses the import summary (the project
 #'   written, its per-section definition counts, and the folders and files
 #'   that could not be copied). Defaults to `FALSE`.
@@ -376,12 +360,7 @@ importProjectFromExcel <- function(
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
-  # A file the workbook reader cannot open as Excel is refused ahead of the
-  # destination checks, rather than by a refusal about where its import would
-  # have been written or by the reader's own error. `readxl::excel_format()`
-  # is what `readxl` decides by: a known Excel extension (any case), otherwise
-  # the file's signature. A file with an Excel extension whose content is not a
-  # workbook passes here and is refused by the reader.
+  # A file the workbook reader cannot open as Excel is refused.
   if (
     !fs::is_file(projectConfigPath) ||
       is.na(readxl::excel_format(projectConfigPath))
@@ -489,9 +468,6 @@ importProjectFromExcel <- function(
     if (length(conventionWorkbooks) > 0L) {
       .informFormatted(messages$importUndeclaredWorkbooks(conventionWorkbooks))
     }
-    # Copying the referenced folders and files is what an import into another
-    # folder is expected to do, so only what could not be copied is named: the
-    # new project lacks it until the user places it there.
     if (length(assets$notCopied) > 0L) {
       msg <- messages$importUncopiedAssetFolders(assets$notCopied)
       cli::cli_warn("{msg}")
