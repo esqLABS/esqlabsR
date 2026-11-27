@@ -1154,6 +1154,8 @@ convertProjectToV6 <- function(
     add = TRUE
   )
 
+  # Each step is recorded before it is taken, so an interrupt between the two
+  # still leaves it for the restore, which skips what did not happen.
   for (from in plan$moves) {
     to <- file.path(
       projectDir,
@@ -1161,8 +1163,8 @@ convertProjectToV6 <- function(
       fs::path_rel(from, projectDir)
     )
     .v5CreateDir(dirname(to), state)
-    fs::file_move(from, to)
     state$moved[[from]] <- to
+    fs::file_move(from, to)
   }
 
   for (output in plan$outputs) {
@@ -1181,7 +1183,7 @@ convertProjectToV6 <- function(
 }
 
 # Create `dir` and the folders above it that do not exist, recording each one
-# created so a restore can remove it again.
+# before it is created so a restore can remove it again.
 #
 # @keywords internal
 # @noRd
@@ -1192,8 +1194,8 @@ convertProjectToV6 <- function(
     dir <- dirname(dir)
   }
   for (folder in missing) {
-    dir.create(folder)
     state$createdDirs <- c(state$createdDirs, folder)
+    dir.create(folder)
   }
   invisible(NULL)
 }
@@ -1231,6 +1233,10 @@ convertProjectToV6 <- function(
 
   notRestored <- character()
   for (from in names(state$moved)) {
+    # A move recorded but not taken left the file where it was.
+    if (!file.exists(state$moved[[from]])) {
+      next
+    }
     restored <- tryCatch(
       {
         fs::file_move(state$moved[[from]], from)

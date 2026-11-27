@@ -419,3 +419,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:40: convertProjectToV6() refuses the esqlabsR 5 workbooks in the esqlabsR5/ folder of a converted project, which it converted into a second project nested in the first. (#1426)
 - 2026-11-27 22:42: convertProjectToV6() refuses a project in whose configurations folder it finds no esqlabsR 5 workbook, naming the folder and any part of it that names a set environment variable, instead of converting it to an empty project. (#1426)
 - 2026-11-27 22:44: convertProjectToV6() writes a populationsFolder that names an environment variable and stays relative under the configurations folder (Configurations/${POPCSV}), where esqlabsR 5 read it. (#1426)
+- 2026-11-27 22:47: convertProjectToV6() records each move and folder before making it, and its restore skips a move that did not happen. (#1426)
