@@ -87,9 +87,9 @@ Only Excel files are read. The JSON file that
 \code{snapshotProjectConfiguration()} saved in esqlabsR 5 (usually
 \code{ProjectConfiguration.json}) is refused before anything is written. If that
 file is all you have of a project, restore its Excel files first with
-\code{restoreProjectConfiguration()} in esqlabsR 5 (version 5.5.0 or later), then
-import the restored \code{ProjectConfiguration.xlsx} with this function in the
-current version.
+\code{restoreProjectConfiguration()} in esqlabsR 5.7.0, the last esqlabsR 5
+release, then import the restored workbook (\code{ProjectConfiguration.xlsx} for
+\code{ProjectConfiguration.json}) with this function in the current version.
 }
 \seealso{
 Other projectPersistence:
