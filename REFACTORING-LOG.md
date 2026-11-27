@@ -412,7 +412,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 21:33: Tests cover a converted project's sync with its workbooks, a workbook carried over unchanged, the workbooks named and dropped, the DefaultSolverSettings sheet, a restore that cannot move a file back, and the esqlabsR 5 boolean and PI configuration readers. (#1426)
 - 2026-11-27 21:36: convertProjectToV6() converts the workbooks in the order the import reads them, scenarios first. (#1426)
 - 2026-11-27 21:36: The migration article describes three steps (convert with convertProjectToV6(), edit the v6 workbooks, import them), the reference lists the converter, and NEWS describes it, the ${NAME} rewrite and the content it does not carry over. (#1426)
-- 2026-11-27 21:43: convertProjectToV6() leaves a Scenarios sheet without its Scenario_name column for the import to report, instead of stopping on an R error, and puts the folder back. (#1426)
+- 2026-11-27 21:43: convertProjectToV6() no longer stops on an R error for a Scenarios sheet without its Scenario_name column: the conversion reaches the import, shows the import's error, and puts the folder back. (#1426)
 - 2026-11-27 22:03: Regenerated the help pages and NAMESPACE, which export convertProjectToV6(). (#1426)
 - 2026-11-27 22:36: convertProjectToV6() builds each workbook's place once, reads each esqlabsR 5 sheet once, lists the workbooks to write directly and builds its messages with cliBullets(); what it writes is unchanged. (#1426)
 - 2026-11-27 22:38: convertProjectToV6() refuses a workbook that lies outside the project folder once links are followed (a linked configurations folder, or a property workbook that is a link), instead of moving it out of the folder the link points into. (#1426)
@@ -425,3 +425,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:50: convertProjectToV6() refuses a projectConfigPath or silent that is not a single value, or is NA. (#1426)
 - 2026-11-27 22:52: The converter's warnings carry esqlabsR_convert* classes (the ontogeny warning one as well), and a few of its messages read more plainly. (#1426)
 - 2026-11-27 22:57: The converter's tests drop the duplicates and the checks that could not fail, merge the overlapping ones into single conversions, edit workbooks with editWorkbookSheets(), call the converter one way, and describe what they check rather than their history. (#1426)
+- 2026-11-27 22:58: The convertProjectToV6() help, the migration article and NEWS describe what is not moved, the ${NAME} rewrite and its exceptions, the snapshot JSON, the new refusals, all sheets the summary lists, and the Yes cell that now turns a scenario setting on; the #1182 bullet drops its 5.x rationale. (#1426)

@@ -44,17 +44,17 @@ Point `convertProjectToV6()` at the project's `ProjectConfiguration.xlsx`. The c
 
 ```{r convert}
 jsonPath <- convertProjectToV6("MyProject/ProjectConfiguration.xlsx")
-jsonPath
-#> "MyProject/Project.json"
 ```
+
+`jsonPath` is the path to the `Project.json` the conversion wrote.
 
 Afterwards the folder holds:
 
-* `esqlabsR5/`, with `ProjectConfiguration.xlsx` and the esqlabsR 5 workbooks it named, at the same places inside it (`esqlabsR5/Configurations/Scenarios.xlsx`, ...). Nothing in them is changed.
+* `esqlabsR5/`, with `ProjectConfiguration.xlsx`, the `ProjectConfiguration.json` that `snapshotProjectConfiguration()` saved beside it if there is one, and the esqlabsR 5 workbooks it named, at the same places inside it (`esqlabsR5/Configurations/Scenarios.xlsx`, ...). Nothing in them is changed.
 * `Project.xlsx` and the `Configurations/` workbooks, in the layout of 6.0.0. These are the workbooks you edit from now on.
 * `Project.json` and the `definitions/` folder, which `importProjectFromExcel()` wrote from those workbooks.
 
-Models, observed data and population files stay where they are, so no path in the project changes. If any step fails, or you interrupt it, the folder is put back as it was, and the error tells you why.
+Models, observed data and population files are not moved. If any step fails, or you interrupt it, the folder is put back as it was, and the error tells you why.
 
 What the conversion changes in the workbooks:
 
@@ -63,15 +63,17 @@ What the conversion changes in the workbooks:
 * **Scenarios.** `Yes`/`No` and `1`/`0` become `TRUE`/`FALSE`. A scenario name that the id does not keep, such as `Aciclovir IV 2.5 mg/kg`, goes into the new `Label` column, so plots and reports still show it.
 * **Plots.** The columns `plotID`, `DataCombinedName`, `name` and `plotIDs` become `plotId`, `dataCombined`, `plotGridId` and `plots`, and an axis scale written `"lin"` becomes `"linear"`.
 * **Parameter identification.** The sheets keyed by `PITaskName` become the `PITasks`, `PIParameters` and `PIOutputMappings` sheets. The rows of a `PIParameters` sheet that share a `Group` become one parameter estimated across their scenarios. The `ObservedDataSheet` column is not needed any more: the project imports every sheet of the data workbook and finds a data set by its name.
-* **Folders.** `modelFolder` becomes `simulationsFolder`, and `populationsFolder`, which esqlabsR 5 read inside the configurations folder, becomes its path from the project folder (`Configurations/PopulationsCSV`). A folder that names an environment variable as part of its path (`SHARED/Data`, with `SHARED` set) is written as `${SHARED}/Data`, which 6.0.0 reads; the summary lists each value it rewrote.
+* **Folders.** `modelFolder` becomes `simulationsFolder`, and `populationsFolder`, which esqlabsR 5 read inside the configurations folder, becomes its path from the project folder (`Configurations/PopulationsCSV`). A folder that names an environment variable as part of its path (`SHARED/Data`, with `SHARED` set) is written as `${SHARED}/Data`, which 6.0.0 reads; a part containing "path" is kept as written, as esqlabsR 5 did, and a rewritten `populationsFolder` stays inside the configurations folder (`Configurations/${POPCSV}`). The summary lists each value it rewrote.
 
-Some content has no place in 6.0.0. The conversion warns when a sheet that holds rows is not carried over: the `exportConfiguration` sheet of the plots workbook (save figures from the plot objects `createPlots()` returns instead), the `UserDefinedVariability` sheet of the populations workbook, and an `Individual Parameter Sets` cell naming a set other than the individual's own sheet. The lookup lists `dataTypes`, `plotTypes` and `ObservedDataNames` are dropped and named in the summary. All of them stay in the workbooks in `esqlabsR5/`.
+Some content has no place in 6.0.0. The conversion warns when a sheet that holds rows is not carried over: the `exportConfiguration` sheet of the plots workbook (save figures from the plot objects `createPlots()` returns instead), the `UserDefinedVariability` sheet of the populations workbook, and an `Individual Parameter Sets` cell naming a set other than the individual's own sheet. The summary names the other sheets it does not carry over: the lookup lists `dataTypes`, `plotTypes` and `ObservedDataNames`, an empty `exportConfiguration` or `UserDefinedVariability` sheet, and any other sheet the 6.0.0 workbooks have no place for. All of them stay in the workbooks in `esqlabsR5/`.
 
 The conversion refuses, before changing anything:
 
-* a folder that already holds a 6.0.0 project (`Project.json`, `Project.xlsx` or files in `definitions/`) or an earlier conversion (`esqlabsR5/`);
+* a folder that already holds a 6.0.0 project (`Project.json`, `Project.xlsx` or files in `definitions/`) or an earlier conversion (`esqlabsR5/`), and the `esqlabsR5/` folder of a converted project;
 * a workbook that is already in the layout of 6.0.0: import it with `importProjectFromExcel()` instead;
-* a folder value that points outside the project folder, such as an absolute path or one starting with `../`. A 6.0.0 project keeps its folders inside the project folder, or reaches a shared folder through an environment variable: write the value as `${SHARED}/Data` in `ProjectConfiguration.xlsx` and convert again.
+* a folder value that points outside the project folder, such as an absolute path or one starting with `../`. A 6.0.0 project keeps its folders inside the project folder, or reaches a shared folder through an environment variable: write the value as `${SHARED}/Data` in `ProjectConfiguration.xlsx` and convert again;
+* a workbook that lies outside the project folder once links are followed, such as a configurations folder that is a link to a shared folder;
+* a project whose configurations folder holds no esqlabsR 5 workbook.
 
 If all you have is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, usually `ProjectConfiguration.json`, get the workbooks back first: in esqlabsR 5.7.0, run `restoreProjectConfiguration()` on that file, then update to this version and convert the restored `ProjectConfiguration.xlsx`.
 

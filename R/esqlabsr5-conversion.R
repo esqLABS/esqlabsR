@@ -425,26 +425,40 @@
 #'
 #' The conversion changes the folder in this order:
 #'
-#' 1. It reads every esqlabsR 5 workbook and prepares the v6 workbooks. All of
-#'    its warnings come from this step, and nothing in the folder changes yet.
-#' 2. It moves `ProjectConfiguration.xlsx` and the esqlabsR 5 workbooks it read
-#'    into an `esqlabsR5/` subfolder, keeping their paths inside it, so
+#' 1. It reads every esqlabsR 5 workbook and prepares the v6 workbooks. Nothing
+#'    in the folder changes yet, and the conversion's own warnings come from
+#'    this step.
+#' 2. It moves `ProjectConfiguration.xlsx`, the `ProjectConfiguration.json`
+#'    that `snapshotProjectConfiguration()` of esqlabsR 5 saved beside it if
+#'    there is one, and the esqlabsR 5 workbooks it read into an `esqlabsR5/`
+#'    subfolder, keeping their paths inside it, so
 #'    `Configurations/Scenarios.xlsx` becomes
 #'    `esqlabsR5/Configurations/Scenarios.xlsx`.
 #' 3. It writes the v6 workbooks: `Project.xlsx` beside where
 #'    `ProjectConfiguration.xlsx` was, and the `Configurations/` workbooks
 #'    under the names the project gave them.
-#' 4. It runs [importProjectFromExcel()] on `Project.xlsx`.
+#' 4. It runs [importProjectFromExcel()] on `Project.xlsx`, which can add
+#'    warnings of its own.
 #'
-#' Models, observed data and population files stay where they are, so no path
-#' in the project changes. If any step fails, or the conversion is
-#' interrupted, the folder is put back as it was before and the error is
-#' shown.
+#' Models, observed data and population files are not moved. A folder value
+#' that names an environment variable the esqlabsR 5 way, as a part of the path
+#' (`SHARED/Data` with `SHARED` set), is written as `${SHARED}/Data`, which this
+#' version reads; a part containing "path" is kept as written, as esqlabsR 5
+#' did. If any step fails, or the conversion is interrupted, the folder is put
+#' back as it was before and the error is shown.
 #'
-#' The conversion refuses a folder that already holds a v6 project
-#' (`Project.json`, `Project.xlsx` or files in `definitions/`) or an earlier
-#' conversion (an `esqlabsR5/` folder), and a workbook that is already in the
-#' v6 layout. Afterwards, edit the v6 workbooks and import them with
+#' The conversion refuses, before changing anything:
+#' - a folder that already holds a v6 project (`Project.json`, `Project.xlsx`
+#'   or files in `definitions/`) or an earlier conversion (an `esqlabsR5/`
+#'   folder), and the `esqlabsR5/` folder of a converted project;
+#' - a workbook that is already in the v6 layout;
+#' - a folder value that points outside the project folder, such as an absolute
+#'   path or one starting with `../`: a v6 project reaches such a folder
+#'   through an environment variable, written as `${SHARED}/Data`;
+#' - a workbook that lies outside the project folder once links are followed,
+#'   and a project whose configurations folder holds no esqlabsR 5 workbook.
+#'
+#' Afterwards, edit the v6 workbooks and import them with
 #' [importProjectFromExcel()], or work with the project in R.
 #'
 #' @param projectConfigPath Path to the esqlabsR 5 project configuration
