@@ -161,13 +161,14 @@
 # an observedData id that is not canonical cannot be saved
 
     Code
-      .serializeObservedDataSet(list(list(id = "Laskin", type = "pkml", file = "laskin.pkml")))
+      .serializeObservedDataSet(list(Laskin = list(id = "Laskin", type = "pkml",
+        file = "laskin.pkml")))
     Condition
       Error in `.validateDefinitionTreeKey()`:
       ! observedData id "Laskin" is not a canonical definition-file id.
       i Use the add/set API, which canonicalizes it to "laskin", or store the definition under the key "laskin".
     Code
-      .serializeObservedDataSet(list(list(id = "../escape", type = "programmatic")))
+      .serializeObservedDataSet(list(`../escape` = list(id = "../escape", type = "programmatic")))
     Condition
       Error in `.validateDefinitionTreeKey()`:
       ! observedData id "../escape" is not a canonical definition-file id.

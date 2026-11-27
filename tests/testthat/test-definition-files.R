@@ -586,10 +586,10 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
 
 # Two declarations filed under one id would share one definition file.
 test_that("observedData declarations that share an id cannot be saved", {
-  entries <- list(
+  entries <- .observedDataSectionById(list(
     list(id = "laskin_1982", type = "pkml", file = "Laskin 1982.pkml"),
     list(id = "laskin_1982", type = "pkml", file = "sub/laskin 1982.pkml")
-  )
+  ))
 
   expect_snapshot(.serializeObservedDataSet(entries), error = TRUE)
 })
@@ -602,10 +602,10 @@ test_that("observedData declarations that share an id cannot be saved", {
 test_that("an observedData id that is not canonical cannot be saved", {
   expect_snapshot(error = TRUE, {
     .serializeObservedDataSet(list(
-      list(id = "Laskin", type = "pkml", file = "laskin.pkml")
+      Laskin = list(id = "Laskin", type = "pkml", file = "laskin.pkml")
     ))
     .serializeObservedDataSet(list(
-      list(id = "../escape", type = "programmatic")
+      "../escape" = list(id = "../escape", type = "programmatic")
     ))
   })
 })

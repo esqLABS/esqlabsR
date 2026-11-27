@@ -588,7 +588,8 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
   # The data-set names inside a config source are known only by reading it, so
   # the observedData setter leaves the names cache unset, and the next lookup
   # reads every source.
-  record <- c(list(id = id), unclass(entry)[names(entry) != "id"])
+  record <- unclass(entry)
+  record$id <- id
   if (replacing) {
     observedData[[idx]] <- record
   } else {

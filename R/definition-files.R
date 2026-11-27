@@ -848,17 +848,18 @@
   })
 }
 
-# observedData: one file per declaration, keyed by its id, which every file
-# stores as its first field. `call` is the call an abort names: the save, when
-# the save runs these checks before writing any PKML file.
+# observedData: one file per declaration, keyed by its id. The section stores
+# every declaration with its id first (`.observedDataSectionById()`), so each
+# record is the file content as it is. `call` is the call the file-collision
+# abort names: the save, when the save runs these checks before writing any
+# PKML file.
 #
 # @keywords internal
 # @noRd
 .serializeObservedDataSet <- function(observedData, call = environment()) {
   observedData <- observedData %||% list()
   out <- list()
-  for (entry in observedData) {
-    id <- .keyedTreeRecordId(entry, "id", "observedData")
+  for (id in names(observedData)) {
     .validateDefinitionTreeKey(id, "observedData")
     # Two declarations filed under one id would overwrite each other's file (one
     # file on disk, the second declaration lost on reload).
@@ -868,8 +869,7 @@
         call = call
       )
     }
-    entry <- unclass(entry)
-    out[[id]] <- c(list(id = id), entry[names(entry) != "id"])
+    out[[id]] <- unclass(observedData[[id]])
   }
   out
 }
