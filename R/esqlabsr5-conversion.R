@@ -670,8 +670,12 @@ convertProjectToV6 <- function(
     ))
   }
   v6Workbook <- file.path(projectDir, "Project.xlsx")
+  # The JSON file `snapshotProjectConfiguration()` of esqlabsR 5 saved beside
+  # the property workbook describes the same project, so it goes with it.
+  snapshot <- as.character(fs::path_ext_set(projectConfigPath, "json"))
   moves <- unique(c(
     projectConfigPath,
+    if (file.exists(snapshot)) snapshot,
     vapply(sections, function(section) section$path, character(1))
   ))
   .v5CheckNotLinkedOutside(moves, projectDir, .call)

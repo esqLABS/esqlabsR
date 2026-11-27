@@ -173,9 +173,11 @@ test_that("convertProjectToV6() moves the esqlabsR 5 workbooks and writes a proj
   )
   after <- .folderState(projectDir)
 
-  # The property workbook and every workbook the project names moved, unchanged.
+  # The property workbook, the esqlabsR 5 snapshot JSON beside it, and every
+  # workbook the project names moved, unchanged.
   moved <- c(
     "ProjectConfiguration.xlsx",
+    "ProjectConfiguration.json",
     file.path(
       "Configurations",
       c(
