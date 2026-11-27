@@ -117,6 +117,15 @@
       16                  outputFolder                               Results/
       17         initialConditionsFile                 InitialConditions.xlsx
 
+# convertProjectToV6() refuses a workbook linked from outside the project folder
+
+    Code
+      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+    Condition
+      Error in `convertProjectToV6()`:
+      x Workbooks of the project lie outside the project folder once links are followed: 'Configurations/Scenarios.xlsx', 'Configurations/ModelParameters.xlsx', 'Configurations/Individuals.xlsx', 'Configurations/Populations.xlsx', 'Configurations/Applications.xlsx', 'Configurations/Plots.xlsx', and 'Configurations/ParameterIdentification.xlsx'.
+      i The esqlabsR 5 workbooks move into the 'esqlabsR5' folder of the project, which would take them out of the folder the link points into. Copy the files or their folder into the project instead of linking them, then convert again.
+
 # convertProjectToV6() refuses a workbook file name outside the configurations folder
 
     Code

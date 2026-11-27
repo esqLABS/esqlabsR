@@ -86,6 +86,18 @@
   )
 }
 
+.esqlabsR5Messages$linkedOutside <- function(files) {
+  n <- length(files)
+  cliBullets(
+    "x" = "{cli::qty(n)}{?A workbook/Workbooks} of the project {?lies/lie} \\
+    outside the project folder once links are followed: {.file {files}}.",
+    "i" = "The esqlabsR 5 workbooks move into the {.file esqlabsR5} folder of \\
+    the project, which would take {cli::qty(n)}{?it/them} out of the folder \\
+    the link points into. Copy the {cli::qty(n)}file{?s} or {?its/their} \\
+    folder into the project instead of linking {?it/them}, then convert again."
+  )
+}
+
 .esqlabsR5Messages$converted <- function(folder) {
   cliBullets(
     "v" = "Converted the esqlabsR 5 project. Its esqlabsR 5 workbooks are now \\
@@ -584,13 +596,15 @@ convertProjectToV6 <- function(
     ))
   }
   v6Workbook <- file.path(projectDir, "Project.xlsx")
+  moves <- unique(c(
+    projectConfigPath,
+    vapply(sections, function(section) section$path, character(1))
+  ))
+  .v5CheckNotLinkedOutside(moves, projectDir, .call)
 
   list(
     projectDir = projectDir,
-    moves = unique(c(
-      projectConfigPath,
-      vapply(sections, function(section) section$path, character(1))
-    )),
+    moves = moves,
     outputs = c(
       list(list(path = v6Workbook, sheets = propertySheets)),
       unname(outputs)
@@ -599,6 +613,36 @@ convertProjectToV6 <- function(
     envVarRewrites = envVarRewrites$rewrites,
     droppedSheets = droppedSheets
   )
+}
+
+# Abort when a file that is to move is, once links are followed, outside the
+# project folder: a workbook in a linked configurations folder, or a property
+# workbook that is itself a link. The paths the conversion moves and writes are
+# the ones the project spells, so moving such a file would take it out of the
+# folder the link points into.
+#
+# @param files The files that move into `esqlabsR5/`.
+# @param projectDir The project folder.
+# @keywords internal
+# @noRd
+.v5CheckNotLinkedOutside <- function(files, projectDir, .call) {
+  realRoot <- as.character(fs::path_real(projectDir))
+  linked <- files[vapply(
+    files,
+    function(file) {
+      .pathEscapesRoot(as.character(fs::path_real(file)), realRoot)
+    },
+    logical(1)
+  )]
+  if (length(linked) > 0L) {
+    cli::cli_abort(
+      .esqlabsR5Messages$linkedOutside(
+        as.character(fs::path_rel(linked, projectDir))
+      ),
+      call = .call
+    )
+  }
+  invisible(NULL)
 }
 
 # The v6 workbook a section is written to: `section` with the sheets to write,

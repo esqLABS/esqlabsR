@@ -502,6 +502,36 @@ test_that("convertProjectToV6() names the workbooks it writes, and only those", 
   )
 })
 
+test_that("convertProjectToV6() refuses a workbook linked from outside the project folder", {
+  projectDir <- localExcelProjectDir()
+  shared <- file.path(withr::local_tempdir(), "SharedConfigs")
+  file.rename(file.path(projectDir, "Configurations"), shared)
+  linked <- file.symlink(shared, file.path(projectDir, "Configurations"))
+  skip_if_not(linked, "Symbolic links cannot be created here.")
+  before <- .folderState(projectDir)
+  sharedBefore <- .folderState(shared)
+
+  expect_snapshot(
+    convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx")),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(.folderState(projectDir), before)
+  expect_identical(.folderState(shared), sharedBefore)
+
+  # The property workbook itself can be the link.
+  projectDir <- localExcelProjectDir()
+  elsewhere <- file.path(withr::local_tempdir(), "ProjectConfiguration.xlsx")
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  file.rename(configPath, elsewhere)
+  file.symlink(elsewhere, configPath)
+  expect_error(
+    convertProjectToV6(configPath),
+    "outside the project folder once links are followed"
+  )
+  expect_true(file.exists(elsewhere))
+})
+
 test_that("convertProjectToV6() refuses a workbook file name outside the configurations folder", {
   projectDir <- localExcelProjectDir()
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
