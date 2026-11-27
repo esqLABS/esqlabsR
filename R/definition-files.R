@@ -579,9 +579,7 @@
     # before this runs (see `.persistProgrammaticPopulations`). One that reaches
     # here is an orphan (read from disk with no backing object this session), so
     # write it back verbatim; the run path aborts with an actionable message if a
-    # scenario tries to use it. A programmatic observed-data source never gets
-    # this far: a project file declaring one does not load
-    # (`.abortOnProgrammaticObservedData()`).
+    # scenario tries to use it.
     out[[id]] <- c(list(id = id), pop)
   }
   out

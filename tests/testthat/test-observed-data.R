@@ -493,8 +493,9 @@ test_that("addObservedData rejects a DataSet name that is not a safe filename", 
   expect_error(addObservedData(project, ds), "safe filename segment")
 })
 
-# A hand-authored `programmatic` sentinel with no `name` is schema-legal (a
-# programmatic entry has no required fields). The persist step must not crash on
+# A `programmatic` sentinel with no `name` is set directly on the section here,
+# since a project file declaring one does not load (a programmatic entry has no
+# required fields). The persist step must not crash on
 # `store[[NULL]]`; a name-less entry has no id to name its definition file, so
 # the save aborts with the serializer's clear "no id" message, not an opaque
 # `subscript out of bounds`.

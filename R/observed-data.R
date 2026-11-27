@@ -13,9 +13,11 @@
 #   - programmatic : DataSets added at runtime via addObservedData(project).
 #                    The DataSet itself is not JSON-serializable, so it
 #                    is held on the Project's private slot
-#                    (.programmaticDataSets) and the JSON sentinel
-#                    `{type: "programmatic", name: ...}` is what
-#                    survives a round-trip.
+#                    (.programmaticDataSets) under the sentinel
+#                    `{type: "programmatic", name: ...}` until
+#                    saveProject() writes it to a PKML file and rewrites
+#                    the sentinel as a `pkml` source. A project file that
+#                    declares a sentinel does not load.
 
 # Print ----
 
@@ -827,7 +829,8 @@ removeObservedData <- function(project, id) {
 # written: for each `programmatic` entry whose DataSet is in the runtime store,
 # write `<dataFolder>/<name>.pkml` and rewrite the section entry to a `pkml`
 # source pointing at that file. A programmatic entry with no DataSet in the store
-# (an orphan sentinel read from disk) is left untouched.
+# is left untouched; only a section set directly (as tests do) can hold one, since
+# a project file declaring a programmatic source does not load.
 #
 # Returns the character vector of persisted DataSet names; the caller drops these
 # from the runtime store only after the whole save commits, so an abort partway
@@ -841,10 +844,10 @@ removeObservedData <- function(project, id) {
   toPersist <- which(vapply(
     observedData,
     function(e) {
-      # A hand-authored `programmatic` sentinel may carry no `name`; guard it
-      # before indexing the store (`store[[NULL]]` aborts). A name-less sentinel
-      # has no backing DataSet, so it is left untouched, matching this function's
-      # orphan-sentinel contract.
+      # A `programmatic` sentinel set directly on the section may carry no
+      # `name`; guard it before indexing the store (`store[[NULL]]` aborts). A
+      # name-less sentinel has no backing DataSet, so it is left untouched, like
+      # any entry whose DataSet is not in the store.
       identical(e$type, "programmatic") &&
         !is.null(e$name) &&
         !is.null(private$.programmaticDataSets[[e$name]])
