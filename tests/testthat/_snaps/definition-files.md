@@ -146,8 +146,7 @@
     Condition
       Error in `.serializeObservedDataSet()`:
       x Two observed-data sources would be saved to the same definition file 'laskin 1982.pkml.json'.
-      i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      i Each source is saved to a file named after its id. Give the sources distinct ids, or remove one with `removeObservedData()`.
 
 # a programmatic observedData id that escapes its directory aborts
 
@@ -158,18 +157,6 @@
       ! observedData id "../escape" is not a single safe filename segment.
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
       i Give the declaration an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
-
-# saveProject aborts when a definition file cannot be renamed to its id's new spelling
-
-    Code
-      saveProject(project)
-    Condition
-      Warning in `file.rename()`:
-      cannot rename file '<project>/definitions/observed-data/Laskin 1982.pkml.json' to '<project>/definitions/observed-data/laskin 1982.pkml.json', reason 'Permission denied'
-      Error in `.writeDefinitionTree()`:
-      ! Failed to rename 1 definition file in the 'definitions' folder to the new spelling of its id.
-      x '<project>/definitions/observed-data/Laskin 1982.pkml.json'
-      i Check the file permissions, then save again.
 
 # a full-tree write aborts when a stale file cannot be removed
 

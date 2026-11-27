@@ -514,8 +514,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add observed data. See [addObservedData()].
-    addObservedData = function(entry, overwrite = FALSE) {
-      private$.impl(.addObservedData_impl, entry, overwrite)
+    addObservedData = function(entry, id = NULL, overwrite = FALSE) {
+      private$.impl(.addObservedData_impl, entry, id, overwrite)
     },
 
     #' @description Remove observed data. See [removeObservedData()].

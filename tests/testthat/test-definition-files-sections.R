@@ -264,7 +264,7 @@ test_that("saveProject() writes an observed-data (config) definition file", {
     list(type = "pkml", file = "extra.pkml")
   )
   saveProject(project)
-  expect_true(file.exists(file.path(dir, "extra.pkml.json")))
+  expect_true(file.exists(file.path(dir, "extra.json")))
 
   reloaded <- loadProject(project$info$projectFilePath)
   files <- vapply(

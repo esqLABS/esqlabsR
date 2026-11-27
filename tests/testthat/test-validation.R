@@ -1365,7 +1365,7 @@ test_that("removeObservedData warns when a dataCombined still references it", {
     id = "dc1",
     observed = list(list(label = "obs", dataSet = "MyObs"))
   )
-  expect_snapshot(removeObservedData(project, "MyObs"))
+  expect_snapshot(removeObservedData(project, "myobs"))
 })
 
 # Section adapter: plots, plotType enum ----
