@@ -277,8 +277,7 @@
 
 #' Import project configuration from Excel files
 #'
-#' @description Reads all Excel configuration files in an esqlabsR project, or
-#' the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, and
+#' @description Reads all Excel configuration files in an esqlabsR project and
 #' converts them to the JSON project format: a `Project.json` project file plus
 #' one file per definition in the `definitions/` folder. The result is a
 #' ready-to-use project: `loadProject("<outputDir>/Project.json")` can open it
@@ -298,30 +297,24 @@
 #' import and names the sheet. A workbook without the sheet gives a project
 #' without `defaultSolverSettings`.
 #'
-#' The JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5
-#' (usually `ProjectConfiguration.json`) is imported the same way: pass it as
-#' `projectConfigPath`. The model, data, and population folders that sit
-#' beside it are copied into `outputDir` (from a data folder that is the folder
-#' holding the JSON file, only the data workbook and its importer
-#' configuration), and the import summary names each
-#' folder the new project still lacks, so you know what to place there before
-#' you run it. A working folder in the file
-#' that points outside the project stops the import before anything is written.
-#' Observed data is imported from the data workbook the file names, in the
-#' data folder beside it; when that workbook is missing, the import warns and
-#' names it, as for a `Project.xlsx`. The project file is never
-#' written over the file being imported, whatever `overwrite` says.
+#' Only Excel files are read. The JSON file that
+#' `snapshotProjectConfiguration()` saved in esqlabsR 5 (usually
+#' `ProjectConfiguration.json`) is refused before anything is written. If that
+#' file is all you have of a project, restore its Excel files first with
+#' `restoreProjectConfiguration()` in esqlabsR 5 (version 5.5.0 or later), then
+#' import the restored `ProjectConfiguration.xlsx` with this function in the
+#' current version.
 #'
-#' @param projectConfigPath Path to the `Project.xlsx` file, or to the JSON
-#'   file that `snapshotProjectConfiguration()` saved in esqlabsR 5 (usually
-#'   `ProjectConfiguration.json`). Defaults to `"Project.xlsx"`.
+#' @param projectConfigPath Path to the project's top-level Excel file,
+#'   `Project.xlsx` (`ProjectConfiguration.xlsx` in a project created before
+#'   that file was renamed). Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
-#'   (default), it is created in the same directory as the source file.
+#'   (default), it is created in the same directory as the Excel file.
 #' @param overwrite Logical. Guards against silently replacing an existing JSON
 #'   project. With `overwrite = FALSE` (default), the import aborts when a
 #'   project file or a non-empty `definitions/` tree already exists in
-#'   `outputDir`, because importing again replaces the JSON project with what
-#'   the import reads and deletes every definition the source does not contain,
+#'   `outputDir`, because importing again replaces the JSON project with the
+#'   Excel state and deletes every definition the Excel files do not contain,
 #'   including one you added to the JSON project since. Pass `overwrite = TRUE`
 #'   to replace the existing JSON project. The same flag governs the folders
 #'   and observed-data files copied into another folder (see `copyAssets`):
