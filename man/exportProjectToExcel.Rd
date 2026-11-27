@@ -55,8 +55,6 @@ Other projectPersistence:
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}}
+\code{\link[=saveProject]{saveProject()}}
 }
 \concept{projectPersistence}

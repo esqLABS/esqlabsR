@@ -44,7 +44,7 @@ Two functions form the bridge:
 
 ## Step 1: run the import
 
-Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries.
+Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries. The import reads only Excel files. If your project folder also holds the JSON file that `snapshotProjectConfiguration()` saved, import the Excel files beside it, not the JSON file. If all you have is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, usually `ProjectConfiguration.json`, get the Excel files back first: in esqlabsR 5.7.0, the last esqlabsR 5 release, run `restoreProjectConfiguration()` on that file, which writes the top-level workbook and the `Configurations/` workbooks beside it. Then update to this version and import the restored workbook (`ProjectConfiguration.xlsx` for `ProjectConfiguration.json`) as described here.
 
 ```{r import}
 jsonPath <- importProjectFromExcel(
@@ -134,6 +134,6 @@ When `excel_in_sync` is `FALSE`, `status$details` describes the divergence, so y
 
 ## Where to go next
 
-With the project validating, work with it as any other: `vignette("how-to-design-scenarios")` to describe what to simulate, `vignette("how-to-run-simulations")` to run, `vignette("how-to-plot-results")` to plot. To hand the whole thing to a colleague as one file, see the snapshot workflow in `vignette("how-to-set-up-a-project")`.
+With the project validating, work with it as any other: `vignette("how-to-design-scenarios")` to describe what to simulate, `vignette("how-to-run-simulations")` to run, `vignette("how-to-plot-results")` to plot. To hand the whole thing to a colleague, copy or zip the project folder.
 
 For the layout the import writes, see `vignette("reference-project-file")`. For why Excel is now an interchange format rather than the source of truth, see `vignette("about-the-project-model")`.

@@ -173,6 +173,33 @@ exampleProject <- function(envir = parent.frame()) {
   loadProject(file.path(dest, "Project.json"))
 }
 
+#' Write `project` as a tree project (`Project.json` plus `definitions/`) into
+#' a fresh temporary folder and load it back from there.
+#'
+#' The in-memory state is written, unsaved edits included, and the folder the
+#' project was loaded from is left alone, so a test can check that every
+#' section survives the definition-file writer and parser without touching the
+#' source. The folder is removed when the calling test finishes.
+.reloadThroughTree <- function(project, envir = parent.frame()) {
+  dir <- withr::local_tempdir("Reloaded_", .local_envir = envir)
+  loadProject(.writeProjectTree(project, dir))
+}
+
+#' Write `project` as one inline project file (every section in `Project.json`,
+#' no `definitions/` tree) into a fresh temporary folder and load it back.
+#'
+#' The single-file counterpart of [.reloadThroughTree()]: the in-memory state is
+#' written, unsaved edits included, and the source folder is left alone. The
+#' folder is removed when the calling test finishes.
+.reloadThroughInlineFile <- function(project, envir = parent.frame()) {
+  path <- file.path(
+    withr::local_tempdir("Inline_", .local_envir = envir),
+    "Project.json"
+  )
+  .saveProjectJson(project, path)
+  loadProject(path)
+}
+
 #' One row of an Excel `Scenarios` sheet, with every required column present.
 #'
 #' Named arguments override a column's value; passing `NULL` drops the column
@@ -211,6 +238,49 @@ localExcelProjectDir <- function(envir = parent.frame()) {
   workDir <- withr::local_tempdir(.local_envir = envir)
   file.copy(dirname(testProjectExcelPath()), workDir, recursive = TRUE)
   file.path(workDir, "TestProjectExcel")
+}
+
+#' A writable copy of `TestProjectExcel` whose data folder is the project folder.
+#'
+#' The data workbook and its importer configuration sit beside
+#' `ProjectConfiguration.xlsx` instead of in `Data/`, and the workbook says
+#' `dataFolder = "."`. Returns the project directory.
+localExcelProjectWithRootData <- function(envir = parent.frame()) {
+  projectDir <- localExcelProjectDir(envir = envir)
+  dataDir <- file.path(projectDir, "Data")
+  file.rename(
+    list.files(dataDir, full.names = TRUE),
+    file.path(projectDir, list.files(dataDir))
+  )
+  unlink(dataDir, recursive = TRUE)
+
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  config <- readExcel(configPath)
+  config$Value[config$Property == "dataFolder"] <- "."
+  .writeExcel(config, configPath)
+  projectDir
+}
+
+#' The lines of an import summary about assets that were not copied.
+#'
+#' Evaluates `expr` (an `importProjectFromExcel()` call), muffling its messages
+#' and warnings, and returns those that report a folder or file as not copied,
+#' a warning prefixed with `Warning:`. Snapshotting only these
+#' lines keeps a change in the fixture's definition counts out of the snapshot.
+importAssetLines <- function(expr) {
+  shown <- character()
+  withCallingHandlers(
+    expr,
+    message = function(cnd) {
+      shown <<- c(shown, conditionMessage(cnd))
+      invokeRestart("muffleMessage")
+    },
+    warning = function(cnd) {
+      shown <<- c(shown, paste("Warning:", conditionMessage(cnd)))
+      invokeRestart("muffleWarning")
+    }
+  )
+  trimws(grep("not copied", shown, value = TRUE, fixed = TRUE))
 }
 
 #' Export a project to Excel and read it back, returning the re-imported one.
@@ -396,10 +466,9 @@ importLegacyExcelProject <- function(
 
 #' Redact a whole quoted absolute path that lives under the session temp
 #' directory, so an `expect_snapshot()` of a message naming a per-run temp path
-#' (a snapshot file, a target directory) is stable across runs. Both the temp
+#' (a source file, a target directory) is stable across runs. Both the temp
 #' root and the random per-run basename vary run to run, so the whole quoted
-#' path is collapsed to `'<tmp-path>'`, keeping a fixed `.esqlabsR` suffix when
-#' present so a snapshot-file message still reads as one. Used as the
+#' path is collapsed to `'<tmp-path>'`. Used as the
 #' `transform` of snapshots whose message names such a path with no meaningful
 #' project-relative tail.
 #'
@@ -407,7 +476,8 @@ importLegacyExcelProject <- function(
 #' path elsewhere is left intact, so a meaningful assertion on a real path is
 #' never silently hidden. Separators are normalized to `/` first (so a Windows
 #' backslash path matches), and both a Unix (`/tmp/...`) and a drive-prefixed
-#' Windows (`C:/...`) temp path are matched.
+#' Windows (`C:/...`) temp path are matched, whether a separator is written as
+#' one slash or doubled (macOS `tempdir()` carries a `//`).
 .redactTmpDir <- function(lines) {
   # Normalize backslashes to forward slashes so a Windows path (in the message
   # or in `tempdir()`) matches the same pattern as a Unix one.
@@ -418,14 +488,13 @@ importLegacyExcelProject <- function(
   # already carries the drive letter (`C:/...`), so escaping it verbatim also
   # matches the drive-prefixed form a message reports; a Unix path starts with
   # `/tmp/...`. Either way, an unrelated absolute path is left intact.
-  prefix <- .escapeRegex(tmp)
-  # A quoted temp path ending in the snapshot extension keeps that suffix; any
-  # other quoted temp path collapses to a bare placeholder.
-  lines <- gsub(
-    paste0("'", prefix, "[^']*\\.esqlabsR'"),
-    "'<tmp-path>.esqlabsR'",
-    lines
-  )
+  #
+  # Every separator in the prefix matches one or more slashes. On macOS
+  # `TMPDIR` ends in `/`, so `tempdir()` reads `/var/folders/.../T//RtmpXXXX`,
+  # while a message prints the path made absolute with `fs::path_abs()`, which
+  # collapses the double slash; the other way round must match too.
+  tmp <- gsub("/+", "/", tmp)
+  prefix <- gsub("/", "/+", .escapeRegex(tmp), fixed = TRUE)
   gsub(paste0("'", prefix, "[^']*'"), "'<tmp-path>'", lines)
 }
 

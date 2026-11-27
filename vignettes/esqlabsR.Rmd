@@ -165,7 +165,7 @@ That is the whole loop. You added an individual and a scenario to a project, des
 
 You have seen the shape of the workflow. From here, pick the guide for whatever you need to do next:
 
-- `vignette("how-to-set-up-a-project")` to create your own project, save your work, and share it as a single file.
+- `vignette("how-to-set-up-a-project")` to create your own project, save your work, and share it with a colleague.
 - `vignette("how-to-design-scenarios")` to create the definitions a scenario is built from, edit them in place, and add several at once.
 - `vignette("how-to-validate-a-project")` to check that a project is consistent before running it.
 - `vignette("how-to-run-simulations")` to run many scenarios, populations, and steady-state runs, and to save and reload results.
