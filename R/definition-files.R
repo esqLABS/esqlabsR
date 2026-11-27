@@ -33,10 +33,7 @@
 #   plotGrids                -> plot-grids/               one file per grid
 #   parameterIdentification  -> parameter-identification/ one file per task
 #
-# A section keyed by an id is one file per id (the id is the filename),
-# `observedData` included: every declaration stores its id, either the one the
-# user gave or the one derived from its source (file basename, or the
-# programmatic DataSet name).
+# A section keyed by an id is one file per id (the id is the filename).
 #
 # The plots concern is three independent top-level keyed sections, each its own
 # kind: `dataCombined` (`data-combined/<id>.json`), `plots`
