@@ -1127,7 +1127,7 @@ test_that("addObservedData rejects an id that is not a single non-empty string",
   for (bad in list("", NA_character_, 42, c("laskin_iv", "laskin_po"))) {
     expect_error(
       addObservedData(project, list(type = "pkml", file = "a.pkml"), id = bad),
-      "must be a single non-empty string"
+      "`id` must be a non-empty"
     )
     expect_error(
       addObservedData(
@@ -1135,11 +1135,16 @@ test_that("addObservedData rejects an id that is not a single non-empty string",
         ospsuite::DataSet$new(name = "Scratch measurement"),
         id = bad
       ),
-      "must be a single non-empty string"
+      "`id` must be a non-empty"
     )
   }
   expect_snapshot(error = TRUE, {
     addObservedData(project, list(id = 2024, type = "pkml", file = "a.pkml"))
+    addObservedData(
+      project,
+      list(type = "pkml", file = "a.pkml"),
+      id = c("laskin_iv", "laskin_po")
+    )
     addObservedData(project, list(type = "pkml", file = 2024))
   })
   expect_length(project$definitions$observedData, 1L)

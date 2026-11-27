@@ -493,7 +493,7 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
     )
   }
 
-  id <- .resolveObservedDataId(entry, id, call = .call)
+  id <- .resolveObservedDataId(entry, id, isDataSet, call = .call)
   sources <- self$definitions$observedData
   sectionIds <- names(sources) %||% character()
   .assertNoOverwriteClash(
@@ -610,21 +610,18 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
 # @noRd
 .resolveObservedDataId <- function(
   entry,
-  id = NULL,
+  id,
+  isDataSet,
   call = rlang::caller_env()
 ) {
-  isDataSet <- inherits(entry, "DataSet")
   typed <- id %||% (if (!isDataSet) entry[["id"]])
   if (!is.null(typed)) {
-    if (is.null(.usableObservedDataString(typed))) {
-      cli::cli_abort(messages$observedDataInvalidId(), call = call)
-    }
+    .assertIdVector(typed, call = call)
+    .assertNonEmptyString(typed, "id", call = call)
     return(.canonicalizeId(typed))
   }
-  source <- .usableObservedDataString(
-    if (isDataSet) entry$name else entry[["file"]]
-  )
-  if (is.null(source)) {
+  source <- if (isDataSet) entry$name else entry[["file"]]
+  if (!.isNonEmptyString(source)) {
     cli::cli_abort(messages$observedDataNoIdSource(), call = call)
   }
   if (isDataSet) {
@@ -838,7 +835,7 @@ removeObservedData <- function(project, id) {
 .observedDataSourceFiles <- function(observedData) {
   vapply(
     observedData %||% list(),
-    \(e) .usableObservedDataString(e[["file"]]) %||% NA_character_,
+    \(e) if (.isNonEmptyString(e[["file"]])) e[["file"]] else NA_character_,
     character(1)
   )
 }

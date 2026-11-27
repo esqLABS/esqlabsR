@@ -2167,12 +2167,6 @@ messages$observedDataNotReplaceableByDataSet <- function(id) {
   )
 }
 
-messages$observedDataInvalidId <- function() {
-  ospsuite.utils::cliFormat(
-    "The {.arg id} of an observed-data source must be a single non-empty string."
-  )
-}
-
 messages$observedDataNoIdSource <- function() {
   cliBullets(
     "x" = "Cannot take an id from this observed-data source.",

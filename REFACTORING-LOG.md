@@ -442,3 +442,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 23:24: addObservedData() refuses a DataSet whose PKML file another source reads with its own message, which asks for another id, instead of the save-time message. (#1368)
 - 2026-11-27 23:25: addObservedData() refuses an id that already exists with the message every other add function gives. (#1368)
 - 2026-11-27 23:29: The observed-data serializer walks the section by its ids like the other keyed serializers, and only the section setter puts the id first in a record. (#1368)
+- 2026-11-27 23:31: An id given to addObservedData() is checked with the shared id helpers, and the observed-data string helper and the invalid-id message are gone. (#1368)

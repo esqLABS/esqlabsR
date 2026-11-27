@@ -909,7 +909,7 @@
   })
   names(records) <- vapply(
     records,
-    \(e) .usableObservedDataString(e[["id"]]) %||% NA_character_,
+    \(e) if (.isNonEmptyString(e[["id"]])) e[["id"]] else NA_character_,
     character(1),
     USE.NAMES = FALSE
   )
@@ -926,26 +926,6 @@
 .asObservedDataSource <- function(entry) {
   class(entry) <- c("ObservedDataSource", "list")
   entry
-}
-
-# A declaration field such as `file` is usable only as a single non-empty,
-# non-NA string. Anything else (absent, `""`, `NA`, or a number or array a
-# hand-edited definition file left behind) gives `NULL`, so the caller reports
-# it rather than pass a non-string on to `basename()` or a `character(1)`
-# `vapply()`.
-#
-# @keywords internal
-# @noRd
-.usableObservedDataString <- function(value) {
-  if (
-    !is.character(value) ||
-      length(value) != 1L ||
-      is.na(value) ||
-      !nzchar(value)
-  ) {
-    return(NULL)
-  }
-  value
 }
 
 # plots: three keyed kinds, one part of the `plots` definitions trio each.

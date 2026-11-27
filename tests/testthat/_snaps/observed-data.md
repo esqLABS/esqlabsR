@@ -249,7 +249,13 @@
       addObservedData(project, list(id = 2024, type = "pkml", file = "a.pkml"))
     Condition
       Error in `addObservedData()`:
-      ! The `id` of an observed-data source must be a single non-empty string.
+      ! `id` must be a non-empty character vector with no NA or empty element.
+    Code
+      addObservedData(project, list(type = "pkml", file = "a.pkml"), id = c(
+        "laskin_iv", "laskin_po"))
+    Condition
+      Error in `addObservedData()`:
+      ! `id` must be a non-empty string
     Code
       addObservedData(project, list(type = "pkml", file = 2024))
     Condition
