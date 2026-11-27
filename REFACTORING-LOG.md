@@ -413,3 +413,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 21:36: convertProjectToV6() converts the workbooks in the order the import reads them, scenarios first. (#1426)
 - 2026-11-27 21:36: The migration article describes three steps (convert with convertProjectToV6(), edit the v6 workbooks, import them), the reference lists the converter, and NEWS describes it, the ${NAME} rewrite and the content it does not carry over. (#1426)
 - 2026-11-27 21:43: convertProjectToV6() leaves a Scenarios sheet without its Scenario_name column for the import to report, instead of stopping on an R error, and puts the folder back. (#1426)
+- 2026-11-27 22:03: Regenerated the help pages and NAMESPACE, which export convertProjectToV6(). (#1426)

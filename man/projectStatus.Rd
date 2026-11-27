@@ -46,6 +46,7 @@ project$status # the same information as a structured list
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
 
 Other projectPersistence:
+\code{\link[=convertProjectToV6]{convertProjectToV6()}},
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},

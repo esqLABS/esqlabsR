@@ -18,6 +18,7 @@ exampleProjectPath()
 }
 \seealso{
 Other projectPersistence:
+\code{\link[=convertProjectToV6]{convertProjectToV6()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
