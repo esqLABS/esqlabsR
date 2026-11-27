@@ -45,16 +45,6 @@
   )
 }
 
-.esqlabsR5Messages$targetExists <- function(files) {
-  cliBullets(
-    "x" = "The conversion writes {cli::qty(length(files))}{?a file/files} \\
-    that already {?exists/exist} and {?is/are} not an esqlabsR 5 workbook it \\
-    reads: {.file {files}}.",
-    "i" = "Move {cli::qty(length(files))}{?it/them} out of the project folder, \\
-    then convert again."
-  )
-}
-
 .esqlabsR5Messages$restoreIncomplete <- function(files) {
   cliBullets(
     "!" = "The project folder could not be put back completely. \\
@@ -684,17 +674,9 @@ convertProjectToV6 <- function(
     projectConfigPath,
     vapply(sections, function(section) section$path, character(1))
   )
-  targets <- vapply(outputs, function(output) output$path, character(1))
-  inTheWay <- targets[file.exists(targets) & !(targets %in% moves)]
-  if (length(inTheWay) > 0L) {
-    cli::cli_abort(.esqlabsR5Messages$targetExists(
-      as.character(fs::path_rel(inTheWay, projectDir))
-    ))
-  }
-
   list(
     projectDir = projectDir,
-    moves = unname(moves),
+    moves = unique(unname(moves)),
     outputs = outputs,
     v6Workbook = v6Workbook,
     envVarRewrites = envVarRewrites$rewrites,
