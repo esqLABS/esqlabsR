@@ -2153,13 +2153,6 @@ messages$observedDataPersistNoDataFolder <- function(name) {
   )
 }
 
-messages$observedDataIdExists <- function(id) {
-  cliBullets(
-    "x" = "An observed-data source with id {.val {id}} already exists.",
-    "i" = "Pass {.code overwrite = TRUE} to replace it, or give the new source another {.arg id}."
-  )
-}
-
 messages$observedDataSetNameExists <- function(name) {
   cliBullets(
     "x" = "Another observed-data source already provides a data set named {.val {name}}.",

@@ -440,3 +440,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:11: The help pages of addObservedData(), removeObservedData(), loadObservedData() and Project are regenerated. (#1368)
 - 2026-11-27 23:23: removeObservedData() warns about a dataCombined only when it names a data set the removed source provides, read from the DataSet held in the session or from the source file, and reads no file when no dataCombined names a data set. (#1368)
 - 2026-11-27 23:24: addObservedData() refuses a DataSet whose PKML file another source reads with its own message, which asks for another id, instead of the save-time message. (#1368)
+- 2026-11-27 23:25: addObservedData() refuses an id that already exists with the message every other add function gives. (#1368)

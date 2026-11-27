@@ -56,8 +56,8 @@
           "Laskin 1982.Group A")))
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "aciclovir_timevaluesdata" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "aciclovir_timevaluesdata" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addObservedData aborts on a duplicate DataSet name, replaces with overwrite
 
@@ -65,8 +65,8 @@
       addObservedData(project, ds2)
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "prog_ds" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "prog_ds" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addObservedData with a DataSet reads no other source's file
 
@@ -116,8 +116,8 @@
       addObservedData(project, scratch)
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "scratch_measurement" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "scratch_measurement" already exists.
+      i Pass `overwrite = TRUE` to replace it.
     Code
       addObservedData(project, scratch, overwrite = TRUE)
     Condition
@@ -155,14 +155,14 @@
       addObservedData(project, list(type = "pkml", file = "dirB/obs.pkml"))
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "obs" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "obs" already exists.
+      i Pass `overwrite = TRUE` to replace it.
     Code
       addObservedData(project, list(type = "pkml", file = "data.pkml"))
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "data" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "data" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # saveProject aborts on a programmatic-to-PKML file collision
 
@@ -208,8 +208,8 @@
       addObservedData(project, list(id = "obs", type = "pkml", file = "b.pkml"))
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "obs" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "obs" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # the id argument wins over the entry's id, which wins over the source
 
@@ -273,14 +273,14 @@
       addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"))
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "cohort_b" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "cohort_b" already exists.
+      i Pass `overwrite = TRUE` to replace it.
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "cohort b"))
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "cohort_b" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "cohort_b" already exists.
+      i Pass `overwrite = TRUE` to replace it.
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"), overwrite = TRUE)
     Condition
@@ -394,8 +394,8 @@
       addObservedData(project, scratch)
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "scratch_measurement" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "scratch_measurement" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # a DataSet whose name gives the id of another DataSet aborts
 
@@ -403,8 +403,8 @@
       addObservedData(project, ospsuite::DataSet$new(name = "cohort"))
     Condition
       Error in `addObservedData()`:
-      x An observed-data source with id "cohort" already exists.
-      i Pass `overwrite = TRUE` to replace it, or give the new source another `id`.
+      ! observed-data source "cohort" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # a DataSet overwrite is refused when another source provides its name
 

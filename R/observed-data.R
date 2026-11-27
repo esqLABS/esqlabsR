@@ -496,11 +496,15 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
   id <- .resolveObservedDataId(entry, id, call = .call)
   sources <- self$definitions$observedData
   sectionIds <- names(sources) %||% character()
+  .assertNoOverwriteClash(
+    id,
+    sectionIds,
+    "observed-data source",
+    overwrite,
+    call = .call
+  )
   idx <- match(id, sectionIds)
   replacing <- !is.na(idx)
-  if (replacing && !overwrite) {
-    cli::cli_abort(messages$observedDataIdExists(id))
-  }
   observedData <- private$.getSection("observedData")
 
   if (isDataSet) {
