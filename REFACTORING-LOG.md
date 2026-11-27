@@ -398,3 +398,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 15:41: The importProjectFromExcel() help says any file that is not Excel stops the import before anything is written, the esqlabsR 5 snapshot JSON included, and keeps the advice for a user who has that JSON file. (#1417)
 - 2026-11-27 16:26: The importProjectFromExcel() summary no longer lists the folders and observed-data files it copied, which an import into another folder is expected to do; it still warns about what could not be copied.
 - 2026-11-27 16:36: The warning about folders an import could not copy reads in the singular when there is one folder.
+- 2026-11-27 20:57: convertProjectToV6() checks that it is given an esqlabsR 5 property workbook in a folder holding no v6 project or earlier conversion, and refuses anything else before changing the folder. (#1426)
