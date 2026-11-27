@@ -540,23 +540,27 @@ importProjectFromExcel <- function(
 
 # Abort for a `.json` file handed to `importProjectFromExcel()`, which reads
 # only Excel files. The JSON file `snapshotProjectConfiguration()` saved in
-# esqlabsR 5 gets the way back to its Excel files; a current project file is
-# pointed at `loadProject()`; any other file, one that does not parse included,
-# is told what the import reads.
+# esqlabsR 5 gets the way back to its Excel files; any other file is told what
+# the import reads, a current project file is pointed at `loadProject()`, and a
+# file that does not parse is said to be unreadable.
 #
 # @keywords internal
 # @noRd
 .abortJsonImportSource <- function(path, .call = rlang::caller_env()) {
+  unreadable <- FALSE
   jsonData <- tryCatch(
     jsonlite::fromJSON(path, simplifyVector = FALSE),
-    error = function(e) NULL
+    error = function(e) {
+      unreadable <<- TRUE
+      NULL
+    }
   )
   if (.isLegacySnapshot(jsonData)) {
     cli::cli_abort(messages$importLegacySnapshot(path), call = .call)
   }
   isCurrentProject <- is.list(jsonData) && !is.null(jsonData$schemaVersion)
   cli::cli_abort(
-    messages$importJsonSource(path, isCurrentProject),
+    messages$importJsonSource(path, isCurrentProject, unreadable),
     call = .call
   )
 }

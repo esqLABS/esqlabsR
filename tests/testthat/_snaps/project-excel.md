@@ -96,6 +96,15 @@
       x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
       i It is already a project in the current format. Open it with `loadProject()`.
 
+# importProjectFromExcel says a .json file it cannot parse is unreadable, and writes nothing
+
+    Code
+      importProjectFromExcel(broken)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+      ! It could not be read as JSON; it may be incomplete or damaged.
+
 # exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE
 
     Code

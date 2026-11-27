@@ -373,7 +373,8 @@ messages$importLegacySnapshot <- function(path) {
 }
 
 # Raised from `importProjectFromExcel()` for any other `.json` file.
-messages$importJsonSource <- function(path, isCurrentProject) {
+# `unreadable` is TRUE when the file does not parse as JSON at all.
+messages$importJsonSource <- function(path, isCurrentProject, unreadable) {
   cliBullets(
     "x" = "{.file {path}} is not an Excel file. \\
     {.fn importProjectFromExcel} reads the {.file Project.xlsx} or \\
@@ -381,6 +382,9 @@ messages$importJsonSource <- function(path, isCurrentProject) {
     "i" = if (isCurrentProject) {
       "It is already a project in the current format. Open it with \\
       {.fn loadProject}."
+    },
+    "!" = if (unreadable) {
+      "It could not be read as JSON; it may be incomplete or damaged."
     }
   )
 }

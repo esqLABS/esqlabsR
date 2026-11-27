@@ -1034,6 +1034,22 @@ test_that("importProjectFromExcel refuses any other JSON file and writes nothing
   )
 })
 
+test_that("importProjectFromExcel says a .json file it cannot parse is unreadable, and writes nothing", {
+  dir <- withr::local_tempdir()
+  broken <- file.path(dir, "ProjectConfiguration.json")
+  writeLines("{\"projectConfiguration\": {\"column_names\": [", broken)
+
+  expect_snapshot(
+    importProjectFromExcel(broken),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(
+    list.files(dir, all.files = TRUE, no.. = TRUE),
+    basename(broken)
+  )
+})
+
 # Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
 # Configurations workbooks wholesale, defaulting outputDir to the project's own
 # directory, so a bare call would silently overwrite hand-maintained workbooks.
