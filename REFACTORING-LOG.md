@@ -333,6 +333,10 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-27 14:13: The Excel import writes a DataCombined curve's path as its output-path id when exactly one output path has it, and the example project uses the id. (#1280)
 - 2026-10-27 14:18: The help pages are regenerated for the renamed and new scenario, plot and plot-grid fields.
 - 2026-10-27 16:54: Review fixes: a scenario record handed back to setScenario() clears the fields it leaves empty, labels drop wrapping quotes and are left off copies and off exports without labels, and an NA reference is refused on save. (#1294)
+- 2026-10-28 14:54: The standard importer configuration names the same unit for errors as for measurements; loaded data does not change, since both come from the Measurement unit column. (#757)
+- 2026-10-28 14:54: The observed-data template workbook has an Error type column, filled with ASD. (#757)
+- 2026-10-28 14:54: Excel observed data takes each data set's error type, ASD or GSD, from the Error type column when the importer configuration reads it, as the standard one now does. (#757)
+- 2026-10-28 14:54: The observed data article, the definition-fields reference, the loadObservedData() help, and NEWS describe the Error type column and the unit of a GSD. (#757)
 - 2026-10-28 15:03: Review fixes: a scenario label must be a non-empty string, the Excel import keeps a scenario name as its label only when the id changes more than its case, and a plot sheet with two disagreeing id columns warns. (#1294)
 - 2026-10-29 15:51: The scenarios vignette drops a sentence that restated the obvious.
 - 2026-10-29 16:01: A scenario record always has an id: Scenario() refuses one without it.
@@ -351,3 +355,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
 - 2026-11-25 16:24: Formatted the message catalog with Air.
 - 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
+- 2026-11-26 11:53: After merging v6, the loadObservedData() help page has no Security section and the observed-data vignette no longer lists script sources for the DataSet error type. (#757)

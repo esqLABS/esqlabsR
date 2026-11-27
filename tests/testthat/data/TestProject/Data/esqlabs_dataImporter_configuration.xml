@@ -13,7 +13,7 @@
     </MappingDataFormatParameter>
     <MappingDataFormatParameter columnName="Error">
       <MappedColumn errorStdDev="Arithmetic Standard Deviation" name="Error">
-        <Unit columnName="Measurement unit" selectedUnit="mg/dl" />
+        <Unit columnName="Measurement unit" selectedUnit="mmol/l" />
       </MappedColumn>
     </MappingDataFormatParameter>
     <MetaDataFormatParameter columnName="Study Id" metaDataId="Study Id" isColumn="1" />
@@ -26,6 +26,7 @@
     <MetaDataFormatParameter columnName="Molecule" metaDataId="Molecule" isColumn="1" />
     <MetaDataFormatParameter columnName="Molecular Weight" metaDataId="Molecular Weight" isColumn="1" />
     <MetaDataFormatParameter columnName="Route" metaDataId="Route" isColumn="1" />
+    <MetaDataFormatParameter columnName="Error type" metaDataId="Error type" isColumn="1" />
     <GroupByDataFormatParameter columnName="Group Id" />
   </Parameters>
   <LoadedSheets>
