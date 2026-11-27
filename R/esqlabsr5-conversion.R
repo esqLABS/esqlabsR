@@ -96,6 +96,33 @@
   )
 }
 
+.esqlabsR5Messages$converted <- function(folder) {
+  cliBullets(
+    "v" = "Converted the esqlabsR 5 project. Its esqlabsR 5 workbooks are now \\
+    in {.file {folder}}.",
+    "i" = "Edit the v6 workbooks and import them with \\
+    {.fn importProjectFromExcel}, or load {.file Project.json} with \\
+    {.fn loadProject}."
+  )
+}
+
+.esqlabsR5Messages$envVarFolders <- function(properties, from, to) {
+  n <- length(properties)
+  cliBullets(
+    "i" = "{cli::qty(n)}{?A folder names/Folders name} an environment \\
+    variable the esqlabsR 5 way, as a part of the path. A v6 project writes \\
+    it as {.code ${{NAME}}}, so {cli::qty(n)}{?the value was/the values were} \\
+    rewritten:",
+    stats::setNames(
+      sprintf(
+        "{.field {properties[[%1$d]]}}: {.val {from[[%1$d]]}} -> {.val {to[[%1$d]]}}",
+        seq_len(n)
+      ),
+      rep("*", n)
+    )
+  )
+}
+
 .esqlabsR5Messages$folderHoldsProject <- function(dir, found) {
   cliBullets(
     "x" = "{.file {dir}} already holds a v6 project or an earlier conversion: \\
@@ -161,6 +188,9 @@ convertProjectToV6 <- function(
   properties <- .v5CheckConvertible(projectConfigPath)
   plan <- .v5PlanConversion(projectConfigPath, properties)
   jsonPath <- .v5ApplyConversion(plan, silent)
+  if (!silent) {
+    .v5InformConversion(plan)
+  }
   invisible(jsonPath)
 }
 
@@ -265,6 +295,8 @@ convertProjectToV6 <- function(
   projectConfigPath <- normalizePath(projectConfigPath)
   projectDir <- dirname(projectConfigPath)
   propertyTable <- .v5PropertyTable(properties)
+  envVarRewrites <- .v5EnvVarFolders(propertyTable)
+  propertyTable$Value <- envVarRewrites$values
 
   configsFolder <- .v5ConfigurationsFolder(
     .v5PropertyLookup(propertyTable)("configurationsFolder"),
@@ -325,7 +357,8 @@ convertProjectToV6 <- function(
     projectDir = projectDir,
     moves = unname(moves),
     outputs = outputs,
-    v6Workbook = v6Workbook
+    v6Workbook = v6Workbook,
+    envVarRewrites = envVarRewrites$rewrites
   )
 }
 
@@ -357,6 +390,83 @@ convertProjectToV6 <- function(
   "populationsFolder",
   "outputFolder"
 )
+
+# The working folders whose values esqlabsR 5 reads environment variables in.
+.v5EnvVarFolderProperties <- c(
+  "dataFolder",
+  "modelFolder",
+  "populationsFolder",
+  "outputFolder"
+)
+
+# Write the environment variables a working folder names the esqlabsR 5 way as
+# `${NAME}`, the way a v6 project names them.
+#
+# esqlabsR 5 splits a folder value at `/` and replaces each part that is the
+# name of a set environment variable by its value, except a part containing
+# "path" (so the `PATH` variable of Windows is never read). A v6 project reads
+# only `${NAME}`, so each such part becomes `${NAME}`. The project then resolves
+# the folder the same way esqlabsR 5 did, and a colleague's own value of the
+# variable is used on their computer. A part that is not a valid variable name
+# for `${NAME}` is kept as written.
+#
+# @param table The property table.
+# @returns `list(values, rewrites)`: the `Value` column with the rewritten
+#   folders, and a data frame of the rewrites (`property`, `from`, `to`).
+# @keywords internal
+# @noRd
+.v5EnvVarFolders <- function(table) {
+  values <- table$Value
+  rewrites <- data.frame(
+    property = character(),
+    from = character(),
+    to = character(),
+    stringsAsFactors = FALSE
+  )
+  for (i in which(table$Property %in% .v5EnvVarFolderProperties)) {
+    value <- values[[i]]
+    if (.isBlankCell(value)) {
+      next
+    }
+    rewritten <- .v5EnvVarSegments(value)
+    if (!identical(rewritten, value)) {
+      values[[i]] <- rewritten
+      rewrites[nrow(rewrites) + 1L, ] <- c(
+        table$Property[[i]],
+        value,
+        rewritten
+      )
+    }
+  }
+  list(values = values, rewrites = rewrites)
+}
+
+# One folder value with each part that names a set environment variable
+# written as `${NAME}`; see `.v5EnvVarFolders()`.
+#
+# @keywords internal
+# @noRd
+.v5EnvVarSegments <- function(value) {
+  segments <- strsplit(value, "/", fixed = TRUE)[[1]]
+  for (i in seq_along(segments)) {
+    segment <- segments[[i]]
+    if (
+      !grepl("^[A-Za-z_][A-Za-z0-9_]*$", segment) ||
+        grepl("path", segment, ignore.case = TRUE)
+    ) {
+      next
+    }
+    if (nzchar(Sys.getenv(segment))) {
+      segments[[i]] <- paste0("${", segment, "}")
+    }
+  }
+  rewritten <- paste(segments, collapse = "/")
+  # `strsplit()` drops the empty part after a trailing `/`.
+  if (endsWith(value, "/")) {
+    rewritten <- paste0(rewritten, "/")
+  }
+  rewritten
+}
 
 # Resolve the configurations folder, which has to be inside the project folder:
 # the esqlabsR 5 workbooks in it move into `esqlabsR5/`, keeping their path
@@ -558,6 +668,33 @@ convertProjectToV6 <- function(
     ),
     table
   )
+}
+
+# Report what the conversion changed beyond the layout of the sheets: where the
+# esqlabsR 5 workbooks went, and which folder values it rewrote. The messages
+# carry the class `esqlabsR_conversionSummary`.
+#
+# @keywords internal
+# @noRd
+.v5InformConversion <- function(plan) {
+  cli::cli_inform(
+    .esqlabsR5Messages$converted(
+      .readablePath(file.path(plan$projectDir, .esqlabsR5Folder))
+    ),
+    class = "esqlabsR_conversionSummary"
+  )
+  rewrites <- plan$envVarRewrites
+  if (nrow(rewrites) > 0L) {
+    cli::cli_inform(
+      .esqlabsR5Messages$envVarFolders(
+        rewrites$property,
+        rewrites$from,
+        rewrites$to
+      ),
+      class = "esqlabsR_conversionSummary"
+    )
+  }
+  invisible(NULL)
 }
 
 # Move the esqlabsR 5 files into `esqlabsR5/`, write the v6 workbooks and import

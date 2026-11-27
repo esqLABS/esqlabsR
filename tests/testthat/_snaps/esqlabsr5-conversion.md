@@ -182,3 +182,14 @@
       x configurationsFolder points outside the project folder: '${ESQLABSR_TEST_CONFIGURATIONS}'.
       i The esqlabsR 5 workbooks move into the 'esqlabsR5' folder of the project, so they have to be inside it. Move the configurations folder into the project and give its path from the project folder, then convert again.
 
+# the conversion summary names each folder value it rewrote
+
+    Code
+      cat(summary, sep = "\n")
+    Output
+      v Converted the esqlabsR 5 project. Its esqlabsR 5 workbooks are now in '<tmp-path>'.
+      i Edit the v6 workbooks and import them with `importProjectFromExcel()`, or load 'Project.json' with `loadProject()`.
+      i Folders name an environment variable the esqlabsR 5 way, as a part of the path. A v6 project writes it as `${NAME}`, so the values were rewritten:
+      * modelFolder: "MDL/Simulations/" -> "${MDL}/Simulations/"
+      * dataFolder: "OBSDATA" -> "${OBSDATA}"
+

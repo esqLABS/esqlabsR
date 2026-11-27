@@ -367,3 +367,113 @@ test_that("convertProjectToV6() refuses a folder outside the project folder", {
     expect_identical(.folderState(projectDir), before)
   }
 })
+
+# Environment variables in folder values (#1411) ----
+
+# Set one property of a copied project's esqlabsR 5 property sheet.
+.setProperty <- function(projectDir, property, value) {
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  properties <- readExcel(configPath)
+  properties$Value[properties$Property == property] <- value
+  .writeExcel(properties, configPath)
+  invisible(configPath)
+}
+
+# The `filePaths` block of a converted project's `Project.json`.
+.convertedFilePaths <- function(projectDir) {
+  jsonlite::read_json(file.path(projectDir, "Project.json"))$filePaths
+}
+
+test_that("convertProjectToV6() writes a folder on a drive named by a variable as ${NAME}", {
+  # The data sits on a shared drive that esqlabsR 5 reached through SHARED.
+  shared <- withr::local_tempdir()
+  projectDir <- localExcelProjectDir()
+  file.rename(file.path(projectDir, "Data"), file.path(shared, "Data"))
+  withr::local_envvar(SHARED = normalizePath(shared, "/"))
+  .setProperty(projectDir, "dataFolder", "SHARED/Data")
+
+  converted <- convertExcelProject(projectDir)
+
+  expect_identical(.convertedFilePaths(projectDir)$dataFolder, "${SHARED}/Data")
+  expect_identical(
+    list.files(file.path(projectDir, "definitions", "observed-data")),
+    "testproject_timevaluesdata.json"
+  )
+  expect_false(any(grepl("not found", converted$warnings, fixed = TRUE)))
+})
+
+test_that("convertProjectToV6() writes a variable naming a folder of the project as ${NAME}", {
+  projectDir <- localExcelProjectDir()
+  # Not `MODELS`: on Windows a variable name ignores case, so it would match the
+  # fixture's own `Models` folder.
+  withr::local_envvar(
+    OBSDATA = "Data",
+    MDL = "Models",
+    POPCSV = "Configurations/PopulationsCSV",
+    OUT = "Results"
+  )
+  .setProperty(projectDir, "dataFolder", "OBSDATA")
+  .setProperty(projectDir, "modelFolder", "MDL/Simulations/")
+  .setProperty(projectDir, "populationsFolder", "POPCSV")
+  .setProperty(projectDir, "outputFolder", "OUT/")
+
+  converted <- convertExcelProject(projectDir)
+
+  expect_identical(
+    .convertedFilePaths(projectDir)[c(
+      "dataFolder",
+      "simulationsFolder",
+      "populationsFolder",
+      "outputFolder"
+    )],
+    list(
+      dataFolder = "${OBSDATA}",
+      simulationsFolder = "${MDL}/Simulations/",
+      populationsFolder = "${POPCSV}",
+      outputFolder = "${OUT}/"
+    )
+  )
+  paths <- converted$project$paths
+  expect_true(dir.exists(paths$simulationsFolder))
+  expect_true(file.exists(file.path(
+    paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+  expect_length(converted$project$definitions$observedData, 1L)
+})
+
+test_that("convertProjectToV6() keeps a part of a folder value that holds 'path'", {
+  projectDir <- localExcelProjectDir()
+  dir.create(file.path(projectDir, "DataPath"))
+  file.copy(
+    list.files(file.path(projectDir, "Data"), full.names = TRUE),
+    file.path(projectDir, "DataPath")
+  )
+  withr::local_envvar(DataPath = "Elsewhere")
+  .setProperty(projectDir, "dataFolder", "DataPath")
+
+  converted <- convertExcelProject(projectDir)
+
+  expect_identical(.convertedFilePaths(projectDir)$dataFolder, "DataPath")
+  expect_length(converted$project$definitions$observedData, 1L)
+})
+
+test_that("the conversion summary names each folder value it rewrote", {
+  projectDir <- localExcelProjectDir()
+  withr::local_envvar(OBSDATA = "Data", MDL = "Models")
+  .setProperty(projectDir, "dataFolder", "OBSDATA")
+  .setProperty(projectDir, "modelFolder", "MDL/Simulations/")
+
+  summary <- character()
+  suppressWarnings(withCallingHandlers(
+    convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx")),
+    message = function(m) {
+      if (inherits(m, "esqlabsR_conversionSummary")) {
+        summary <<- c(summary, conditionMessage(m))
+      }
+      invokeRestart("muffleMessage")
+    }
+  ))
+
+  expect_snapshot(cat(summary, sep = "\n"), transform = .redactTmpDir)
+})
