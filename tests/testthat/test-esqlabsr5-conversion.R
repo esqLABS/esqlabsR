@@ -477,3 +477,114 @@ test_that("the conversion summary names each folder value it rewrote", {
 
   expect_snapshot(cat(summary, sep = "\n"), transform = .redactTmpDir)
 })
+
+# Parameter sets ----
+
+# A one-row parameter sheet, for a test to add to a workbook.
+.parameterSheet <- function(parameterName = "Volume", value = 1) {
+  data.frame(
+    `Container Path` = "Organism|Liver",
+    `Parameter Name` = parameterName,
+    Value = value,
+    Units = "l",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("convertProjectToV6() moves every parameter set to the model-parameters workbook", {
+  projectDir <- localLegacyExcelProject()
+  converted <- convertExcelProject(projectDir)
+  configDir <- file.path(projectDir, "Configurations")
+
+  expect_identical(
+    readxl::excel_sheets(file.path(configDir, "ModelParameters.xlsx")),
+    c("Global", "Aciclovir", "Sheet, with comma", "Adult", "Child", "IV_250mg")
+  )
+  expect_identical(
+    as.list(readExcel(
+      file.path(configDir, "Applications.xlsx"),
+      sheet = "ApplicationProtocols"
+    )),
+    list(ApplicationId = "IV_250mg", ParameterSets = "IV_250mg")
+  )
+  biometrics <- readExcel(
+    file.path(configDir, "Individuals.xlsx"),
+    sheet = "IndividualBiometrics"
+  )
+  expect_identical(
+    readxl::excel_sheets(file.path(configDir, "Individuals.xlsx")),
+    "IndividualBiometrics"
+  )
+  expect_identical(biometrics$ParameterSets, c("Adult", "Child"))
+  expect_false("Individual Parameter Sets" %in% names(biometrics))
+
+  expect_identical(
+    unlist(converted$project$definitions$individuals[["child"]]$parameterSets),
+    "child"
+  )
+  expect_identical(converted$warnings, character())
+})
+
+test_that("a renamed parameter set keeps a name Excel can hold", {
+  projectDir <- localLegacyExcelProject()
+  # As long as an Excel sheet name can be.
+  longName <- "Adult_with_a_long_name_31_chars"
+  expect_identical(nchar(longName), 31L)
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ModelParameters.xlsx"),
+    function(sheets) {
+      c(sheets, stats::setNames(list(.parameterSheet()), longName))
+    }
+  )
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Individuals.xlsx"),
+    function(sheets) {
+      sheets[[longName]] <- .parameterSheet("Weight", 2)
+      sheets$IndividualBiometrics$IndividualId[[1]] <- longName
+      sheets
+    }
+  )
+
+  converted <- suppressWarnings(convertExcelProject(projectDir))
+
+  renamed <- "Adult_with_a_long_name_31_cha_2"
+  expect_identical(nchar(renamed), 31L)
+  expect_contains(
+    readxl::excel_sheets(
+      file.path(projectDir, "Configurations", "ModelParameters.xlsx")
+    ),
+    c(longName, renamed)
+  )
+  individual <- converted$project$definitions$individuals[[tolower(longName)]]
+  expect_identical(unlist(individual$parameterSets), tolower(renamed))
+})
+
+test_that("an Individual Parameter Sets cell naming another set is reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Individuals.xlsx"),
+    function(sheets) {
+      sheets$IndividualBiometrics$`Individual Parameter Sets` <- c(
+        "Adult, Global",
+        "Child"
+      )
+      sheets
+    }
+  )
+
+  warning <- expect_warning(
+    convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE),
+    class = "esqlabsR_convertIndividualParameterSets"
+  )
+  expect_snapshot(cat(conditionMessage(warning)), transform = .redactTmpDir)
+
+  project <- suppressWarnings(loadProject(file.path(
+    projectDir,
+    "Project.json"
+  )))
+  expect_identical(
+    unlist(project$definitions$individuals[["adult"]]$parameterSets),
+    "adult"
+  )
+})

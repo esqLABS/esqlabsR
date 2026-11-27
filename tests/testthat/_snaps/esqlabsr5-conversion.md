@@ -65,15 +65,16 @@
       cat(.writtenWorkbookLayout(projectDir), sep = "\n")
     Output
       Project.xlsx [Project] 16 rows: Property | Value | Description
-      Configurations/Applications.xlsx [Aciclovir_iv_250mg] 1 rows: Container Path | Parameter Name | Value | Units
-      Configurations/Applications.xlsx [Protocol_250mg] 1 rows: Container Path | Parameter Name | Value | Units
-      Configurations/Applications.xlsx [Protocol_500mg] 1 rows: Container Path | Parameter Name | Value | Units
-      Configurations/Individuals.xlsx [IndividualBiometrics] 1 rows: IndividualId | Species | Population | Gender | Weight [kg] | Height [cm] | Age [year(s)] | Protein Ontogenies | Individual Parameter Sets
-      Configurations/Individuals.xlsx [Indiv1] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/Applications.xlsx [ApplicationProtocols] 3 rows: ApplicationId | ParameterSets
+      Configurations/Individuals.xlsx [IndividualBiometrics] 1 rows: IndividualId | Species | Population | Gender | Weight [kg] | Height [cm] | Age [year(s)] | Protein Ontogenies | ParameterSets
       Configurations/ModelParameters.xlsx [Global] 1 rows: Container Path | Parameter Name | Value | Units
       Configurations/ModelParameters.xlsx [Sheet, with comma] 1 rows: Container Path | Parameter Name | Value | Units
       Configurations/ModelParameters.xlsx [MissingParam] 1 rows: Container Path | Parameter Name | Value | Units
       Configurations/ModelParameters.xlsx [Aciclovir] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [Indiv1] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [Aciclovir_iv_250mg] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [Protocol_250mg] 1 rows: Container Path | Parameter Name | Value | Units
+      Configurations/ModelParameters.xlsx [Protocol_500mg] 1 rows: Container Path | Parameter Name | Value | Units
       Configurations/ParameterIdentification.xlsx [PIOutputMappings] 4 rows: PITaskName | Scenarios | OutputPath | ObservedDataSheet | DataSet | Scaling | xOffset | yOffset | xFactor | yFactor | Weight
       Configurations/ParameterIdentification.xlsx [PIParameters] 6 rows: PITaskName | Scenarios | Container Path | Parameter Name | Units | MinValue | MaxValue | StartValue | Group
       Configurations/ParameterIdentification.xlsx [PIConfiguration] 1 rows: PITaskName | Algorithm | CIMethod | PrintEvaluationFeedback | AutoEstimateCI | numberOfCores | checkForNegativeValues | ObjectiveFunctionType | ResidualWeightingMethod | RobustMethod | ScaleVar | LinScaleCV | LogScaleSD
@@ -192,4 +193,13 @@
       i Folders name an environment variable the esqlabsR 5 way, as a part of the path. A v6 project writes it as `${NAME}`, so the values were rewritten:
       * modelFolder: "MDL/Simulations/" -> "${MDL}/Simulations/"
       * dataFolder: "OBSDATA" -> "${OBSDATA}"
+
+# an Individual Parameter Sets cell naming another set is reported
+
+    Code
+      cat(conditionMessage(warning))
+    Output
+      ! The Individual Parameter Sets column of '<tmp-path>' names a parameter set that esqlabsR 5 did not apply, and that is not linked to the individual:
+      x Individual "Adult": "Global".
+      i esqlabsR 5 applies to an individual the sheet named after it, and so does the converted project. To apply another set as well, add it to the individual's ParameterSets cell in the v6 individuals workbook and import again.
 

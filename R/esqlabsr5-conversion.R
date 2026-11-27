@@ -123,6 +123,109 @@
   )
 }
 
+# Raised by `.v5AppendParameterSets()`. `bullets` are the `old -> new` templates
+# of `.canonicalizedIdBullets()`; the caller binds `sourceLabel` and
+# `renamedCount` into their environment and passes it as `.envir`, so a sheet
+# name holding `{` is never evaluated. `cli::qty()` re-arms the plural after the
+# length-1 `sourceLabel`.
+.esqlabsR5Messages$renamedParameterSets <- function(bullets) {
+  c(
+    "!" = "{renamedCount} parameter set{?s} in {.file {sourceLabel}} \\
+    {cli::qty(renamedCount)}reuse{?s/} an id that is already taken, so \\
+    {?it was/they were} renamed:",
+    bullets,
+    "i" = "A v6 project keeps every parameter set in the model-parameters \\
+    workbook, so one sheet name cannot serve two sets. References made in \\
+    {.file {sourceLabel}} point at the {cli::qty(renamedCount)}renamed \\
+    set{?s}; rename the sheet and its references in the v6 workbooks to \\
+    choose the id yourself."
+  )
+}
+
+.esqlabsR5Messages$unparametrizedIndividuals <- function(
+  filePath,
+  ids,
+  sheets
+) {
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} individual{?s} in {.file {filePath}} {?is/are} \\
+      converted without the parameter set {?it/they} declare{?s/}, because the \\
+      sheet did not parse as a parameter sheet:",
+      stats::setNames(
+        sprintf(
+          "Individual {.val {ids[[%1$d]]}}: sheet {.val {sheets[[%1$d]]}}.",
+          seq_along(ids)
+        ),
+        rep("x", length(ids))
+      ),
+      "i" = "Nothing else reports this: the individual has no parametrization \\
+      and the project still validates, so every scenario using it runs on the \\
+      unmodified model. Add the set to the v6 model-parameters workbook and \\
+      to the individual's {.field ParameterSets} cell, then import again."
+    ),
+    envir = envir
+  )
+}
+
+.esqlabsR5Messages$undefinedIndividualSheets <- function(filePath, sheets) {
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} parameter {?sheet/sheets} of {.file {filePath}} \\
+      {?names/name} an individual that {.field IndividualBiometrics} does not \\
+      define, so that individual is not converted: {.val {sheets}}.",
+      "i" = "An individual comes from its {.field IndividualBiometrics} row, so \\
+      the sheet becomes a parameter set that no individual uses, and the \\
+      {cli::qty(n)}scenario{?s} naming the individual {?has/have} nothing to \\
+      resolve to.",
+      "i" = "Add a row for it to the {.field IndividualBiometrics} sheet of the \\
+      v6 individuals workbook and import again."
+    ),
+    envir = envir
+  )
+}
+
+.esqlabsR5Messages$individualParameterSetsColumn <- function(
+  filePath,
+  ids,
+  sets
+) {
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("sets", sets, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field Individual Parameter Sets} column of \\
+      {.file {filePath}} names {cli::qty(n)}{?a parameter set/parameter sets} \\
+      that esqlabsR 5 did not apply, and that {?is/are} not linked to the \\
+      individual:",
+      stats::setNames(
+        sprintf(
+          "Individual {.val {ids[[%1$d]]}}: {.val {sets[[%1$d]]}}.",
+          seq_along(ids)
+        ),
+        rep("x", length(ids))
+      ),
+      "i" = "esqlabsR 5 applies to an individual the sheet named after it, and \\
+      so does the converted project. To apply another set as well, add it to \\
+      the individual's {.field ParameterSets} cell in the v6 individuals \\
+      workbook and import again."
+    ),
+    envir = envir
+  )
+}
+
 .esqlabsR5Messages$folderHoldsProject <- function(dir, found) {
   cliBullets(
     "x" = "{.file {dir}} already holds a v6 project or an earlier conversion: \\
@@ -309,21 +412,39 @@ convertProjectToV6 <- function(
     configsFolder,
     .call
   )
-  sections <- .v5ReadableWorkbooks(
-    .v5PropertyLookup(propertyTable),
-    configsFolder,
-    .call
+  props <- .v5PropertyLookup(propertyTable)
+  sections <- .v5ReadableWorkbooks(props, configsFolder, .call)
+  scenarios <- .v5ScenarioRecords(sections$scenariosFile$path)
+
+  # Each section's v6 workbook, by property: `sheets` to write, or `copy` for a
+  # workbook whose layout v6 reads as it is. A workbook left with no sheet is
+  # not written.
+  workbooks <- lapply(sections, function(section) {
+    c(section, list(copy = TRUE))
+  })
+  workbooks <- .v5ConvertParameterWorkbooks(
+    workbooks,
+    sections,
+    scenarios,
+    .v5SectionTargets(props, configsFolder)
   )
 
   outputs <- list()
-  for (section in sections) {
-    outputs[[length(outputs) + 1L]] <- list(
-      path = section$path,
-      copyOf = section$path
-    )
+  for (workbook in workbooks) {
+    if (isTRUE(workbook$copy)) {
+      outputs[[length(outputs) + 1L]] <- list(
+        path = workbook$path,
+        copyOf = workbook$path
+      )
+    } else if (length(workbook$sheets) > 0L) {
+      outputs[[length(outputs) + 1L]] <- list(
+        path = workbook$path,
+        sheets = workbook$sheets
+      )
+    }
   }
 
-  propertyTable <- .v5DeclareWorkbooks(propertyTable, sections)
+  propertyTable <- .v5DeclareWorkbooks(propertyTable, workbooks, sections)
   propertySheets <- list(Project = .v5PropertySheet(propertyTable))
   # Only a workbook written since 6.0.0 has the sheet, but the import reads it
   # from any property workbook, so it is carried over unchanged.
@@ -566,28 +687,94 @@ convertProjectToV6 <- function(
   relative
 }
 
-# Add a property row for each section workbook the project reads under its
-# usual name without naming it, so the v6 property sheet names every workbook
-# the conversion writes.
+# Make the property rows name exactly the section workbooks the conversion
+# writes: a row is added for a workbook the project reads under its usual name
+# without naming it, and removed for an esqlabsR 5 workbook whose content all
+# moved to another workbook. The row of a workbook the project names but that
+# does not exist is kept, so the import still reports it.
 #
 # @keywords internal
 # @noRd
-.v5DeclareWorkbooks <- function(table, sections) {
-  for (section in sections) {
-    if (section$property %in% table$Property) {
-      next
+.v5DeclareWorkbooks <- function(table, workbooks, sections) {
+  for (property in names(.v5SectionWorkbooks)) {
+    workbook <- workbooks[[property]]
+    written <- !is.null(workbook) &&
+      (isTRUE(workbook$copy) || length(workbook$sheets) > 0L)
+    if (written && !(property %in% table$Property)) {
+      table <- rbind(
+        table,
+        data.frame(
+          Property = property,
+          Value = workbook$name,
+          Description = NA_character_,
+          stringsAsFactors = FALSE
+        )
+      )
+    } else if (!written && property %in% names(sections)) {
+      table <- table[table$Property != property, , drop = FALSE]
     }
-    table <- rbind(
-      table,
-      data.frame(
-        Property = section$property,
-        Value = section$name,
-        Description = NA_character_,
-        stringsAsFactors = FALSE
+  }
+  table
+}
+
+# Where each section workbook goes, `list(name, path)` by property: the file the
+# project names, or the usual name. Used for a workbook the conversion writes
+# although the esqlabsR 5 project had none, such as the model-parameters
+# workbook of a project whose parameter sets were all in the individuals
+# workbook.
+#
+# @keywords internal
+# @noRd
+.v5SectionTargets <- function(props, configsFolder) {
+  if (is.null(configsFolder)) {
+    return(list())
+  }
+  targets <- list()
+  for (property in names(.v5SectionWorkbooks)) {
+    name <- props(property) %||% .v5SectionWorkbooks[[property]]
+    targets[[property]] <- list(
+      property = property,
+      name = name,
+      path = normalizePath(
+        .absoluteAgainstRoot(name, configsFolder),
+        mustWork = FALSE
       )
     )
   }
-  table
+  targets
+}
+
+# The scenarios of the esqlabsR 5 scenarios workbook, as far as the conversion of
+# the other workbooks needs them: `list(id, individual, outputPaths)` for each
+# row that names a scenario.
+#
+# @keywords internal
+# @noRd
+.v5ScenarioRecords <- function(scenariosFile) {
+  if (is.null(scenariosFile)) {
+    return(list())
+  }
+  if (!("Scenarios" %in% readxl::excel_sheets(scenariosFile))) {
+    return(list())
+  }
+  df <- readExcel(scenariosFile, sheet = "Scenarios")
+  records <- list()
+  for (i in seq_len(nrow(df))) {
+    id <- .v5CellValue(df, "Scenario_name", i)
+    if (.isBlankCell(id)) {
+      next
+    }
+    records[[length(records) + 1L]] <- list(
+      id = as.character(id),
+      individual = .naToNull(as.character(.v5CellValue(df, "IndividualId", i))),
+      outputPaths = .parseCommaListToArray(.v5CellValue(
+        df,
+        "OutputPathsIds",
+        i
+      ))
+    )
+  }
+  records
 }
 
 # A `Property -> Value` lookup over the property sheet, returning NULL for a
@@ -829,4 +1016,505 @@ convertProjectToV6 <- function(
     ))
   }
   invisible(NULL)
+}
+
+# Parameter sets ----
+#
+# esqlabsR 5 keeps parameter sets in three workbooks: every sheet of the
+# model-parameters workbook, every sheet of the individuals workbook but the
+# biometrics one (a sheet named after an individual is that individual's own
+# set), and every sheet of the applications workbook (one per application
+# protocol). A v6 project keeps them all in the model-parameters workbook, lists
+# the application protocols on an `ApplicationProtocols` sheet, and links an
+# individual to its sets through the `ParameterSets` column.
+
+# Move every parameter set into the model-parameters workbook, in the order the
+# import reads the three workbooks in, and point the individuals and the
+# application protocols at the sets they use.
+#
+# The three workbooks had a sheet namespace each, so a sheet name can be taken
+# by an earlier workbook: the later sheet is renamed, and the references its own
+# workbook makes follow it (see `.v5AppendParameterSets()`).
+#
+# @param workbooks The v6 workbooks by property, as `.v5PlanConversion()` builds
+#   them.
+# @param sections The esqlabsR 5 workbooks read, by property.
+# @param scenarios The scenario records (`.v5ScenarioRecords()`).
+# @param targets Where each section workbook goes (`.v5SectionTargets()`).
+# @returns `workbooks`, with the model-parameters, individuals and applications
+#   workbooks written anew.
+# @keywords internal
+# @noRd
+.v5ConvertParameterWorkbooks <- function(
+  workbooks,
+  sections,
+  scenarios,
+  targets
+) {
+  if (length(targets) == 0L) {
+    return(workbooks)
+  }
+  sets <- list()
+
+  modelParams <- sections$modelParamsFile
+  if (!is.null(modelParams)) {
+    parsed <- .parseExcelParameterSheets(modelParams$path)
+    sets <- .v5AppendParameterSets(sets, parsed, modelParams$path)$sets
+  }
+
+  individuals <- sections$individualsFile
+  if (!is.null(individuals)) {
+    converted <- .v5ConvertIndividualsWorkbook(
+      individuals$path,
+      sets,
+      scenarios
+    )
+    sets <- converted$sets
+    workbooks$individualsFile <- c(
+      individuals,
+      list(copy = FALSE, sheets = converted$sheets)
+    )
+  }
+
+  applications <- sections$applicationsFile
+  if (!is.null(applications)) {
+    converted <- .v5ConvertApplicationsWorkbook(applications$path, sets)
+    sets <- converted$sets
+    workbooks$applicationsFile <- c(
+      applications,
+      list(copy = FALSE, sheets = converted$sheets)
+    )
+  }
+
+  if (length(sets) > 0L || !is.null(modelParams)) {
+    workbooks$modelParamsFile <- c(
+      modelParams %||% targets$modelParamsFile,
+      list(copy = FALSE, sheets = lapply(sets, .v5ParameterSetSheet))
+    )
+  }
+  workbooks
+}
+
+# A parameter set as a sheet of the model-parameters workbook.
+#
+# @param entries The set as `.parseExcelParameterSheets()` returns it.
+# @keywords internal
+# @noRd
+.v5ParameterSetSheet <- function(entries) {
+  data.frame(
+    `Container Path` = vapply(entries, \(e) e$containerPath, character(1)),
+    `Parameter Name` = vapply(entries, \(e) e$parameterName, character(1)),
+    Value = vapply(entries, \(e) as.double(e$value), double(1)),
+    Units = vapply(entries, \(e) e$units %||% NA_character_, character(1)),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
+# The longest sheet name Excel allows.
+.v5MaxSheetName <- 31L
+
+# A sheet name for a parameter set whose id is not yet taken.
+#
+# The name is kept when its canonical id is free. Otherwise `_2`, `_3`, ... is
+# added, as `.v5UniqueImportedId()` adds it to an id, cutting the name so the
+# result still fits an Excel sheet name. The check is on the canonical id,
+# because two names that canonicalize alike (`Rat`, `rat`) become one id.
+#
+# @param name The sheet name.
+# @param taken The canonical ids already taken.
+# @returns The sheet name to write the set under.
+# @keywords internal
+# @noRd
+.v5UniqueSheetName <- function(name, taken) {
+  if (!(.canonicalizeOneId(name) %in% taken)) {
+    return(name)
+  }
+  n <- 1L
+  repeat {
+    n <- n + 1L
+    suffix <- paste0("_", n)
+    candidate <- paste0(
+      substr(name, 1L, .v5MaxSheetName - nchar(suffix)),
+      suffix
+    )
+    if (!(.canonicalizeOneId(candidate) %in% taken)) {
+      return(candidate)
+    }
+  }
+}
+
+# Append the sets of one workbook to the sets collected so far, renaming a set
+# whose id an earlier set already took.
+#
+# Before 6.0.0 the model-parameters, individuals and applications workbooks were
+# three namespaces, so the same sheet name in two of them is legitimate; in one
+# workbook, two sheet names that canonicalize alike are too. The set collected
+# first keeps the id, the later one is renamed (`Indiv1` -> `Indiv1_2`), and a
+# warning names each rename and the workbook.
+#
+# @param sets The sets collected so far, by sheet name.
+# @param incoming The sets of one workbook, by sheet name.
+# @param source The workbook `incoming` was read from, named in the warning.
+# @returns `list(sets, renames)`: the collected sets, and a named character
+#   vector mapping each renamed set's canonical id to its new sheet name, which
+#   `.v5ApplyIdRenames()` applies to the references the workbook makes.
+# @keywords internal
+# @noRd
+.v5AppendParameterSets <- function(sets, incoming, source) {
+  if (length(incoming) == 0L) {
+    return(list(sets = sets, renames = character()))
+  }
+  taken <- vapply(
+    names(sets),
+    .canonicalizeOneId,
+    character(1),
+    USE.NAMES = FALSE
+  )
+  newNames <- character(length(incoming))
+  renames <- character()
+  for (i in seq_along(incoming)) {
+    name <- names(incoming)[[i]]
+    newNames[[i]] <- .v5UniqueSheetName(name, taken)
+    taken <- c(taken, .canonicalizeOneId(newNames[[i]]))
+    if (!identical(newNames[[i]], name)) {
+      renames <- c(
+        renames,
+        stats::setNames(newNames[[i]], .canonicalizeOneId(name))
+      )
+    }
+  }
+
+  if (length(renames) > 0L) {
+    renamed <- newNames != names(incoming)
+    rendered <- .canonicalizedIdBullets(
+      names(incoming)[renamed],
+      newNames[renamed]
+    )
+    rendered$envir$sourceLabel <- basename(source)
+    rendered$envir$renamedCount <- length(renames)
+    cli::cli_warn(
+      .esqlabsR5Messages$renamedParameterSets(rendered$bullets),
+      .envir = rendered$envir,
+      class = "esqlabsR_importRenamedParameterSets"
+    )
+  }
+
+  list(
+    sets = c(sets, stats::setNames(incoming, newNames)),
+    renames = renames
+  )
+}
+
+# Point parameter-set references at the sets `.v5AppendParameterSets()` renamed.
+#
+# Matched on the canonical id, as the rename was: a cell spelling `indiv1` for a
+# sheet named `Indiv1` names that sheet.
+#
+# @param ids Referenced parameter-set ids.
+# @param renames Named character vector, canonical old id -> new sheet name.
+# @returns `ids` with every renamed entry replaced.
+# @keywords internal
+# @noRd
+.v5ApplyIdRenames <- function(ids, renames) {
+  if (length(renames) == 0L || length(ids) == 0L) {
+    return(ids)
+  }
+  ids <- as.character(ids)
+  canonical <- vapply(ids, .canonicalizeOneId, character(1), USE.NAMES = FALSE)
+  mapped <- unname(renames[canonical])
+  ifelse(is.na(mapped), ids, mapped)
+}
+
+# Drop the references to sheets of a workbook that are not parameter sheets.
+#
+# A `ParameterSets` cell names sheets of its own workbook, so a sheet that did
+# not parse as a parameter set leaves a reference to a set that does not exist.
+# Only those references are dropped; the cell may also name a set of another
+# workbook. Matched on the canonical id.
+#
+# @param refs Referenced parameter-set ids.
+# @param skippedSheets The sheets of the workbook that are not parameter sheets.
+# @returns `refs` without the dropped references.
+# @keywords internal
+# @noRd
+.v5DropSkippedSheetRefs <- function(refs, skippedSheets) {
+  if (length(refs) == 0L || length(skippedSheets) == 0L) {
+    return(refs)
+  }
+  skipped <- vapply(skippedSheets, .canonicalizeOneId, character(1))
+  refs[!(vapply(refs, .canonicalizeOneId, character(1)) %in% skipped)]
+}
+
+# The individuals workbook in the v6 layout: its `IndividualBiometrics` sheet,
+# with each individual's parameter sets in the `ParameterSets` column. The other
+# sheets are parameter sets and move to the model-parameters workbook.
+#
+# @param file The esqlabsR 5 individuals workbook.
+# @param sets The parameter sets collected so far.
+# @param scenarios The scenario records.
+# @returns `list(sheets, sets)`.
+# @keywords internal
+# @noRd
+.v5ConvertIndividualsWorkbook <- function(file, sets, scenarios) {
+  sheetNames <- readxl::excel_sheets(file)
+  biometrics <- NULL
+  if ("IndividualBiometrics" %in% sheetNames) {
+    biometrics <- as.data.frame(
+      readExcel(file, sheet = "IndividualBiometrics"),
+      check.names = FALSE
+    )
+  }
+  paramSheetNames <- setdiff(sheetNames, "IndividualBiometrics")
+  parsed <- if (length(paramSheetNames) > 0L) {
+    .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+  } else {
+    list()
+  }
+  appended <- .v5AppendParameterSets(sets, parsed, file)
+  if (is.null(biometrics)) {
+    return(list(sheets = list(), sets = appended$sets))
+  }
+
+  setSheetNames <- names(parsed)
+  skippedSheets <- setdiff(paramSheetNames, setSheetNames)
+  ids <- vapply(
+    seq_len(nrow(biometrics)),
+    function(i) as.character(.v5CellValue(biometrics, "IndividualId", i)),
+    character(1)
+  )
+  declared <- lapply(seq_len(nrow(biometrics)), function(i) {
+    .parseCommaListToArray(.v5CellValue(biometrics, "ParameterSets", i))
+  })
+  .v5WarnUnparametrizedIndividuals(ids, declared, skippedSheets, file)
+  .v5WarnUndefinedIndividualSheets(ids, setSheetNames, scenarios, file)
+  .v5WarnIndividualParameterSetsColumn(biometrics, ids, file)
+  biometrics[["Individual Parameter Sets"]] <- NULL
+
+  sheetCanonical <- vapply(setSheetNames, .canonicalizeOneId, character(1))
+  parameterSets <- vapply(
+    seq_along(ids),
+    function(i) {
+      refs <- .v5DropSkippedSheetRefs(declared[[i]], skippedSheets)
+      refs <- .v5ApplyIdRenames(refs, appended$renames)
+      # A sheet named after the individual is the individual's own set.
+      own <- .canonicalizeOneId(ids[[i]])
+      if (!is.na(own)) {
+        match <- setSheetNames[own == sheetCanonical]
+        refs <- unique(c(refs, .v5ApplyIdRenames(match, appended$renames)))
+      }
+      .formatArrayToCommaList(refs)
+    },
+    character(1)
+  )
+  biometrics$ParameterSets <- parameterSets
+  list(
+    sheets = list(IndividualBiometrics = biometrics),
+    sets = appended$sets
+  )
+}
+
+# The applications workbook in the v6 layout: one `ApplicationProtocols` row per
+# protocol, naming its parameter set, which moves to the model-parameters
+# workbook.
+#
+# esqlabsR 5 has one sheet per protocol, so each sheet that is a parameter set
+# becomes a protocol of the same name. A workbook that already has an
+# `ApplicationProtocols` sheet keeps it, and its other sheets are parameter sets.
+#
+# @param file The esqlabsR 5 applications workbook.
+# @param sets The parameter sets collected so far.
+# @returns `list(sheets, sets)`.
+# @keywords internal
+# @noRd
+.v5ConvertApplicationsWorkbook <- function(file, sets) {
+  sheetNames <- readxl::excel_sheets(file)
+  if ("ApplicationProtocols" %in% sheetNames) {
+    protocols <- as.data.frame(
+      readExcel(file, sheet = "ApplicationProtocols"),
+      check.names = FALSE
+    )
+    paramSheetNames <- setdiff(sheetNames, "ApplicationProtocols")
+    parsed <- if (length(paramSheetNames) > 0L) {
+      .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+    } else {
+      list()
+    }
+    appended <- .v5AppendParameterSets(sets, parsed, file)
+    if ("ParameterSets" %in% names(protocols)) {
+      skippedSheets <- setdiff(paramSheetNames, names(parsed))
+      protocols$ParameterSets <- vapply(
+        seq_len(nrow(protocols)),
+        function(i) {
+          refs <- .parseCommaListToArray(protocols$ParameterSets[[i]])
+          refs <- .v5DropSkippedSheetRefs(refs, skippedSheets)
+          .formatArrayToCommaList(.v5ApplyIdRenames(refs, appended$renames))
+        },
+        character(1)
+      )
+    }
+    return(list(
+      sheets = list(ApplicationProtocols = protocols),
+      sets = appended$sets
+    ))
+  }
+
+  parsed <- .parseExcelParameterSheets(file, sheetNames = sheetNames)
+  appended <- .v5AppendParameterSets(sets, parsed, file)
+  if (length(parsed) == 0L) {
+    return(list(sheets = list(), sets = appended$sets))
+  }
+  setNames <- .v5ApplyIdRenames(names(parsed), appended$renames)
+  protocols <- data.frame(
+    ApplicationId = names(parsed),
+    ParameterSets = vapply(setNames, .formatArrayToCommaList, character(1)),
+    stringsAsFactors = FALSE
+  )
+  list(
+    sheets = list(ApplicationProtocols = protocols),
+    sets = appended$sets
+  )
+}
+
+# Report the sets an `Individual Parameter Sets` cell names besides the
+# individual's own sheet.
+#
+# esqlabsR 5 does not read the column: it applies to an individual the sheet
+# named after it, which the conversion links through the `ParameterSets` column.
+# Any other set the cell names was never applied, so it is not linked either,
+# and is named here, since a modeler may have expected it to be.
+#
+# @param biometrics The `IndividualBiometrics` sheet.
+# @param ids The `IndividualId` cells.
+# @param file The workbook, named in the warning.
+# @keywords internal
+# @noRd
+.v5WarnIndividualParameterSetsColumn <- function(biometrics, ids, file) {
+  column <- "Individual Parameter Sets"
+  if (!(column %in% names(biometrics))) {
+    return(invisible(NULL))
+  }
+  namedIds <- character()
+  namedSets <- character()
+  for (i in seq_along(ids)) {
+    sets <- .parseCommaListToArray(.v5CellValue(biometrics, column, i))
+    own <- .canonicalizeOneId(ids[[i]])
+    other <- sets[vapply(sets, .canonicalizeOneId, character(1)) != own]
+    namedIds <- c(namedIds, rep(ids[[i]], length(other)))
+    namedSets <- c(namedSets, other)
+  }
+  if (length(namedIds) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    .esqlabsR5Messages$individualParameterSetsColumn(file, namedIds, namedSets),
+    "esqlabsR_convertIndividualParameterSets"
+  )
+}
+
+# Report the individuals a skipped sheet leaves without their parameter set.
+#
+# A sheet of the individuals workbook that is not a parameter sheet is reported
+# on its own (`.parseExcelParameterSheets()`), but not what it costs: an
+# individual parametrized through that sheet, by its name or through its
+# `ParameterSets` cell, is converted without the set, and the project still
+# validates.
+#
+# @param ids The `IndividualId` cells.
+# @param declared The sets each individual's `ParameterSets` cell names.
+# @param skippedSheets The sheets of the workbook that are not parameter sheets.
+# @param file The workbook, named in the warning.
+# @keywords internal
+# @noRd
+.v5WarnUnparametrizedIndividuals <- function(
+  ids,
+  declared,
+  skippedSheets,
+  file
+) {
+  if (length(ids) == 0L || length(skippedSheets) == 0L) {
+    return(invisible(NULL))
+  }
+  skipped <- vapply(skippedSheets, .canonicalizeOneId, character(1))
+  lostIds <- character()
+  lostSheets <- character()
+  for (i in seq_along(ids)) {
+    id <- .canonicalizeOneId(ids[[i]])
+    if (is.na(id)) {
+      next
+    }
+    referenced <- c(
+      id,
+      if (length(declared[[i]]) > 0L) {
+        vapply(declared[[i]], .canonicalizeOneId, character(1))
+      }
+    )
+    lost <- skippedSheets[skipped %in% referenced]
+    lostIds <- c(lostIds, rep(ids[[i]], length(lost)))
+    lostSheets <- c(lostSheets, lost)
+  }
+  if (length(lostIds) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    .esqlabsR5Messages$unparametrizedIndividuals(file, lostIds, lostSheets),
+    "esqlabsR_importUnparametrizedIndividuals"
+  )
+}
+
+# Report a parameter sheet named after an individual that the
+# `IndividualBiometrics` sheet does not define.
+#
+# Individuals come from the biometrics rows, so such an individual is not
+# converted: its sheet becomes a parameter set no individual uses, and a
+# scenario naming the individual names nothing. Only a sheet named after an
+# individual a scenario uses is reported, so a set that only lives in this
+# workbook is not mistaken for a dropped individual.
+#
+# @param ids The `IndividualId` cells.
+# @param setSheetNames The sheets of the workbook that are parameter sets.
+# @param scenarios The scenario records.
+# @param file The workbook, named in the warning.
+# @keywords internal
+# @noRd
+.v5WarnUndefinedIndividualSheets <- function(
+  ids,
+  setSheetNames,
+  scenarios,
+  file
+) {
+  if (length(setSheetNames) == 0L) {
+    return(invisible(NULL))
+  }
+  defined <- vapply(ids, .canonicalizeOneId, character(1))
+  wanted <- unique(vapply(
+    scenarios,
+    function(scenario) {
+      .canonicalizeOneId(scenario$individual %||% NA_character_)
+    },
+    character(1)
+  ))
+  sheetIds <- vapply(setSheetNames, .canonicalizeOneId, character(1))
+  dropped <- setSheetNames[sheetIds %in% setdiff(wanted, defined)]
+  if (length(dropped) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    .esqlabsR5Messages$undefinedIndividualSheets(file, dropped),
+    "esqlabsR_importUndefinedIndividualSheets"
+  )
+}
+
+# Shared cell readers ----
+
+# One cell of a parsed sheet, `NA` where the sheet has no such column or row.
+#
+# @keywords internal
+# @noRd
+.v5CellValue <- function(df, column, i = 1L) {
+  values <- df[[column]]
+  if (is.null(values) || length(values) < i) {
+    return(NA)
+  }
+  values[[i]]
 }
