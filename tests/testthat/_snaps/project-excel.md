@@ -180,23 +180,12 @@
       x The name "../Project.json" contains a path separator or is "." / "..", so it could write outside `outputDir`.
       i Pass a single filename segment, for example "Project.json" (the default) or "MyStudy"; a .json extension is appended when the name does not already end in one.
 
-# importProjectFromExcel copies the observed-data files when the data folder is the project folder
-
-    Code
-      writeLines(importAssetLines(importProjectFromExcel(file.path(projectDir,
-        "ProjectConfiguration.xlsx"), outputDir = outputDir)))
-    Output
-      Copied 2 referenced folders into the new project: 'Models/Simulations/' and 'Configurations/PopulationsCSV'.
-      Copied 2 observed-data files into the new project: 'TestProject_TimeValuesData.xlsx' and 'esqlabs_dataImporter_configuration.xml'.
-
 # importProjectFromExcel keeps an observed-data file already in outputDir and says so
 
     Code
       writeLines(importAssetLines(importProjectFromExcel(file.path(projectDir,
         "ProjectConfiguration.xlsx"), outputDir = outputDir)))
     Output
-      Copied 2 referenced folders into the new project: 'Models/Simulations/' and 'Configurations/PopulationsCSV'.
-      Copied 1 observed-data file into the new project: 'esqlabs_dataImporter_configuration.xml'.
       Warning: 1 observed-data file was not copied: 'TestProject_TimeValuesData.xlsx'. The new project already holds a file of that name and reads it instead (pass `overwrite = TRUE` to replace it).
 
 # importProjectFromExcel warns naming each renamed duplicate parameter set

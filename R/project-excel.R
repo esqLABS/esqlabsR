@@ -324,7 +324,7 @@
 #'   is and named in a warning; with `overwrite = TRUE`, it is replaced.
 #' @param silent Logical. If `TRUE`, suppresses the import summary (the project
 #'   written, its per-section definition counts, and the folders and files
-#'   copied or missing). Defaults to `FALSE`.
+#'   that could not be copied). Defaults to `FALSE`.
 #' @param copyAssets Logical. Whether to copy the input folders the project
 #'   references (models, data, csv populations) into `outputDir`, which is what
 #'   makes the imported project runnable where it was written. Defaults to
@@ -489,14 +489,9 @@ importProjectFromExcel <- function(
     if (length(conventionWorkbooks) > 0L) {
       .informFormatted(messages$importUndeclaredWorkbooks(conventionWorkbooks))
     }
-    if (length(assets$copied) > 0L) {
-      msg <- messages$importCopiedAssetFolders(assets$copied)
-      cli::cli_inform("{msg}")
-    }
-    if (length(assets$copiedFiles) > 0L) {
-      msg <- messages$importCopiedAssetFiles(assets$copiedFiles)
-      cli::cli_inform("{msg}")
-    }
+    # Copying the referenced folders and files is what an import into another
+    # folder is expected to do, so only what could not be copied is named: the
+    # new project lacks it until the user places it there.
     if (length(assets$notCopied) > 0L) {
       msg <- messages$importUncopiedAssetFolders(assets$notCopied)
       cli::cli_warn("{msg}")
@@ -2015,7 +2010,8 @@ projectStatus <- function(project, silent = FALSE) {
 # `copied` / `notCopied` are folder values copied whole or left out;
 # `copiedFiles` / `notCopiedFiles` are the observed-data files copied on their
 # own from a data folder that is the project folder, or kept because the output
-# already holds them. Each gets its own summary line.
+# already holds them. The import summary names only `notCopied` and
+# `notCopiedFiles`.
 .noAssetsCopied <- list(
   copied = character(),
   notCopied = character(),

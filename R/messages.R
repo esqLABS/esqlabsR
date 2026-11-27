@@ -351,20 +351,6 @@ messages$importNotExcelFile <- function(path) {
   )
 }
 
-messages$importCopiedAssetFolders <- function(folders) {
-  ospsuite.utils::cliFormat(
-    "Copied {length(folders)} referenced folder{?s} into the new project: {.file {folders}}."
-  )
-}
-
-# Files copied on their own from a data folder that is the project folder
-# (`.copyProjectFolderDataFiles()`).
-messages$importCopiedAssetFiles <- function(files) {
-  ospsuite.utils::cliFormat(
-    "Copied {length(files)} observed-data file{?s} into the new project: {.file {files}}."
-  )
-}
-
 messages$importUncopiedAssetFolders <- function(folders) {
   ospsuite.utils::cliFormat(
     "{length(folders)} folder{?s} named by the project configuration {cli::qty(length(folders))}{?was/were} not copied: {.file {folders}}.",

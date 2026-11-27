@@ -34,7 +34,7 @@ is and named in a warning; with \code{overwrite = TRUE}, it is replaced.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
 written, its per-section definition counts, and the folders and files
-copied or missing). Defaults to \code{FALSE}.}
+that could not be copied). Defaults to \code{FALSE}.}
 
 \item{copyAssets}{Logical. Whether to copy the input folders the project
 references (models, data, csv populations) into \code{outputDir}, which is what

@@ -2294,11 +2294,11 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
     collapse = "\n"
   )
 
-  # The output path, the per-section counts, and the assets that travelled.
+  # The output path and the per-section counts. The folders the import copies
+  # are expected, so the summary does not list them.
   expect_match(summaryText, "Project.json", fixed = TRUE)
   expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
-  # Three: the models, the data, and the population csv folder.
-  expect_match(summaryText, "Copied 3 referenced folders", fixed = TRUE)
+  expect_no_match(summaryText, "Copied", fixed = TRUE)
 
   expect_silent(suppressWarnings(importProjectFromExcel(
     configPath,
@@ -2714,10 +2714,14 @@ test_that("importProjectFromExcel copies the observed-data files when the data f
   projectDir <- localExcelProjectWithRootData()
   outputDir <- withr::local_tempdir()
 
-  expect_snapshot(writeLines(importAssetLines(importProjectFromExcel(
-    file.path(projectDir, "ProjectConfiguration.xlsx"),
-    outputDir = outputDir
-  ))))
+  # Nothing is reported: every file the import needed was copied.
+  expect_identical(
+    importAssetLines(importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = outputDir
+    )),
+    character()
+  )
 
   # The two data files and nothing else from the project folder: no workbook,
   # and not the `ProjectConfiguration.json` the fixture also holds.

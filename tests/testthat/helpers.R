@@ -261,11 +261,11 @@ localExcelProjectWithRootData <- function(envir = parent.frame()) {
   projectDir
 }
 
-#' The lines of an import summary about copied and not copied assets.
+#' The lines of an import summary about assets that were not copied.
 #'
 #' Evaluates `expr` (an `importProjectFromExcel()` call), muffling its messages
-#' and warnings, and returns those that report a folder or file as copied or
-#' not copied, a warning prefixed with `Warning:`. Snapshotting only these
+#' and warnings, and returns those that report a folder or file as not copied,
+#' a warning prefixed with `Warning:`. Snapshotting only these
 #' lines keeps a change in the fixture's definition counts out of the snapshot.
 importAssetLines <- function(expr) {
   shown <- character()
@@ -280,7 +280,7 @@ importAssetLines <- function(expr) {
       invokeRestart("muffleWarning")
     }
   )
-  trimws(grep("copied", shown, value = TRUE, ignore.case = TRUE))
+  trimws(grep("not copied", shown, value = TRUE, fixed = TRUE))
 }
 
 #' Export a project to Excel and read it back, returning the re-imported one.
