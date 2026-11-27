@@ -351,3 +351,9 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
 - 2026-11-25 16:24: Formatted the message catalog with Air.
 - 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
+- 2026-11-26 15:55: Removed four test data files that no test reads. (#82)
+- 2026-11-26 15:55: Removed three vignette figures and the PowerPoint they were drawn in, which no article uses. (#82)
+- 2026-11-26 15:55: The update-packages.R helper script is no longer installed with the package. (#82)
+- 2026-11-26 15:55: Removed the empty .gitmodules file. (#82)
+- 2026-11-26 15:55: .Rbuildignore lists only files that exist or that local tools create, with anchored and escaped patterns. (#82)
+- 2026-11-26 18:08: Brought the unused-files branch up to date with v6. (#82)

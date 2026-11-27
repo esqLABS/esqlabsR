@@ -32,6 +32,8 @@
 
 - Every task-oriented vignette is renamed so its name states what kind of article it is, and the old names no longer resolve: `projects`, `design-scenarios`, `validate-project`, `run-simulations`, `plot-results`, `observed-data`, `pi-workflow`, `sensitivity`, `sensitivity-plots`, and `migrate-from-excel` become `how-to-set-up-a-project`, `how-to-design-scenarios`, `how-to-validate-a-project`, `how-to-run-simulations`, `how-to-plot-results`, `how-to-use-observed-data`, `how-to-identify-parameters`, `how-to-run-a-sensitivity-analysis`, `how-to-customize-sensitivity-plots`, and `how-to-migrate-from-excel`. Update any `vignette()` call or article URL that names one of the old ones. The get-started tutorial keeps its `vignette("esqlabsR")` name.
 
+- The `update-packages.R` helper script is no longer installed in `extdata`. Install or update esqlabsR as described in the README. (#82)
+
 - Bumped minimum required `ospsuite` version to 13.0.0. In ospsuite 13 the negative-values check is a solver setting only (`simulation$solver$checkForNegativeValues`), and esqlabsR applies a project's or PI task's `checkForNegativeValues` there; earlier ospsuite versions let the run options override that setting, so the project value would be ignored (#1000, #1252).
 
 ## Major changes
