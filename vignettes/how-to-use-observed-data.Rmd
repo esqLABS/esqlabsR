@@ -43,9 +43,9 @@ project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
 
 ## Choose the name a source is known by
 
-Two strings attach to every source, and they are not interchangeable. The **source id** is what `removeObservedData()` matches and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
+Two strings attach to every source, and they are not interchangeable. The **source id** is what `loadObservedData()` and `removeObservedData()` match and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
 
-The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read or remove a source.
+The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read, load or remove a source.
 
 Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
 
@@ -82,7 +82,7 @@ addDataCombined(
 
 ## Loading observed data
 
-`loadObservedData()` resolves every declared source into a named list of `DataSet` objects, keyed by DataSet name. `createDataCombined()` (and therefore `createPlots()`) calls it internally to evaluate the observed side of a figure, so you rarely call it yourself.
+By default, `loadObservedData()` resolves every declared source into a named list of `DataSet` objects, keyed by DataSet name (to load only some sources, see [Load only some sources](#load-only-some-sources) below). `createDataCombined()` (and therefore `createPlots()`) calls it internally to evaluate the observed side of a figure, so you rarely call it yourself.
 
 ```{r}
 observed <- loadObservedData(project)
@@ -150,6 +150,20 @@ Because saving turns a `programmatic` source into a `pkml` file, the data folder
 Sometimes the observed data is not a fixed set of numbers but the result of a calculation: digitized points that need transforming, a unit conversion applied to a raw file, a combination of several inputs. A project never runs R code to produce its data, so the calculation stays in your own R code and the project receives its result. Build the `DataSet` in your code, save it to a PKML file in the data folder, and declare a `pkml` source, as in Source type 2. When the inputs change, run your code again and save the `DataSet` to the same PKML file: the project reads the new values the next time it resolves observed data.
 
 Because resolving observed data only reads files, you can open a project someone sends you and plot its observed data without running any code from it.
+
+## Load only some sources
+
+To load only some sources, pass their ids to `sources`. Only those sources are read, so a source you leave out cannot stop the load, for example because its file is missing or because its data set has the same name as one from another source. An id that names no source stops the load with a list of the source ids the project has. `getObservedDataNames()` still lists the data sets of every source.
+
+The project now declares three sources. This loads two of them, and the Excel source is not read:
+
+```{r}
+observed <- loadObservedData(
+  project,
+  sources = c("extra_cohort.pkml", "Scratch measurement")
+)
+names(observed)
+```
 
 ## Remove a source
 

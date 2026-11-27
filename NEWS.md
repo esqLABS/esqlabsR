@@ -71,6 +71,7 @@
 ## New features
 
 - A scenario can carry an optional `label`, a free-text name kept exactly as typed, which the id cannot keep because it is changed to lowercase and filename-safe characters. Set it with `addScenario(label = )` and change or remove it with `setScenario(label = )`. `print()` shows it after the id, and printing `project$definitions$scenarios` shows it next to each id; results and messages use the id. `exportProjectToExcel()` writes it to a `Label` column of the `Scenarios` sheet when a scenario has one, and `importProjectFromExcel()` reads it back. When an import changes a `Scenario_name` by more than its case to make it an id, the original name is kept as the label, so `Aciclovir_IV-2.5mg/kg` becomes the id `aciclovir_iv-2.5mg_kg` with the label `Aciclovir_IV-2.5mg/kg`, while `MyScenario` becomes the id `myscenario` with no label. A label must be a single non-empty string; `validateProject()` reports one that is not. (#1294)
+- `loadObservedData(project, sources = )` loads only the observed-data sources whose ids you pass. A source you leave out is not read, so its missing file or a data-set name it shares with another source cannot stop the load. An id is matched the way `removeObservedData()` matches it, an id that names no source is an error listing the project's source ids, and `sources = NULL` (the default) loads every source. (#1370)
 
 ## Deprecations
 

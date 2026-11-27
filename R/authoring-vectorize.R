@@ -102,17 +102,30 @@ NULL
 # Validate the `id` vector that sets N for a vectorized authoring call: a
 # non-empty character vector with no NA / empty element. Returns the value
 # unchanged. The caller canonicalizes ids separately. `arg` names the argument
-# in the abort, `call` attributes it to the public caller.
+# in the abort, `call` attributes it to the public caller. `allowEmpty` accepts
+# a zero-length vector, for an argument that selects ids, where selecting none
+# is a valid choice.
 #
 # @keywords internal
 # @noRd
-.assertIdVector <- function(id, arg = "id", call = rlang::caller_env()) {
+.assertIdVector <- function(
+  id,
+  arg = "id",
+  allowEmpty = FALSE,
+  call = rlang::caller_env()
+) {
   if (
     !is.character(id) ||
-      length(id) == 0L ||
+      (!allowEmpty && length(id) == 0L) ||
       any(is.na(id)) ||
       any(nchar(id) == 0)
   ) {
+    if (allowEmpty) {
+      cli::cli_abort(
+        "{.arg {arg}} must be a character vector with no NA or empty element.",
+        call = call
+      )
+    }
     cli::cli_abort(
       "{.arg {arg}} must be a non-empty character vector with no NA or \\
       empty element.",

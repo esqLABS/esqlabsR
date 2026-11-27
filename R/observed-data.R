@@ -217,18 +217,29 @@ print.ObservedDataSource <- function(x, ...) {
 #' nothing, and the load warns you by name.
 #'
 #' @param project A `Project` object (see [loadProject()]).
-#' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
-#'   `observedData` definitions is empty or `NULL`.
+#' @param sources Character vector of the ids of the observed-data sources to
+#'   load, or `NULL` (default) to load every source. Only the sources you name
+#'   are read, so a source you leave out cannot stop the load with a missing
+#'   file or a data-set name another source also uses. An id is matched as in
+#'   [removeObservedData()]. An id that names no source is an error listing the
+#'   project's source ids. `character(0)` returns an empty list.
+#' @returns A named list of [`ospsuite::DataSet`] objects: those of the
+#'   `excel` and `pkml` sources in the order the project declares
+#'   them, followed by the `DataSet`s added in this session with
+#'   [addObservedData()]. Empty list when `observedData` definitions is empty
+#'   or `NULL`.
 #'
 #' @examples
 #' \dontrun{
 #' project <- loadProject("path/to/Project.json")
 #' dataSets <- loadObservedData(project)
+#' # Only the data of one source
+#' dataSets <- loadObservedData(project, sources = "Aciclovir_TimeValuesData.xlsx")
 #' }
 #' @export
-loadObservedData <- function(project) {
+loadObservedData <- function(project, sources = NULL) {
   ospsuite.utils::validateIsOfType(project, "Project")
-  project$loadObservedData()
+  project$loadObservedData(sources)
 }
 
 # Implementation behind `project$loadObservedData()` / `loadObservedData()`.
@@ -237,17 +248,37 @@ loadObservedData <- function(project) {
 #
 # @keywords internal
 # @noRd
-.loadObservedData_impl <- function(self, private, .call) {
+.loadObservedData_impl <- function(self, private, sources = NULL, .call) {
   rlang::local_error_call(.call)
-  if (
-    is.null(self$definitions$observedData) ||
-      length(self$definitions$observedData) == 0
-  ) {
+  if (!is.null(sources)) {
+    .assertIdVector(sources, arg = "sources", allowEmpty = TRUE)
+  }
+  observedData <- private$.getSection("observedData") %||% list()
+  sectionIds <- names(observedData) %||% character()
+  selected <- seq_along(observedData)
+  programmaticDataSets <- private$.programmaticDataSets
+  if (!is.null(sources)) {
+    matched <- lapply(
+      sources,
+      .observedDataIndicesOfId,
+      sectionIds = sectionIds
+    )
+    unknown <- unique(sources[lengths(matched) == 0L])
+    if (length(unknown) > 0L) {
+      cli::cli_abort(messages$observedDataUnknownSources(unknown, sectionIds))
+    }
+    selected <- sort(unique(unlist(matched)))
+    programmaticDataSets <- programmaticDataSets[intersect(
+      names(programmaticDataSets),
+      sectionIds[selected]
+    )]
+  }
+  if (length(selected) == 0L) {
     return(list())
   }
   allDataSets <- list()
-  for (i in seq_along(self$definitions$observedData)) {
-    entry <- self$definitions$observedData[[i]]
+  for (i in selected) {
+    entry <- observedData[[i]]
     .validateObservedDataEntry(entry, i)
     dataSets <- switch(
       entry$type,
@@ -259,34 +290,44 @@ loadObservedData <- function(project) {
       allDataSets <- .mergeObservedDataSets(allDataSets, dataSets)
     }
   }
-  # Merge runtime programmatic store, then cache names.
-  allDataSets <- .mergeObservedDataSets(
-    allDataSets,
-    private$.programmaticDataSets
-  )
+  # Merge the DataSets this session added.
+  allDataSets <- .mergeObservedDataSets(allDataSets, programmaticDataSets)
   # A `programmatic` sentinel resolves to nothing unless this session added its
   # DataSet: the data lives only in the runtime store, so a sentinel read from
   # disk (a reload, or a project opened elsewhere) has no backing DataSet and
   # would silently vanish from the result. Warn by name so the drop is loud
   # instead of surfacing later as an obscure dangling DataCombined reference.
   unresolved <- .unresolvedProgrammaticNames(
-    self$definitions$observedData,
+    observedData[selected],
     names(allDataSets)
   )
   if (length(unresolved) > 0) {
     # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
     # and on every `createDataCombined()`/`createPlots()`), so throttle to once
     # per session per project rather than firing on every call.
+    frequencyId <- paste0(
+      "esqlabsR_observed_data_unresolved_programmatic_",
+      .projectWarningKey(self)
+    )
+    if (!is.null(sources)) {
+      # A load of selected sources warns under a key of its own, so it never
+      # uses up the warning a full load gives about every such source.
+      frequencyId <- paste0(
+        frequencyId,
+        "_selected_",
+        paste(sort(unresolved), collapse = "|")
+      )
+    }
     cli::cli_warn(
       messages$observedDataProgrammaticUnresolved(unresolved),
       .frequency = "once",
-      .frequency_id = paste0(
-        "esqlabsR_observed_data_unresolved_programmatic_",
-        .projectWarningKey(self)
-      )
+      .frequency_id = frequencyId
     )
   }
-  private$.observedDataNamesCache <- names(allDataSets)
+  # The names of a subset are not the project's names.
+  if (is.null(sources)) {
+    private$.observedDataNamesCache <- names(allDataSets)
+  }
   allDataSets
 }
 
@@ -342,8 +383,8 @@ loadObservedData <- function(project) {
 
 #' Get names of all observed data in a Project
 #'
-#' Returns the names of all DataSets that would be returned by
-#' [loadObservedData()]. On first call this loads the data to discover
+#' Returns the names of all DataSets that `loadObservedData(project)` would
+#' return, for every source of the project. On first call this loads the data to discover
 #' names; subsequent calls return cached names until a mutation
 #' invalidates the cache.
 #'
@@ -706,23 +747,8 @@ removeObservedData <- function(project, id) {
   dropIdx <- integer()
   missingIds <- character()
   sectionIds <- names(observedData) %||% character()
-  # A lookup, unlike the add-time and save-time checks
-  # (`.observedDataIdMatches()`): those guard definition file names, which
-  # ignore case on Windows and macOS, while removing finds the one source the
-  # user names, so it matches the id as stored.
-  entriesWithId <- function(key) which(sectionIds %in% key)
   for (one in id) {
-    matchIdx <- entriesWithId(one)
-    if (length(matchIdx) == 0L) {
-      # An id this section stores is one of two kinds, so the match takes two
-      # passes rather than one transform. A derived id is the source's own
-      # string (a `file` basename, a `DataSet` name), which only the verbatim
-      # pass above finds; a declared id is stored the way `addObservedData()`
-      # canonicalized it, so the id as the user authored it needs the same
-      # transform to reach it. Verbatim first, so a derived id that another
-      # entry's declared id happens to canonicalize to still wins its own match.
-      matchIdx <- entriesWithId(.silentlyCanonicalized(.canonicalizeId(one)))
-    }
+    matchIdx <- .observedDataIndicesOfId(one, sectionIds)
     if (length(matchIdx) == 0L) {
       missingIds <- c(missingIds, one)
       next
@@ -818,6 +844,35 @@ removeObservedData <- function(project, id) {
     suppressMessages(suppressWarnings(project$getObservedDataNames())),
     error = function(cnd) NULL
   )
+}
+
+# The positions in the section of the source(s) the user means by `id`, or
+# `integer(0)` when it names none. Removing and loading a source both find it
+# here.
+#
+# A lookup, unlike the add-time and save-time checks
+# (`.observedDataIdMatches()`): those guard definition file names, which ignore
+# case on Windows and macOS, while a lookup finds the one source the user names,
+# so it matches the id as stored.
+#
+# An id this section stores is one of two kinds, so the match takes two passes
+# rather than one transform. A derived id is the source's own string (a `file`
+# basename, a `DataSet` name), which only the verbatim pass finds; a declared id
+# is stored the way `addObservedData()` canonicalized it, so the id as the user
+# authored it needs the same transform to reach it. Verbatim first, so a derived
+# id that another entry's declared id happens to canonicalize to still wins its
+# own match.
+#
+# @keywords internal
+# @noRd
+.observedDataIndicesOfId <- function(id, sectionIds) {
+  matchIdx <- which(sectionIds %in% id)
+  if (length(matchIdx) == 0L) {
+    matchIdx <- which(
+      sectionIds %in% .silentlyCanonicalized(.canonicalizeId(id))
+    )
+  }
+  matchIdx
 }
 
 # Which of `sectionIds` name the same definition file as `id`. Ids that differ

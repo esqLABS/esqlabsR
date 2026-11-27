@@ -368,14 +368,24 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 16:58: The help pages of addObservedData(), removeObservedData() and Project are regenerated for stored observed-data ids. (#1368)
 - 2026-11-23 17:17: The observed-data docs say that only a file-based source is passed back to keep its id, and that a file without id gets it on a save after a change. (#1368)
 - 2026-11-23 17:24: A DataSet that replaces a programmatic source spelled in another case is refused when another source already provides its name or reads its PKML file. (#1368)
+- 2026-11-23 17:39: removeObservedData() finds a source through a shared lookup that loading will also use. (#1370)
+- 2026-11-23 17:39: loadObservedData() takes a sources argument that loads only the observed-data sources with those ids. (#1370)
+- 2026-11-23 17:39: The observed-data vignette and NEWS describe loading only some observed-data sources. (#1370)
+- 2026-11-23 17:58: An invalid sources argument of loadObservedData() no longer says the ids must be non-empty, since selecting none is allowed. (#1370)
+- 2026-11-23 17:59: The loadObservedData() help states that session DataSets come after the file-based sources, and tests cover the order, repeated ids and an Excel source read directly. (#1370)
+- 2026-11-23 18:00: A warning about selected programmatic sources with no data no longer keeps a later full load from warning about all of them. (#1370)
+- 2026-11-23 18:00: The observed-data vignette shows loading some sources once the example declares several, and the help of loadObservedData() and getObservedDataNames() reads more tightly. (#1370)
+- 2026-11-23 18:13: The help pages of loadObservedData(), getObservedDataNames() and Project are regenerated for the sources argument. (#1370)
 - 2026-11-23 19:20: Observed-data messages and the removeObservedData() help speak of a DataSet added in this session, and the save-time id collision says to remove, rename and add the DataSet again. (#1367)
 - 2026-11-23 19:21: A save that stops on a DataSet added with addObservedData() names saveProject() in its error, not an internal function. (#1367)
 - 2026-11-23 19:22: A save that stops on a Population added with addPopulation() names saveProject() in its error, not an internal function.
 - 2026-11-23 18:40: The parent branch's DataSet wording and saveProject() error attribution are merged in, with DataSet sources keeping their id across a save. (#1368)
+- 2026-11-23 18:41: The parent branch's DataSet save wording and saveProject() error attribution are merged in with loading selected observed-data sources. (#1370)
 - 2026-11-23 19:35: Ten R files are formatted with Air, which wraps lines longer than 80 characters; the code itself is unchanged.
 - 2026-11-23 19:35: DESCRIPTION records roxygen2 8.1.1, the version that last regenerated the help pages.
 - 2026-11-23 19:55: The addObservedData() help is shorter: the add-time name check is described once, in Details, without the full list of checks. (#1367)
 - 2026-11-23 19:21: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in, with the help saying that a source stores its id and keeps it across a save. (#1368)
+- 2026-11-23 19:22: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in with loading selected observed-data sources. (#1370)
 - 2026-11-25 16:24: Removed the script observed-data source, so loading a project's observed data only reads files and never runs R code. (#1397)
 - 2026-11-25 16:24: Formatted the message catalog with Air.
 - 2026-11-25 16:24: DESCRIPTION records roxygen2 8.1.1, the version that generated the help pages.
@@ -402,6 +412,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-26 11:58: Merged v6, which removed the script source; the add-time name-check tests use PKML and missing-file sources, and the help no longer mentions scripts. (#1367)
 - 2026-11-26 11:58: The addObservedData() help page is regenerated, so it no longer carries the paragraph its documentation dropped with the script source.
 - 2026-11-26 12:48: The parent branch's removal of the script source is merged in; one save test uses a PKML source in its place, and NEWS no longer advises a script source. (#1368)
+- 2026-11-26 12:51: The parent branch's removal of the script source is merged in; the tests for loading selected sources use PKML sources instead of a script, and the help, vignette and NEWS no longer mention script sources. (#1370)
 - 2026-11-26 14:06: The test helper that hides temp paths in snapshots also recognizes the macOS temp folder, whose path carries a double slash. (#1399)
 - 2026-11-26 14:37: Importing a 5.x JSON whose data folder is the project folder itself reads the data workbook beside it instead of warning that it is missing. (#1399)
 - 2026-11-26 14:45: An in-place import of a 5.x JSON adds the files a folder already there lacks, such as a population CSV beside a README, without replacing any file, and names them in the summary. (#1399)
@@ -430,3 +441,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 16:36: The warning about folders an import could not copy reads in the singular when there is one folder.
 - 2026-11-27 17:47: The new base branch, which removes snapshotProject() and restoreProject(), is merged in; the help pages are regenerated. (#1367)
 - 2026-11-27 17:50: The parent branch's new base, which removes snapshotProject() and restoreProject(), is merged in; the test that checked the array shape of observed data in a snapshot checks it in an inline project file instead. (#1368)
+- 2026-11-27 17:52: The parent branch's new base, which removes snapshotProject() and restoreProject(), is merged in; nothing in loading selected sources depended on them. (#1370)

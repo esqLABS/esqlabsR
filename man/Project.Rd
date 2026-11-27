@@ -983,7 +983,15 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
   Load the project's observed data. See \code{\link[=loadObservedData]{loadObservedData()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$loadObservedData()}
+    \preformatted{Project$loadObservedData(sources = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{sources}}{Character ids of the observed-data sources to load, or \code{NULL}
+for all of them. See \code{\link[=loadObservedData]{loadObservedData()}}.}
+    }
     \if{html}{\out{</div>}}
   }
 }

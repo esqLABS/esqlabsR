@@ -73,6 +73,8 @@
 #'   [addInitialConditionEntry()].
 #' @param entry An observed-data source: a `DataSet` or a configuration list.
 #'   See [addObservedData()].
+#' @param sources Character ids of the observed-data sources to load, or `NULL`
+#'   for all of them. See [loadObservedData()].
 #' @param simulated,observed Simulated / observed inputs to a `DataCombined`.
 #'   See [addDataCombined()].
 #' @param task Character id of the parameter-identification task a sub-item
@@ -524,8 +526,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Load the project's observed data. See [loadObservedData()].
-    loadObservedData = function() {
-      private$.impl(.loadObservedData_impl)
+    loadObservedData = function(sources = NULL) {
+      private$.impl(.loadObservedData_impl, sources)
     },
 
     #' @description Names of the project's observed data. See

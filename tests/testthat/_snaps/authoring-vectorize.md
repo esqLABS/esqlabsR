@@ -30,6 +30,14 @@
       Error:
       ! `id` must be a non-empty character vector with no NA or empty element.
 
+# .assertIdVector with allowEmpty accepts no ids but still rejects NA
+
+    Code
+      .assertIdVector(c("a", NA), arg = "sources", allowEmpty = TRUE)
+    Condition
+      Error:
+      ! `sources` must be a character vector with no NA or empty element.
+
 # .recycleField aborts on a length that is neither 1 nor N
 
     Code

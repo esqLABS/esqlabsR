@@ -519,6 +519,228 @@ test_that("overwrite = TRUE accepts a DataSet name inside a PKML source not load
   )
 })
 
+# Loading selected sources ----
+
+digitizedPlasmaDataSet <- function() {
+  ds <- ospsuite::DataSet$new(name = "Digitized plasma")
+  ds$setValues(xValues = c(0, 0.5, 1, 2), yValues = c(0, 3.8, 4.1, 2.3))
+  ds
+}
+
+# A project whose full load fails: next to the Excel source it declares a PKML
+# source holding a data set named "Digitized plasma", a PKML source whose file
+# was never exported, and a DataSet added in the session under that same name.
+.projectWithBrokenSources <- function(envir = parent.frame()) {
+  project <- testProject(envir)
+  .addDigitizedPkmlSource(project)
+  addObservedData(project, list(type = "pkml", file = "cohort_b_export.pkml"))
+  suppressMessages(addObservedData(project, digitizedPlasmaDataSet()))
+  project
+}
+
+test_that("loadObservedData loads only the selected sources", {
+  project <- .projectWithBrokenSources()
+
+  expect_no_warning(
+    result <- loadObservedData(
+      project,
+      sources = c("Digitized plasma", "Aciclovir_TimeValuesData.xlsx")
+    )
+  )
+
+  # The file-based sources in the order the project declares them, then the
+  # DataSets added in this session. The Excel sheet is read here with ospsuite
+  # directly.
+  dataFolder <- project$paths$dataFolder
+  excelDataSets <- ospsuite::loadDataSetsFromExcel(
+    xlsFilePath = file.path(dataFolder, "Aciclovir_TimeValuesData.xlsx"),
+    importerConfigurationOrPath = file.path(
+      dataFolder,
+      "esqlabs_dataImporter_configuration.xml"
+    ),
+    sheets = "Laskin 1982.Group A"
+  )
+  expected <- c(
+    excelDataSets,
+    list("Digitized plasma" = digitizedPlasmaDataSet())
+  )
+  expect_identical(names(expected), c(testObservedDataId, "Digitized plasma"))
+  expect_named(result, names(expected))
+  expect_equal(
+    ospsuite::dataSetToDataFrame(result),
+    ospsuite::dataSetToDataFrame(expected)
+  )
+})
+
+test_that("loadObservedData reads a selected PKML source and no other", {
+  project <- .projectWithBrokenSources()
+
+  result <- loadObservedData(project, sources = "digitized_plasma.pkml")
+
+  # Only the data set the PKML file holds: the DataSet of the same name added in
+  # this session is not added, which would abort the load on the duplicate name.
+  expect_named(result, "Digitized plasma")
+  # PKML stores single precision.
+  expect_equal(
+    result[["Digitized plasma"]]$yValues,
+    c(0, 4.1, 2.3),
+    tolerance = 1e-6
+  )
+})
+
+test_that("loadObservedData with no sources selected returns an empty list", {
+  project <- .projectWithBrokenSources()
+
+  expect_identical(loadObservedData(project, sources = character(0)), list())
+})
+
+test_that("loadObservedData aborts on an unknown source id, listing the ids", {
+  project <- .projectWithBrokenSources()
+
+  expect_snapshot(
+    error = TRUE,
+    loadObservedData(
+      project,
+      sources = c("Aciclovir_TimeValuesData.xlsx", "laskin_po.pkml")
+    )
+  )
+
+  emptyProject <- testProject()
+  removeObservedData(emptyProject, "Aciclovir_TimeValuesData.xlsx")
+  expect_snapshot(
+    error = TRUE,
+    emptyProject$loadObservedData(sources = "laskin_po.pkml")
+  )
+})
+
+test_that("loadObservedData rejects sources that are not source ids", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, {
+    loadObservedData(project, sources = NA_character_)
+  })
+})
+
+test_that("loadObservedData finds a source by its id as given or as stored", {
+  project <- testProject()
+  ospsuite::saveDataSetToPKML(
+    digitizedPlasmaDataSet(),
+    file.path(project$paths$dataFolder, "laskin_1982_iv.pkml")
+  )
+  suppressWarnings(addObservedData(
+    project,
+    list(id = "Laskin_IV", type = "pkml", file = "laskin_1982_iv.pkml")
+  ))
+  expected <- ospsuite::dataSetToDataFrame(digitizedPlasmaDataSet())
+
+  for (id in c("Laskin_IV", "laskin_iv")) {
+    expect_equal(
+      ospsuite::dataSetToDataFrame(loadObservedData(project, sources = id)),
+      expected,
+      info = id
+    )
+  }
+  # Both spellings name one source, which is loaded once.
+  expect_equal(
+    ospsuite::dataSetToDataFrame(
+      loadObservedData(project, sources = c("Laskin_IV", "laskin_iv"))
+    ),
+    expected
+  )
+})
+
+test_that("loadObservedData returns selected sources in the order the project declares them", {
+  project <- testProject()
+  cohortB <- ospsuite::DataSet$new(name = "Cohort B plasma")
+  cohortB$setValues(xValues = c(0, 1, 4), yValues = c(0, 2.9, 1.2))
+  ospsuite::saveDataSetToPKML(
+    digitizedPlasmaDataSet(),
+    file.path(project$paths$dataFolder, "laskin_1982_iv.pkml")
+  )
+  ospsuite::saveDataSetToPKML(
+    cohortB,
+    file.path(project$paths$dataFolder, "cohort_b.pkml")
+  )
+  addObservedData(project, list(type = "pkml", file = "laskin_1982_iv.pkml"))
+  addObservedData(project, list(type = "pkml", file = "cohort_b.pkml"))
+
+  result <- loadObservedData(
+    project,
+    sources = c("cohort_b.pkml", "laskin_1982_iv.pkml")
+  )
+  expect_named(result, c("Digitized plasma", "Cohort B plasma"))
+})
+
+test_that("loadObservedData of selected sources leaves the data-set names alone", {
+  project <- testProject()
+  seam <- .projectSeam(project)
+  # Adding a source clears the data-set names found so far.
+  addObservedData(project, list(type = "pkml", file = "cohort_b_export.pkml"))
+  expect_null(seam$.observedDataNamesCache)
+  loadObservedData(project, sources = "Aciclovir_TimeValuesData.xlsx")
+  expect_null(seam$.observedDataNamesCache)
+
+  project <- testProject()
+  seam <- .projectSeam(project)
+  suppressMessages(addObservedData(project, digitizedPlasmaDataSet()))
+  allNames <- getObservedDataNames(project)
+  expect_identical(allNames, c(testObservedDataId, "Digitized plasma"))
+  loadObservedData(project, sources = "Digitized plasma")
+  expect_identical(seam$.observedDataNamesCache, allNames)
+})
+
+test_that("loadObservedData warns only about a selected programmatic source with no data", {
+  project <- testProject()
+  suppressMessages(addObservedData(project, digitizedPlasmaDataSet()))
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Lost cohort")
+  ))
+  # A reload loses the DataSet of a source that was never saved.
+  seam <- .projectSeam(project)
+  seam$.programmaticDataSets[["Lost cohort"]] <- NULL
+  rlang::reset_warning_verbosity(paste0(
+    "esqlabsR_observed_data_unresolved_programmatic_",
+    .projectWarningKey(project)
+  ))
+
+  expect_no_warning(
+    result <- loadObservedData(project, sources = "Digitized plasma")
+  )
+  expect_equal(
+    ospsuite::dataSetToDataFrame(result),
+    ospsuite::dataSetToDataFrame(digitizedPlasmaDataSet())
+  )
+
+  expect_snapshot(result <- loadObservedData(project, sources = "Lost cohort"))
+  expect_identical(result, list())
+})
+
+test_that("a warning about selected sources leaves the warning of a full load", {
+  project <- testProject()
+  for (name in c("Lost cohort A", "Lost cohort B")) {
+    suppressMessages(addObservedData(
+      project,
+      ospsuite::DataSet$new(name = name)
+    ))
+  }
+  # A reload loses the DataSets of sources that were never saved.
+  seam <- .projectSeam(project)
+  seam$.programmaticDataSets <- list()
+  rlang::reset_warning_verbosity(paste0(
+    "esqlabsR_observed_data_unresolved_programmatic_",
+    .projectWarningKey(project)
+  ))
+
+  expect_warning(
+    loadObservedData(project, sources = "Lost cohort A"),
+    "Lost cohort A"
+  )
+  # The full load, as createDataCombined() runs it, still names every source
+  # that resolved to no data.
+  expect_snapshot(result <- loadObservedData(project))
+  expect_named(result, testObservedDataId)
+})
+
 test_that("addObservedData overwrite = TRUE replaces a config entry in place", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "sub1/obs.pkml"))
