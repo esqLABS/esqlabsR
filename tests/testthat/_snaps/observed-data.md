@@ -218,6 +218,9 @@
       id = "laskin_argument")
       addObservedData(project, list(id = "laskin_entry", type = "pkml", file = "Laskin IV.pkml"))
       addObservedData(project, list(type = "pkml", file = "sub/Cohort B.pkml"))
+      addObservedData(project, c(list(id = "group_b_entry"), groupB), id = "group_b_argument")
+      addObservedData(project, c(list(id = "group_b_entry"), groupB))
+      addObservedData(project, groupB)
       addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Message
       i Added the <DataSet> "Scratch measurement" as observed-data source "scratch_measurement". It lives in this session until you save.

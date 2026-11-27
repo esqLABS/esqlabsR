@@ -996,6 +996,12 @@ test_that("addObservedData canonicalizes a declared id", {
 
 test_that("the id argument wins over the entry's id, which wins over the source", {
   project <- testProject()
+  groupB <- list(
+    type = "excel",
+    file = "Laskin 1982.xlsx",
+    importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+    sheets = list("Laskin 1982.Group B")
+  )
   expect_snapshot({
     addObservedData(
       project,
@@ -1007,6 +1013,13 @@ test_that("the id argument wins over the entry's id, which wins over the source"
       list(id = "laskin_entry", type = "pkml", file = "Laskin IV.pkml")
     )
     addObservedData(project, list(type = "pkml", file = "sub/Cohort B.pkml"))
+    addObservedData(
+      project,
+      c(list(id = "group_b_entry"), groupB),
+      id = "group_b_argument"
+    )
+    addObservedData(project, c(list(id = "group_b_entry"), groupB))
+    addObservedData(project, groupB)
     addObservedData(
       project,
       ospsuite::DataSet$new(name = "Scratch measurement")
@@ -1039,6 +1052,9 @@ test_that("the id argument wins over the entry's id, which wins over the source"
         type = "pkml",
         file = "sub/Cohort B.pkml"
       ),
+      group_b_argument = c(list(id = "group_b_argument"), groupB),
+      group_b_entry = c(list(id = "group_b_entry"), groupB),
+      laskin_1982 = c(list(id = "laskin_1982"), groupB),
       scratch_measurement = list(
         id = "scratch_measurement",
         type = "programmatic"

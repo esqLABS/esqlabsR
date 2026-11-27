@@ -445,3 +445,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 23:31: An id given to addObservedData() is checked with the shared id helpers, and the observed-data string helper and the invalid-id message are gone. (#1368)
 - 2026-11-27 23:32: The check for two DataSets saved to one file, which unique ids rule out, is gone, and three observed-data lookups use the plain form. (#1368)
 - 2026-11-27 23:35: The remaining inline addObservedData() messages move to the catalog, the no-data-folder save error names the source id, and the unresolved-source warning no longer says a session DataSet is never saved. (#1368)
+- 2026-11-27 23:37: The test of the id order covers an Excel source given an id argument, an entry id, and no id. (#1368)
