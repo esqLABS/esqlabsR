@@ -81,12 +81,8 @@
       Configurations/ParameterIdentification.xlsx [AlgorithmOptions] 2 rows: PITaskName | OptionName | OptionValue
       Configurations/ParameterIdentification.xlsx [CIOptions] 1 rows: PITaskName | OptionName | OptionValue
       Configurations/Plots.xlsx [DataCombined] 4 rows: DataCombinedName | dataType | label | scenario | path | dataSet | group | xOffsets | xOffsetsUnits | yOffsets | yOffsetsUnits | xScaleFactors | yScaleFactors
-      Configurations/Plots.xlsx [plotConfiguration] 4 rows: plotID | DataCombinedName | plotType | title | xUnit | yUnit | xAxisScale | yAxisScale | xValuesLimits | yValuesLimits | aggregation | quantiles | nsd | foldDistance | subtitle
-      Configurations/Plots.xlsx [plotGrids] 3 rows: name | plotIDs | title | subtitle
-      Configurations/Plots.xlsx [exportConfiguration] 0 rows: plotGridName | outputName | width
-      Configurations/Plots.xlsx [dataTypes] 2 rows: dataType
-      Configurations/Plots.xlsx [plotTypes] 5 rows: plotType
-      Configurations/Plots.xlsx [ObservedDataNames] 0 rows: 
+      Configurations/Plots.xlsx [plotConfiguration] 4 rows: plotId | dataCombined | plotType | title | xUnit | yUnit | xAxisScale | yAxisScale | xValuesLimits | yValuesLimits | aggregation | quantiles | nsd | foldDistance | subtitle
+      Configurations/Plots.xlsx [plotGrids] 3 rows: plotGridId | plots | title | subtitle
       Configurations/Populations.xlsx [Demographics] 2 rows: PopulationName | species | population | numberOfIndividuals | proportionOfFemales | weightMin | weightMax | weightUnit | heightMin | heightMax | heightUnit | ageMin | ageMax | BMIMin | BMIMax | BMIUnit | Protein Ontogenies
       Configurations/Scenarios.xlsx [OutputPaths] 2 rows: OutputPathId | OutputPath
       Configurations/Scenarios.xlsx [Scenarios] 8 rows: Scenario_name | IndividualId | PopulationId | ReadPopulationFromCSV | ModelParameterSheets | ApplicationProtocol | SimulationTime | SimulationTimeUnit | SteadyState | SteadyStateTime | SteadyStateTimeUnit | OverwriteFormulasInSS | ModelFile | OutputPathsIds
@@ -192,7 +188,8 @@
       i Folders name an environment variable the esqlabsR 5 way, as a part of the path. A v6 project writes it as `${NAME}`, so the values were rewritten:
       * modelFolder: "MDL/Simulations/" -> "${MDL}/Simulations/"
       * dataFolder: "OBSDATA" -> "${OBSDATA}"
-      i A sheet with no place in the v6 workbooks was not carried over; the esqlabsR 5 workbooks in 'esqlabsR5' keep it:
+      i Some sheets with no place in the v6 workbooks were not carried over; the esqlabsR 5 workbooks in 'esqlabsR5' keep them:
+      * 'Plots.xlsx': "exportConfiguration", "dataTypes", "plotTypes", and "ObservedDataNames"
       * 'Populations.xlsx': "UserDefinedVariability"
 
 # an Individual Parameter Sets cell naming another set is reported

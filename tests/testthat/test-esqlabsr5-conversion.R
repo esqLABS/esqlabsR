@@ -690,3 +690,51 @@ test_that("convertProjectToV6() stops on a scenario boolean it cannot read, befo
   )
   expect_identical(.folderState(projectDir), before)
 })
+
+# Plots ----
+
+test_that("convertProjectToV6() writes the plot sheets with the v6 columns", {
+  plots <- data.frame(
+    plotID = c("P1", "P2", "P3"),
+    DataCombinedName = c("AciclovirPVB", NA, "AciclovirPVB"),
+    dataCombined = c(NA, "AciclovirPop", "Ignored"),
+    plotType = "individual",
+    xAxisScale = c("lin", "log", NA),
+    displayLLOQ = c("no", "Yes", NA),
+    stringsAsFactors = FALSE
+  )
+  expect_identical(
+    .v5ConvertPlotSheet(plots),
+    data.frame(
+      plotId = c("P1", "P2", "P3"),
+      dataCombined = c("AciclovirPVB", "AciclovirPop", "AciclovirPVB"),
+      plotType = "individual",
+      xAxisScale = c("linear", "log", NA),
+      displayLLOQ = c(FALSE, TRUE, NA),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  grids <- data.frame(
+    name = c("Aciclovir", "Aciclovir2"),
+    plotIDs = c("\"P1\", \"P2\"", "P2"),
+    title = c("Aciclovir", NA),
+    stringsAsFactors = FALSE
+  )
+  expect_identical(
+    .v5ConvertPlotGridSheet(grids),
+    data.frame(
+      plotGridId = c("Aciclovir", "Aciclovir2"),
+      plots = c("\"P1\", \"P2\"", "P2"),
+      title = c("Aciclovir", NA),
+      stringsAsFactors = FALSE
+    )
+  )
+})
+
+test_that("a true-or-false plot setting that is no boolean spelling is kept for validation", {
+  expect_identical(
+    .v5PlotLogicalColumn(c("no", "sometimes", NA), "displayLLOQ"),
+    c("FALSE", "sometimes", NA)
+  )
+})

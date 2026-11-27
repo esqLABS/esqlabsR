@@ -289,6 +289,52 @@
   )
 }
 
+.esqlabsR5Messages$skippedPlotExportConfiguration <- function(
+  filePath,
+  rows,
+  grids
+) {
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("rows", rows, envir = envir)
+  assign("grids", grids, envir = envir)
+  assign("n", length(grids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field exportConfiguration} sheet of {.file {filePath}} is \\
+      not converted: {cli::qty(rows)}{rows} {?row/rows} describing where a plot \\
+      grid's figure is written and at what size.",
+      if (length(grids) > 0L) {
+        c("x" = "{cli::qty(n)}Plot grid{?s} {.val {grids}}.")
+      },
+      "i" = "A project has no field for a figure's filename, width or height: \\
+      {.fn createPlots} returns the plot objects and the caller saves them, for \\
+      example with {.fn ospsuite.plots::exportPlot}. The esqlabsR 5 workbook in \\
+      {.file esqlabsR5} keeps the sheet."
+    ),
+    envir = envir
+  )
+}
+
+.esqlabsR5Messages$conflictingPlotIdColumns <- function(sheet, columns, pairs) {
+  envir <- new.env(parent = parent.frame())
+  assign("sheet", sheet, envir = envir)
+  assign("used", columns[[1]], envir = envir)
+  assign("other", columns[[2]], envir = envir)
+  assign("pairs", pairs, envir = envir)
+  assign("n", length(pairs), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field {sheet}} sheet has both a {.field {used}} and a \\
+      {.field {other}} column, and they hold different ids in {n} \\
+      row{?s} ({.field {used}} / {.field {other}}): {.val {pairs}}.",
+      "i" = "The v6 sheet keeps the id from {.field {used}}. Change it there \\
+      and import again to use the other."
+    ),
+    envir = envir
+  )
+}
+
 .esqlabsR5Messages$folderHoldsProject <- function(dir, found) {
   cliBullets(
     "x" = "{.file {dir}} already holds a v6 project or an earlier conversion: \\
@@ -502,6 +548,12 @@ convertProjectToV6 <- function(
     workbooks$scenariosFile$copy <- FALSE
     workbooks$scenariosFile$sheets <- converted$sheets
     droppedSheets[[sections$scenariosFile$name]] <- converted$dropped
+  }
+  if (!is.null(sections$plotsFile)) {
+    converted <- .v5ConvertPlotsWorkbook(sections$plotsFile$path)
+    workbooks$plotsFile$copy <- FALSE
+    workbooks$plotsFile$sheets <- converted$sheets
+    droppedSheets[[sections$plotsFile$name]] <- converted$dropped
   }
   if (!is.null(sections$populationsFile)) {
     converted <- .v5ConvertPopulationsWorkbook(sections$populationsFile$path)
@@ -1750,6 +1802,199 @@ convertProjectToV6 <- function(
   cli::cli_abort(
     .esqlabsR5Messages$notLogical(field, x, file),
     call = call
+  )
+}
+
+# Plots ----
+
+# The plots workbook in the v6 layout: its `DataCombined`, `plotConfiguration`
+# and `plotGrids` sheets, the last two with the v6 column names. The other
+# sheets have no v6 place: the `dataTypes`, `plotTypes` and `ObservedDataNames`
+# lookup lists are dropped, and an `exportConfiguration` sheet that holds rows
+# is reported.
+#
+# @param file The esqlabsR 5 plots workbook.
+# @returns `list(sheets, dropped)`, `dropped` naming the sheets not carried over
+#   that no warning names.
+# @keywords internal
+# @noRd
+.v5ConvertPlotsWorkbook <- function(file) {
+  sheetNames <- readxl::excel_sheets(file)
+  read <- function(sheet) {
+    as.data.frame(readExcel(file, sheet = sheet), check.names = FALSE)
+  }
+  converters <- list(
+    DataCombined = identity,
+    plotConfiguration = .v5ConvertPlotSheet,
+    plotGrids = .v5ConvertPlotGridSheet
+  )
+  sheets <- list()
+  dropped <- character()
+  for (sheet in sheetNames) {
+    if (sheet %in% names(converters)) {
+      sheets[[sheet]] <- converters[[sheet]](read(sheet))
+      next
+    }
+    if (identical(sheet, "exportConfiguration")) {
+      exportConfiguration <- read(sheet)
+      if (nrow(exportConfiguration) > 0L) {
+        .v5WarnSkippedPlotExportConfiguration(exportConfiguration, file)
+        next
+      }
+    }
+    dropped <- c(dropped, sheet)
+  }
+  list(sheets = sheets, dropped = dropped)
+}
+
+# The esqlabsR 5 `plotConfiguration` sheet with the v6 columns: `plotID` becomes
+# `plotId` and `DataCombinedName` becomes `dataCombined`, `"lin"`, the esqlabsR 5
+# spelling of the linear axis scale, becomes `"linear"`, and a Yes / No cell of
+# a true-or-false plot setting becomes `TRUE` / `FALSE`.
+#
+# @keywords internal
+# @noRd
+.v5ConvertPlotSheet <- function(df) {
+  df <- .v5MergeIdColumns(df, c("plotId", "plotID"), "plotConfiguration")
+  df <- .v5MergeColumns(df, "dataCombined", "DataCombinedName")
+  for (column in intersect(c("xAxisScale", "yAxisScale"), names(df))) {
+    lin <- !is.na(df[[column]]) & df[[column]] == "lin"
+    df[[column]][lin] <- "linear"
+  }
+  logicalFields <- names(Filter(
+    function(field) identical(field$type, "logical"),
+    .plotFields
+  ))
+  for (column in intersect(logicalFields, names(df))) {
+    df[[column]] <- .v5PlotLogicalColumn(df[[column]], column)
+  }
+  df
+}
+
+# The esqlabsR 5 `plotGrids` sheet with the v6 columns: `name` becomes
+# `plotGridId` and `plotIDs` becomes `plots`.
+#
+# @keywords internal
+# @noRd
+.v5ConvertPlotGridSheet <- function(df) {
+  df <- .v5MergeIdColumns(df, c("plotGridId", "name"), "plotGrids")
+  .v5MergeColumns(df, "plots", "plotIDs")
+}
+
+# Merge an id column and its esqlabsR 5 name into the v6 one, which keeps its
+# own value where it has one. A row where the two disagree is reported.
+#
+# @param df The sheet.
+# @param idColumn The v6 id column, then its esqlabsR 5 name.
+# @param sheet The sheet name, for the warning.
+# @keywords internal
+# @noRd
+.v5MergeIdColumns <- function(df, idColumn, sheet) {
+  .v5WarnConflictingPlotIdColumns(df, idColumn, sheet)
+  .v5MergeColumns(df, idColumn[[1]], idColumn[[2]], keep = idColumn[[1]])
+}
+
+# Merge the esqlabsR 5 column `from` into the v6 column `to`. The value of one
+# column fills a blank cell of the other; where both hold one, `keep` names the
+# column whose value wins, `from` unless told otherwise. The merged column takes
+# the place of whichever of the two comes first.
+#
+# @keywords internal
+# @noRd
+.v5MergeColumns <- function(df, to, from, keep = from) {
+  if (!(from %in% names(df))) {
+    return(df)
+  }
+  preference <- intersect(unique(c(keep, from, to)), names(df))
+  values <- rep(NA_character_, nrow(df))
+  for (column in preference) {
+    blank <- is.na(values)
+    values[blank] <- as.character(df[[column]])[blank]
+  }
+  merged <- which(names(df) %in% c(to, from))
+  before <- seq_len(min(merged) - 1L)
+  data.frame(
+    df[before],
+    stats::setNames(list(values), to),
+    df[setdiff(seq_along(df), c(before, merged))],
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
+# A true-or-false plot setting as `TRUE` / `FALSE` where esqlabsR 5 spelled it
+# otherwise. A cell that is no boolean spelling is kept, so validation reports
+# it; the column is written as text then, since an Excel column has one type.
+#
+# @keywords internal
+# @noRd
+.v5PlotLogicalColumn <- function(values, field) {
+  if (is.logical(values)) {
+    return(values)
+  }
+  converted <- lapply(values, function(value) {
+    tryCatch(.v5ToLogical(value, field), error = function(e) value)
+  })
+  if (all(vapply(converted, is.logical, logical(1)))) {
+    return(unlist(converted))
+  }
+  vapply(converted, as.character, character(1))
+}
+
+# Report an esqlabsR 5 `exportConfiguration` sheet that holds rows.
+#
+# The sheet says where each grid's figure is written and at what size, and a v6
+# project has no field for any of it: figures are saved by the caller, from the
+# plot objects `createPlots()` returns.
+#
+# @param exportDf The sheet.
+# @param plotsFile The workbook, named in the warning.
+# @keywords internal
+# @noRd
+.v5WarnSkippedPlotExportConfiguration <- function(exportDf, plotsFile) {
+  grids <- if ("plotGridName" %in% names(exportDf)) {
+    unique(as.character(exportDf$plotGridName))
+  } else {
+    character()
+  }
+  .warnFormatted(
+    .esqlabsR5Messages$skippedPlotExportConfiguration(
+      plotsFile,
+      nrow(exportDf),
+      grids[!is.na(grids)]
+    ),
+    "esqlabsR_importSkippedPlotExportConfiguration"
+  )
+}
+
+# Report the rows of a plot sheet whose two id columns both hold a value and
+# disagree. A sheet has both only when columns were merged by hand: the v6 one
+# (`plotId` / `plotGridId`) and the esqlabsR 5 one (`plotID` / `name`). The v6
+# column wins; without the warning a grid naming the other id fails later with
+# an unknown-plot error that does not say why.
+#
+# @param df The sheet.
+# @param idColumn The v6 id column, then its esqlabsR 5 name.
+# @param sheet The sheet name, for the warning.
+# @keywords internal
+# @noRd
+.v5WarnConflictingPlotIdColumns <- function(df, idColumn, sheet) {
+  if (!all(idColumn %in% names(df))) {
+    return(invisible(NULL))
+  }
+  used <- as.character(df[[idColumn[[1]]]])
+  other <- as.character(df[[idColumn[[2]]]])
+  rows <- which(!is.na(used) & !is.na(other) & used != other)
+  if (length(rows) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    .esqlabsR5Messages$conflictingPlotIdColumns(
+      sheet,
+      idColumn,
+      paste0(used[rows], " / ", other[rows])
+    ),
+    "esqlabsR_importConflictingPlotIdColumns"
   )
 }
 
