@@ -397,3 +397,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 15:41: importProjectFromExcel() gives any file that is not an Excel file, the esqlabsR 5 snapshot JSON included, one message saying it reads Excel workbooks, before anything is written; the restore advice stays with loadProject(). (#1417)
 - 2026-11-27 15:41: The importProjectFromExcel() help says any file that is not Excel stops the import before anything is written, the esqlabsR 5 snapshot JSON included, and keeps the advice for a user who has that JSON file. (#1417)
 - 2026-11-27 16:26: The importProjectFromExcel() summary no longer lists the folders and observed-data files it copied, which an import into another folder is expected to do; it still warns about what could not be copied.
+- 2026-11-27 16:36: The warning about folders an import could not copy reads in the singular when there is one folder.

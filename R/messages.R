@@ -354,8 +354,8 @@ messages$importNotExcelFile <- function(path) {
 messages$importUncopiedAssetFolders <- function(folders) {
   ospsuite.utils::cliFormat(
     "{length(folders)} folder{?s} named by the project configuration {cli::qty(length(folders))}{?was/were} not copied: {.file {folders}}.",
-    "Each is absent from the Excel project, points outside it, or already holds files in the new project (pass {.code overwrite = TRUE} to replace those).",
-    "A definition pointing into one will not resolve until you place the folder in the new project."
+    "{cli::qty(length(folders))}{?It is/Each is} absent from the Excel project, points outside it, or already holds files in the new project (pass {.code overwrite = TRUE} to replace {?it/those}).",
+    "{cli::qty(length(folders))}A definition pointing into {?it/one of them} will not resolve until you place {?it/that folder} in the new project."
   )
 }
 
