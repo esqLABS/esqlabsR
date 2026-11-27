@@ -3560,7 +3560,10 @@ test_that("importProjectFromExcel copies the observed-data files into a relative
   expect_true(all(file.exists(file.path(
     workDir,
     "out",
-    c("TestProject_TimeValuesData.xlsx", "esqlabs_dataImporter_configuration.xml")
+    c(
+      "TestProject_TimeValuesData.xlsx",
+      "esqlabs_dataImporter_configuration.xml"
+    )
   ))))
   # The models folder traveled too, so the data files were compared against a
   # folder this import copied.

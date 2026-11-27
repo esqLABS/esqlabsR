@@ -15,8 +15,7 @@ importProjectFromExcel(
 }
 \arguments{
 \item{projectConfigPath}{Path to the project's top-level Excel file,
-\code{Project.xlsx} (\code{ProjectConfiguration.xlsx} in a project created before
-that file was renamed). Defaults to \code{"Project.xlsx"}.}
+\code{Project.xlsx} (\code{ProjectConfiguration.xlsx} in projects ccreated with v5 esqlabsR). Defaults to \code{"Project.xlsx"}.}
 
 \item{outputDir}{Directory where the JSON project is created. If \code{NULL}
 (default), it is created in the same directory as the Excel file.}
@@ -24,13 +23,8 @@ that file was renamed). Defaults to \code{"Project.xlsx"}.}
 \item{overwrite}{Logical. Guards against silently replacing an existing JSON
 project. With \code{overwrite = FALSE} (default), the import aborts when a
 project file or a non-empty \verb{definitions/} tree already exists in
-\code{outputDir}, because importing again replaces the JSON project with the
-Excel state and deletes every definition the Excel files do not contain,
-including one you added to the JSON project since. Pass \code{overwrite = TRUE}
-to replace the existing JSON project. The same flag governs the folders
-and observed-data files copied into another folder (see \code{copyAssets}):
-with \code{overwrite = FALSE}, one that \code{outputDir} already holds is kept as it
-is and named in a warning; with \code{overwrite = TRUE}, it is replaced.}
+\code{outputDir}. Pass \code{overwrite = TRUE}
+to replace the existing JSON project.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
 written, its per-section definition counts, and the folders and files
@@ -82,16 +76,6 @@ checks \code{Project.json}: an unknown setting, a value of the wrong type, a
 setting named in two rows, or a value with no setting beside it stops the
 import and names the sheet. A workbook without the sheet gives a project
 without \code{defaultSolverSettings}.
-
-Only Excel files are read: any other file stops the import before anything
-is written. This includes the JSON file that
-\code{snapshotProjectConfiguration()} saved in esqlabsR 5 (usually
-\code{ProjectConfiguration.json}). When the Excel files it was saved from are
-still beside it, as in a usual esqlabsR 5 project folder, import those. If
-the JSON file is all you have of a project, restore its Excel files first
-with \code{restoreProjectConfiguration()} in esqlabsR 5.7.0, the last esqlabsR 5
-release, then import the restored workbook (\code{ProjectConfiguration.xlsx} for
-\code{ProjectConfiguration.json}) with this function in the current version.
 }
 \seealso{
 Other projectPersistence:
