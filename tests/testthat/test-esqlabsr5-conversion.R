@@ -641,3 +641,52 @@ test_that("a filled UserDefinedVariability sheet is reported, an empty one is no
   )
   expect_snapshot(cat(conditionMessage(warning)), transform = .redactTmpDir)
 })
+
+# Scenarios ----
+
+test_that("convertProjectToV6() writes scenario booleans as TRUE / FALSE and keeps a changed name as the label", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      scenarios <- sheets$Scenarios
+      scenarios$Scenario_name[scenarios$Scenario_name == "PIScenario2"] <-
+        "PI Scenario 2"
+      scenarios$SteadyState <- c("Yes", "no", "1", "0", NA, "TRUE")
+      sheets$Scenarios <- scenarios
+      sheets
+    }
+  )
+  convertExcelProject(projectDir)
+
+  scenarios <- readExcel(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    sheet = "Scenarios"
+  )
+  expect_identical(names(scenarios)[1:2], c("Scenario_name", "Label"))
+  expect_identical(
+    scenarios$Label,
+    ifelse(scenarios$Scenario_name == "PI Scenario 2", "PI Scenario 2", NA)
+  )
+  expect_identical(scenarios$SteadyState, c(TRUE, FALSE, TRUE, FALSE, NA, TRUE))
+  expect_type(scenarios$ReadPopulationFromCSV, "logical")
+})
+
+test_that("convertProjectToV6() stops on a scenario boolean it cannot read, before changing the folder", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$Scenarios$SteadyState[[1]] <- "maybe"
+      sheets
+    }
+  )
+  before <- .folderState(projectDir)
+
+  expect_snapshot(
+    convertProjectToV6(legacyExcelProjectPath(projectDir)),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(.folderState(projectDir), before)
+})

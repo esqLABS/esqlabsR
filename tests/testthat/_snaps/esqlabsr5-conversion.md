@@ -212,3 +212,12 @@
       ! The UserDefinedVariability sheet of '<tmp-path>' is not converted: 1 row of parameter variability.
       i esqlabsR 5 did not read the sheet, and a v6 population has no field for it. The esqlabsR 5 workbook in 'esqlabsR5' keeps it.
 
+# convertProjectToV6() stops on a scenario boolean it cannot read, before changing the folder
+
+    Code
+      convertProjectToV6(legacyExcelProjectPath(projectDir))
+    Condition
+      Error in `convertProjectToV6()`:
+      x Cannot read the SteadyState value "maybe" in '<tmp-path>' as true or false.
+      i Use "TRUE" / "FALSE", "1" / "0" or "Yes" / "No", then convert again.
+

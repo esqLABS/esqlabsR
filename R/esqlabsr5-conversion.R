@@ -275,6 +275,20 @@
   )
 }
 
+.esqlabsR5Messages$notLogical <- function(field, value, file) {
+  where <- if (is.null(file)) {
+    "Cannot read the {.field {field}} value {.val {value}} as true or false."
+  } else {
+    "Cannot read the {.field {field}} value {.val {value}} in {.file {file}} \\
+    as true or false."
+  }
+  cliBullets(
+    "x" = where,
+    "i" = "Use {.val TRUE} / {.val FALSE}, {.val 1} / {.val 0} or \\
+    {.val Yes} / {.val No}, then convert again."
+  )
+}
+
 .esqlabsR5Messages$folderHoldsProject <- function(dir, found) {
   cliBullets(
     "x" = "{.file {dir}} already holds a v6 project or an earlier conversion: \\
@@ -480,6 +494,15 @@ convertProjectToV6 <- function(
   # The sheets that have no v6 place and hold nothing a warning names, by
   # workbook, for the summary.
   droppedSheets <- list()
+  if (!is.null(sections$scenariosFile)) {
+    converted <- .v5ConvertScenariosWorkbook(
+      sections$scenariosFile$path,
+      .call
+    )
+    workbooks$scenariosFile$copy <- FALSE
+    workbooks$scenariosFile$sheets <- converted$sheets
+    droppedSheets[[sections$scenariosFile$name]] <- converted$dropped
+  }
   if (!is.null(sections$populationsFile)) {
     converted <- .v5ConvertPopulationsWorkbook(sections$populationsFile$path)
     workbooks$populationsFile$copy <- FALSE
@@ -1572,6 +1595,161 @@ convertProjectToV6 <- function(
   .warnFormatted(
     .esqlabsR5Messages$undefinedIndividualSheets(file, dropped),
     "esqlabsR_importUndefinedIndividualSheets"
+  )
+}
+
+# Scenarios ----
+
+# The boolean columns of a Scenarios sheet. `OverwriteFormulasInSS` is newer
+# than the others, so an older sheet lacks it.
+.v5ScenarioBooleanColumns <- c(
+  "ReadPopulationFromCSV",
+  "SteadyState",
+  "OverwriteFormulasInSS"
+)
+
+# The scenarios workbook in the v6 layout: its `Scenarios` and `OutputPaths`
+# sheets, the scenarios with true/false booleans and with a label where the
+# scenario name does not survive as an id.
+#
+# @param file The esqlabsR 5 scenarios workbook.
+# @param call The frame an abort is attributed to.
+# @returns `list(sheets, dropped)`, `dropped` naming the other sheets.
+# @keywords internal
+# @noRd
+.v5ConvertScenariosWorkbook <- function(file, call = NULL) {
+  sheetNames <- readxl::excel_sheets(file)
+  sheets <- list()
+  for (sheet in intersect(sheetNames, c("Scenarios", "OutputPaths"))) {
+    df <- as.data.frame(readExcel(file, sheet = sheet), check.names = FALSE)
+    if (identical(sheet, "Scenarios")) {
+      df <- .v5ConvertScenariosSheet(df, file, call)
+    }
+    sheets[[sheet]] <- df
+  }
+  list(
+    sheets = sheets,
+    dropped = setdiff(sheetNames, c("Scenarios", "OutputPaths"))
+  )
+}
+
+# A Scenarios sheet with its booleans as `TRUE` / `FALSE` and its `Label`
+# column filled where the scenario name keeps more than its id does.
+#
+# @param df The sheet.
+# @param file The workbook, named when a boolean cell cannot be read.
+# @param call The frame an abort is attributed to.
+# @keywords internal
+# @noRd
+.v5ConvertScenariosSheet <- function(df, file = NULL, call = NULL) {
+  for (column in intersect(.v5ScenarioBooleanColumns, names(df))) {
+    df[[column]] <- vapply(
+      df[[column]],
+      .v5ToLogical,
+      logical(1),
+      field = column,
+      file = file,
+      call = call,
+      USE.NAMES = FALSE
+    )
+  }
+
+  ids <- as.character(df[["Scenario_name"]])
+  labelCells <- if ("Label" %in% names(df)) {
+    as.character(df[["Label"]])
+  } else {
+    rep(NA_character_, nrow(df))
+  }
+  records <- lapply(seq_len(nrow(df)), function(i) {
+    record <- list(id = ids[[i]])
+    if (!is.na(labelCells[[i]])) {
+      record$label <- labelCells[[i]]
+    }
+    record
+  })
+  labels <- vapply(
+    .v5KeepScenarioNamesAsLabels(records),
+    function(record) record$label %||% NA_character_,
+    character(1)
+  )
+  if (all(is.na(labels))) {
+    return(df)
+  }
+  df[["Label"]] <- NULL
+  data.frame(
+    df[1L],
+    Label = labels,
+    df[-1L],
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Keep the `Scenario_name` of each scenario as its label when canonicalizing the
+# id changes more than its case, so the spelling esqlabsR 5 showed is not lost:
+# `Aciclovir_IV-2.5mg/kg` gets the id `aciclovir_iv-2.5mg_kg` and the label
+# `Aciclovir_IV-2.5mg/kg`. A name the id only lowercases gets no label, since the
+# id reads the same. Wrapping quotes are cell syntax, not part of the name, so
+# they are stripped first. A label the sheet gives in its `Label` column wins.
+#
+# @param scenarios Records carrying `id` and, optionally, `label`.
+# @returns `scenarios`, with the labels added.
+# @keywords internal
+# @noRd
+.v5KeepScenarioNamesAsLabels <- function(scenarios) {
+  lapply(scenarios, function(sc) {
+    if (is.null(sc$label) && .isNonEmptyString(sc$id)) {
+      name <- .stripWrappingQuotes(sc$id)
+      if (!identical(.canonicalizeOneId(name), tolower(name))) {
+        sc$label <- name
+      }
+    }
+    sc
+  })
+}
+
+# Read one esqlabsR 5 boolean cell as `TRUE`, `FALSE` or `NA` (blank).
+#
+# esqlabsR 5 sheets spell a boolean as `TRUE` / `FALSE`, `1` / `0`, `Yes` /
+# `No` or `true` / `false`, in any case. A value that is none of these aborts
+# naming the field, so a typo stops the conversion rather than turning into
+# `FALSE`.
+#
+# @param x One cell.
+# @param field The column, for the abort.
+# @param file The workbook, for the abort, or `NULL`.
+# @param call The frame the abort is attributed to.
+# @keywords internal
+# @noRd
+.v5ToLogical <- function(x, field, file = NULL, call = NULL) {
+  if (is.null(x) || length(x) == 0L || is.na(x)) {
+    return(NA)
+  }
+  if (is.logical(x)) {
+    return(x)
+  }
+  if (is.numeric(x)) {
+    if (x == 1) {
+      return(TRUE)
+    }
+    if (x == 0) {
+      return(FALSE)
+    }
+  } else {
+    token <- tolower(trimws(as.character(x)))
+    if (token == "") {
+      return(NA)
+    }
+    if (token %in% c("true", "t", "yes", "y", "1")) {
+      return(TRUE)
+    }
+    if (token %in% c("false", "f", "no", "n", "0")) {
+      return(FALSE)
+    }
+  }
+  cli::cli_abort(
+    .esqlabsR5Messages$notLogical(field, x, file),
+    call = call
   )
 }
 
