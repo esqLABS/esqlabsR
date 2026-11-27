@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-Technical description of a project's on-disk layout, the fields of the `Project.json` file, the in-memory `Project` field groups those fields are read through, the snapshot file format, and the record `runScenarios()` returns.
+Technical description of a project's on-disk layout, the fields of the `Project.json` file, the in-memory `Project` field groups those fields are read through, and the record `runScenarios()` returns.
 
 For why the layout is shaped this way, see `vignette("about-the-project-model")`. For the fields of an individual definition, see `vignette("reference-definition-fields")`.
 
@@ -157,26 +157,6 @@ Two asymmetries to note when reading and writing paths:
 - **Writing a path stores the value verbatim**, and it is resolved on the next read. So `project$paths$simulationsFolder <- "Models"` stores `"Models"`.
 
 `projectFilePath` and `projectDirPath` are read-only; assigning either aborts. The two version fields are managed by the load and save machinery. Assigning any writable field sets the unsaved-changes flag. Changing `definitionsFolder` redirects where the next `saveProject()` writes; nothing moves on disk until that save.
-
-## Snapshot file
-
-`snapshotProject()` writes a single file with every section inlined, so the project's definitions travel as one file rather than a tree.
-
-| Property | Value |
-| --- | --- |
-| Extension | `.esqlabsR`, always added; any extension you supply is replaced |
-| Content | JSON |
-| Covers | project metadata and every definition section |
-| Does not cover | the files definitions reference: model PKMLs, observed-data files, importer configurations, population CSVs |
-| Default name | `<projectName>-YYYY-MM-DD-HHMMSS`, falling back to `project` when the project has no name |
-| Includes unsaved edits | yes, the snapshot is of the in-memory state, except the data of a `DataSet` added with `addObservedData()` or a `Population` added with `addPopulation()`: the snapshot keeps their entries but not their data until `saveProject()` has written them to files, so save before taking the snapshot |
-| Needs a folder on disk | no, a project that exists only in the session can be snapshotted |
-| Return value | invisibly, the path written |
-| Existing file | aborts unless `overwrite = TRUE` |
-
-`restoreProject()` materializes a snapshot back into a project folder (a `Project.json` and the `definitions/` tree) and returns a freshly loaded `Project` bound to that directory. It refuses any directory that is not empty unless `overwrite = TRUE`; the check is deliberately broader than "already holds a project", so unrelated files in the target are enough to stop it.
-
-The round trip is lossless for what the snapshot covers: metadata and definitions reload into a structurally identical project. The referenced working files are unaffected by it either way, and must already be reachable at the paths the definitions name.
 
 ## Scenario Result record
 

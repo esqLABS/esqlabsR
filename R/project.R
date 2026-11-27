@@ -19,21 +19,6 @@
   "initialConditionsFile"
 )
 
-# The `filePaths` values `.pathsGroup()` reads through `.resolveWorkingFolder()`,
-# which requires each to stay under the project directory unless it opts out with
-# a `${VAR}`. Any other property sits in `filePaths` unread, so it cannot fail a
-# load. Named here so code that writes a project can judge a folder value by the
-# same set the loader will.
-#
-# @keywords internal
-# @noRd
-.containedWorkingFolders <- c(
-  "simulationsFolder",
-  "dataFolder",
-  "outputFolder",
-  "populationsFolder"
-)
-
 #' @title Project
 #' @docType class
 #' @description An R6 class representing an esqlabsR project.
@@ -43,9 +28,7 @@
 #'   functions — live only in your R session until you write them to the
 #'   project files with [saveProject()]. This makes a loaded project a safe
 #'   place to experiment: discard unsaved changes by loading the project
-#'   again with [loadProject()], or
-#'   use [snapshotProject()] / [restoreProject()] to set a save-point and
-#'   return to it later.
+#'   again with [loadProject()].
 #'
 #'   A `Project` cannot be copied with `$clone()` — because nothing is
 #'   written to disk until you save, there is no need for a working copy: the
