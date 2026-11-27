@@ -47,6 +47,7 @@ JSON-only project.
 }
 \seealso{
 Other projectPersistence:
+\code{\link[=convertProjectToV6]{convertProjectToV6()}},
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},

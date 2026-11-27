@@ -22,63 +22,68 @@ library(esqlabsR)
 
 ## Who this guide is for
 
-This guide is for modelers who have an existing pre-6.0.0 esqlabsR project driven by Excel workbooks and want to move it to the 6.0.0 model, where a project is a single `Project.json` file backed by a tree of one-file-per-definition files. If you are starting a new project from scratch in 6.0.0, you do not need this guide; create the project directly in the new format instead.
+This guide is for modelers who have a project made with esqlabsR 5, driven by Excel workbooks, and want to work with it in esqlabsR 6.0.0, where a project is a `Project.json` file backed by a folder of one file per definition. If you are starting a new project, you do not need this guide; create the project directly in the new format instead.
 
-The code below is shown but not run; the commands are correct against a real Excel project, so substitute your own paths.
+The code below is shown but not run; substitute your own paths.
 
 ## Before you start: what will look different
 
-A pre-6.0.0 project is an *Excel project*: a `ProjectConfiguration.xlsx` (called `Project.xlsx` in later 5.x releases) pointing at a folder of configuration workbooks, one per concern (`Scenarios.xlsx`, `ModelParameters.xlsx`, `Individuals.xlsx`, `Populations.xlsx`, `Applications.xlsx`, `Plots.xlsx`). The migration keeps the same information and reshapes where it lives. `vignette("about-the-project-model")` explains why; three of the changes are ones you will notice while checking the result, so they are worth knowing before you run the import.
+An esqlabsR 5 project is a `ProjectConfiguration.xlsx` workbook pointing at a folder of configuration workbooks, one per concern (`Scenarios.xlsx`, `ModelParameters.xlsx`, `Individuals.xlsx`, `Populations.xlsx`, `Applications.xlsx`, `Plots.xlsx`, `ParameterIdentification.xlsx`). The migration keeps the same information and reshapes where it lives. `vignette("about-the-project-model")` explains why; three of the changes are ones you will notice while checking the result.
 
-* **The workbooks become one `Project.json` plus a `definitions/` tree.** Each scenario becomes its own file under `definitions/scenarios/`, so where you used to look at a row you now look at a file.
+* **The workbooks become one `Project.json` plus a `definitions/` folder.** Each scenario becomes its own file under `definitions/scenarios/`, so where you used to look at a row you now look at a file. The workbooks stay: in 6.0.0 they are the way to edit the project in Excel and import the edits.
 
-* **Parameter sets merge into one collection.** Excel kept them in three places: the model parameters workbook, the non-biometrics sheets of the individuals workbook, and the non-protocol sheets of the applications workbook. They become a single `parameterSets` collection that scenarios, individuals, and applications all reference by id. This is the change most likely to need your attention, since two sets that shared a name in different workbooks now collide.
+* **Parameter sets move into one workbook.** esqlabsR 5 kept them in three places: the model parameters workbook, the sheets of the individuals workbook beside the biometrics, and the sheets of the applications workbook. In 6.0.0 they are all sheets of the model parameters workbook, and scenarios, individuals and applications name them by id.
 
-* **Ids are lowercased and made filename-safe.** An id you spelled `MyScenario` in Excel becomes `myscenario`, and every reference to it is rewritten the same way, so it still resolves. This matters when you read the imported project, and when anything outside the project refers to an id by its old spelling.
+* **Ids are lowercased and made filename-safe.** A scenario you called `MyScenario` gets the id `myscenario`, and every reference to it is rewritten the same way, so it still resolves. This matters when anything outside the project refers to an id by its old spelling.
 
-Two functions form the bridge:
+The migration takes three steps: convert the esqlabsR 5 project, check the result and edit the workbooks where needed, and import the edited workbooks.
 
-* `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel project and writes the JSON project. It returns, invisibly, the path to the `Project.json` it wrote. The file is called `Project.json` whatever the Excel file was called; pass `projectFileName` to choose another name.
+## Step 1: convert the esqlabsR 5 project
 
-* `exportProjectToExcel(project, outputDir, silent)` writes the workbooks back out from a loaded `Project`, for when you still need to hand a colleague an Excel project or want to compare the two forms.
+Point `convertProjectToV6()` at the project's `ProjectConfiguration.xlsx`. The conversion works in the project's own folder.
 
-## Step 1: run the import
-
-Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries. The import reads only Excel files. If your project folder also holds the JSON file that `snapshotProjectConfiguration()` saved, import the Excel files beside it, not the JSON file. If all you have is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, usually `ProjectConfiguration.json`, get the Excel files back first: in esqlabsR 5.7.0, the last esqlabsR 5 release, run `restoreProjectConfiguration()` on that file, which writes the top-level workbook and the `Configurations/` workbooks beside it. Then update to this version and import the restored workbook (`ProjectConfiguration.xlsx` for `ProjectConfiguration.json`) as described here.
-
-```{r import}
-jsonPath <- importProjectFromExcel(
-  projectConfigPath = "MyProject/Project.xlsx",
-  outputDir = "MyProject"
-)
-jsonPath
-#> "MyProject/Project.json"
+```{r convert}
+jsonPath <- convertProjectToV6("MyProject/ProjectConfiguration.xlsx")
 ```
 
-A few details about what the import does:
+`jsonPath` is the path to the `Project.json` the conversion wrote.
 
-* It resolves the configuration workbooks relative to the configurations folder recorded in the Excel file, and reads whichever exist. Missing workbooks are skipped.
-* The three former parameter-set sources are read into the single `parameterSets` collection. A duplicated id across sources is a collision; the import merges them regardless, and the collision later aborts the load (see "Caveats to check by hand").
-* The import replaces any JSON project already in `outputDir`: it rewrites the project file and brings the whole `definitions/` tree in line with the Excel content, which deletes any definition you created only on the JSON side. To protect that work, the import aborts by default when a JSON project already exists in `outputDir`. Re-run it with `overwrite = TRUE` once you are sure you want the Excel state to win. This matters if you migrated once, then kept working in the JSON project: do not casually re-import over it.
-* The `configurationsFolder` and the per-workbook filenames recorded in the Excel file must stay under the project folder. A value that points outside it (a `../` climb or an absolute path) aborts the import naming the offending field, so a shared or downloaded Excel project cannot read a workbook from elsewhere on the machine. A folder deliberately kept outside the project (for example a shared drive) is still reachable through the `${VAR}` environment-variable form.
+Afterwards the folder holds:
 
-## Step 2: load the project
+* `esqlabsR5/`, with `ProjectConfiguration.xlsx`, the `ProjectConfiguration.json` that `snapshotProjectConfiguration()` saved beside it if there is one, and the esqlabsR 5 workbooks it named, at the same places inside it (`esqlabsR5/Configurations/Scenarios.xlsx`, ...). Nothing in them is changed.
+* `Project.xlsx` and the `Configurations/` workbooks, in the layout of 6.0.0. These are the workbooks you edit from now on.
+* `Project.json` and the `definitions/` folder, which `importProjectFromExcel()` wrote from those workbooks.
 
-Load the JSON into an in-memory `Project`.
+Models, observed data and population files are not moved. If any step fails, or you interrupt it, the folder is put back as it was, and the error tells you why.
 
-```{r load}
-project <- loadProject(jsonPath)
-```
+What the conversion changes in the workbooks:
 
-`loadProject()` already runs a quick check for the most common cross-reference problems (for example a scenario that points at an individual or population that no longer exists) and warns about them, but it still returns the project so you can inspect it. For the full picture, validate explicitly.
+* **Parameter sets.** Every sheet of the individuals and applications workbooks that is a parameter sheet moves to the model parameters workbook. The applications workbook gets one `ApplicationProtocols` row per protocol, naming the protocol's parameter set, and each individual names its own sheet in the `ParameterSets` column of `IndividualBiometrics`. Since the three workbooks had their own sheet names, one name can be taken twice; the later sheet is renamed (`Indiv1` becomes `Indiv1_2`), the references its own workbook makes follow it, and a warning names each rename.
+* **Ontogenies.** The `Protein` and `Ontogeny` column pair becomes the single `Protein Ontogenies` column (`CYP3A4:CYP3A4,CYP2D6:CYP2C8`).
+* **Scenarios.** `Yes`/`No` and `1`/`0` become `TRUE`/`FALSE`. A scenario name that the id does not keep, such as `Aciclovir IV 2.5 mg/kg`, goes into the new `Label` column, so the project keeps the name as you typed it.
+* **Plots.** The columns `plotID`, `DataCombinedName`, `name` and `plotIDs` become `plotId`, `dataCombined`, `plotGridId` and `plots`, and an axis scale written `"lin"` becomes `"linear"`.
+* **Parameter identification.** The sheets keyed by `PITaskName` become the `PITasks`, `PIParameters` and `PIOutputMappings` sheets. The rows of a `PIParameters` sheet that share a `Group` become one parameter estimated across their scenarios. The `ObservedDataSheet` column is not needed any more: the project imports every sheet of the data workbook and finds a data set by its name.
+* **Folders.** `modelFolder` becomes `simulationsFolder`, and `populationsFolder`, which esqlabsR 5 read inside the configurations folder, becomes its path from the project folder (`Configurations/PopulationsCSV`). A folder that names an environment variable as part of its path (`SHARED/Data`, with `SHARED` set) is written as `${SHARED}/Data`, which 6.0.0 reads; a part containing "path" is kept as written, as esqlabsR 5 did, and a rewritten `populationsFolder` stays inside the configurations folder (`Configurations/${POPCSV}`). The summary lists each value it rewrote.
 
-The imported project is a normal tree project: every `add*`, `set*`, and `remove*` function (`addScenario()`, `setIndividual()`, and so on) edits the project in memory, and `saveProject(project)` writes those edits to the definition files under `definitions/`. To label the project file after the study rather than by the generic name, pass `projectFileName` (`importProjectFromExcel(..., projectFileName = "MyStudy")` writes `MyStudy.json`); `saveProject()` then updates that same file, since a project always saves back to the file it was loaded from. Note that this names the project file only: the `definitions/` tree and the copied `Models/` and `Data/` folders beside it are shared by whatever sits in `outputDir`, so migrating several Excel projects means giving each one its own `outputDir`, not just its own project file name.
+Some content has no place in 6.0.0. The conversion warns when a sheet that holds rows is not carried over: the `exportConfiguration` sheet of the plots workbook (save figures from the plot objects `createPlots()` returns instead), the `UserDefinedVariability` sheet of the populations workbook, and an `Individual Parameter Sets` cell naming a set other than the individual's own sheet. The summary names the other sheets it does not carry over: the lookup lists `dataTypes`, `plotTypes` and `ObservedDataNames`, an empty `exportConfiguration` or `UserDefinedVariability` sheet, and any other sheet the 6.0.0 workbooks have no place for. All of them stay in the workbooks in `esqlabsR5/`.
 
-## Step 3: validate what carried over
+The conversion refuses, before changing anything:
 
-Run `validateProject()` to get a complete report. This is the step that catches references that did not survive the reshape, most often because an id was canonicalized on one side of a reference but you expected the original spelling, or because a parameter set the import expected was absent.
+* a folder that already holds a 6.0.0 project (`Project.json`, `Project.xlsx` or definition files (`.json`) in `definitions/`) or an earlier conversion (`esqlabsR5/`), and the `esqlabsR5/` folder of a converted project;
+* a project configuration workbook that is already in the layout of 6.0.0 (it has a `schemaVersion` row): import it with `importProjectFromExcel()` instead;
+* a workbook name that points outside the configurations folder;
+* a folder value that points outside the project folder, such as an absolute path or one starting with `../`. A 6.0.0 project keeps its folders inside the project folder, or reaches a shared folder through an environment variable: write the value as `${SHARED}/Data` in `ProjectConfiguration.xlsx` and convert again;
+* a workbook that lies outside the project folder once links are followed, such as a configurations folder that is a link to a shared folder;
+* a project whose configurations folder holds no esqlabsR 5 workbook.
+
+If all you have is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, usually `ProjectConfiguration.json`, get the workbooks back first: in esqlabsR 5.7.0, run `restoreProjectConfiguration()` on that file, then update to this version and convert the restored `ProjectConfiguration.xlsx`.
+
+## Step 2: check the project and edit the workbooks
+
+Load the project and validate it.
 
 ```{r validate}
+project <- loadProject(jsonPath)
 results <- validateProject(project)
 
 if (isAnyCriticalErrors(results)) {
@@ -86,43 +91,30 @@ if (isAnyCriticalErrors(results)) {
 }
 ```
 
-`validateProject()` prints a report grouped by section and separates blocking **critical errors** from non-blocking **warnings**; the article on validating a project (`vignette("how-to-validate-a-project")`) covers reading that report in full. After a migration the most useful part is the **"did you mean"** suggestion the validator attaches to an unresolved reference, which is exactly the clue you need after canonicalization. For instance, if a scenario references a parameter set written as `Global` in Excel but the canonical id is `global`, the report reads something like:
+`loadProject()` already warns about the most common cross-reference problems (for example a scenario that names an individual that does not exist), and `validateProject()` gives the full report, separating blocking **critical errors** from **warnings**; `vignette("how-to-validate-a-project")` covers reading it. After a migration the most useful part is the **"did you mean"** suggestion attached to an unresolved reference, which is the clue you need after the ids were lowercased:
 
 ```
 [crossReferences] Scenario 'myscenario' references undefined model parameter
 sets: Global (did you mean 'global'?)
 ```
 
-`isAnyCriticalErrors()` gives a single pass/fail check. Once the project validates with no critical errors, the migration is complete and you can run scenarios (`vignette("how-to-run-simulations")`) and create plots (`vignette("how-to-plot-results")`) from the JSON project as normal.
+Fix what the report and the warnings of the conversion point at in the workbooks of 6.0.0: `Project.xlsx` and the `Configurations/` workbooks. Their layout is the one `exportProjectToExcel()` writes, so a workbook you export later looks the same.
 
-## Caveats to check by hand
+## Step 3: import the edited workbooks
 
-The migration is faithful for the common case, but a few things deserve a manual look.
+Import the workbooks again to bring `Project.json` and `definitions/` in line with them.
 
-* **Parameter-set id collisions abort the load.** Because model, individual, and application parameter sets now share one `parameterSets` namespace, two sets that had the same id in different Excel workbooks now collide, and the collision aborts `loadProject()`. If a load fails this way, rename the clashing set in the source Excel and re-import. Even with no collision, skim the merged `parameterSets` after import to confirm each set landed where you expect.
+```{r import}
+jsonPath <- importProjectFromExcel(
+  "MyProject/Project.xlsx",
+  overwrite = TRUE
+)
+project <- loadProject(jsonPath)
+```
 
-* **Update external scripts to the canonical ids.** Import rewrites any id that was not already lowercase and filename-safe (a warning names each `original -> canonical` change), so the ids in the JSON project and in the `definitions/scenarios/` filenames differ from the Excel spellings. If you have scripts that refer to scenarios or parameter sets by their old Excel names, change them to the canonical ids.
+The import replaces the project in the folder with the content of the workbooks, which deletes any definition you created only on the JSON side. It therefore stops when a project already exists, unless you pass `overwrite = TRUE`. Repeat steps 2 and 3 until the project validates with no critical errors; then you can run scenarios (`vignette("how-to-run-simulations")`) and create plots (`vignette("how-to-plot-results")`) as normal.
 
-* **The export does not reconstruct your old workbooks.** `exportProjectToExcel()` writes the unified `parameterSets` collection as a single model-parameters workbook, one sheet per set, rather than the original three-workbook split. Exporting a migrated project and re-importing it is stable, but it is not a route back to the layout you started from. Keep the original workbooks if you need them.
-
-* **Empty or absent sections are dropped, not preserved as empty.** A configuration workbook that did not exist, or a sheet with no rows, simply does not appear in the JSON project. If a section you expected is missing after import, check that its workbook and sheet actually held data.
-
-* **Plot settings are kept, and a few look different.** The columns of the `plotConfiguration` sheet in `Plots.xlsx` are imported as they are, and `exportProjectToExcel()` writes them back. An axis scale written as `"lin"` is imported as `"linear"`. Plots are now drawn with `{ospsuite.plots}`, so check a few figures:
-    * On a time profile, observed points take the color of their curve (`linesColor`). `pointsColor` applies only to observed-versus-simulated and residual plots, and validation warns when a time profile sets it.
-    * `lloqDirection` accepts only the directions a plot type can draw: `"horizontal"` on a time profile, `"vertical"` or `"both"` on an observed-versus-simulated plot. Another value is a critical validation error.
-    * The background, panel, axis-line, and grid settings and `errorbarsCapSize` had no effect with recent versions of the OSP Suite. They now change the plot, so a workbook that set them looks different.
-    * The watermark settings, `displayLLOQ`, `foldLinesLegendDiagonal`, and `linesLinetype` on an observed-versus-simulated plot are kept but have no effect yet, and validation warns about them. `vignette("reference-definition-fields")` lists them.
-    * A setting the workbook leaves empty takes the ESQlabs value, or else the `{ospsuite.plots}` default. For example, fold lines now appear in the legend, and axes keep a small space around the data.
-
-* **A scenario's `solverSettings` is JSON only.** The Excel scenario sheet has no solver-settings columns, so a scenario carrying a `solverSettings` block cannot be written to a workbook. `exportProjectToExcel()` warns and names the scenarios it dropped. A re-imported scenario then solves with the project's `defaultSolverSettings`, which the workbooks do carry (see the next point), or with a parameter-identification task's own block, and only where none of these sets a field does the model file's value apply. The scenario-level override itself is gone. `projectStatus()` also reports such a project as out of sync on the Excel axis for as long as the block is there, because the workbooks genuinely no longer describe it. Import is unaffected: it never produces a block.
-
-* **The project's `defaultSolverSettings` travel on a sheet of their own.** `exportProjectToExcel()` writes them to a `DefaultSolverSettings` sheet in `Project.xlsx`, after the sheet of project properties, with one row per setting (columns `Setting`, `Value`, and `Description`). `importProjectFromExcel()` reads that sheet back and checks it the way `loadProject()` checks `Project.json`: an unknown setting, a value of the wrong type, a setting named in two rows, or a value with no setting beside it stops the import and names the sheet. A workbook without the sheet, such as one from before 6.0.0, gives a project without `defaultSolverSettings`, so its scenarios solve with the settings stored in their model files.
-
-* **Keep the Excel project around until you trust the JSON one.** During the transition you can use `projectStatus(project)` to confirm the workbooks still match the loaded project before you retire them (see Step 4).
-
-## Step 4: confirm the two forms agree
-
-`projectStatus(project)` reports, for a loaded `Project`, whether it has unsaved in-memory edits (the memory-vs-tree axis) and whether a configured `Project.xlsx` side-car is a stale export of the current project (the memory-vs-Excel axis). During a migration the Excel axis is the one to watch: it tells you whether re-exporting would change the workbooks.
+From then on, edit the project either in R (every `add*`, `set*` and `remove*` function, followed by `saveProject()`) or in the workbooks followed by an import. `projectStatus(project)` tells you whether the workbooks still describe the project you loaded:
 
 ```{r status}
 status <- projectStatus(project)
@@ -130,10 +122,25 @@ status$excel_in_sync
 #> TRUE
 ```
 
-When `excel_in_sync` is `FALSE`, `status$details` describes the divergence, so you can see whether it is something you changed deliberately or a migration gap to investigate. Once you trust the JSON project, you can retire the Excel workbooks.
+When `excel_in_sync` is `FALSE`, `status$details` describes the difference, and `exportProjectToExcel(project, overwrite = TRUE)` writes the workbooks from the project.
+
+## Caveats to check by hand
+
+* **Update external scripts to the new ids.** Every id that was not already lowercase and filename-safe is rewritten, so the ids in the project differ from the esqlabsR 5 spellings. Scripts that refer to scenarios or parameter sets by their old names need the new ids.
+
+* **Plot settings are kept, and a few look different.** The columns of the `plotConfiguration` sheet are kept, and `exportProjectToExcel()` writes them back. Plots are now drawn with `{ospsuite.plots}`, so check a few figures:
+    * On a time profile, observed points take the color of their curve (`linesColor`). `pointsColor` applies only to observed-versus-simulated and residual plots, and validation warns when a time profile sets it.
+    * `lloqDirection` accepts only the directions a plot type can draw: `"horizontal"` on a time profile, `"vertical"` or `"both"` on an observed-versus-simulated plot. Another value is a critical validation error.
+    * The background, panel, axis-line, and grid settings and `errorbarsCapSize` had no effect with recent versions of the OSP Suite. They now change the plot, so a workbook that set them looks different.
+    * The watermark settings, `displayLLOQ`, `foldLinesLegendDiagonal`, and `linesLinetype` on an observed-versus-simulated plot are kept but have no effect yet, and validation warns about them. `vignette("reference-definition-fields")` lists them.
+    * A setting the workbook leaves empty takes the ESQlabs value, or else the `{ospsuite.plots}` default. For example, fold lines now appear in the legend, and axes keep a small space around the data.
+
+* **A scenario's `solverSettings` is JSON only.** The scenario sheet has no solver-settings columns, so a scenario carrying a `solverSettings` block cannot be written to a workbook. `exportProjectToExcel()` warns and names those scenarios, and `projectStatus()` reports the project as out of sync with its workbooks for as long as the block is there. The project-wide `defaultSolverSettings` do travel: `exportProjectToExcel()` writes them to a `DefaultSolverSettings` sheet of `Project.xlsx`, and `importProjectFromExcel()` reads them back. A converted project has none until you set them.
+
+* **Keep the `esqlabsR5/` folder until you trust the new project.** It holds the workbooks exactly as esqlabsR 5 used them, including the sheets the conversion did not carry over.
 
 ## Where to go next
 
 With the project validating, work with it as any other: `vignette("how-to-design-scenarios")` to describe what to simulate, `vignette("how-to-run-simulations")` to run, `vignette("how-to-plot-results")` to plot. To hand the whole thing to a colleague, copy or zip the project folder.
 
-For the layout the import writes, see `vignette("reference-project-file")`. For why Excel is now an interchange format rather than the source of truth, see `vignette("about-the-project-model")`.
+For the layout the import writes, see `vignette("reference-project-file")`. For why the workbooks are now a way to edit the project rather than its source of truth, see `vignette("about-the-project-model")`.

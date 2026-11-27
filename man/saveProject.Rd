@@ -50,6 +50,7 @@ saveProject(project) # clean save: "Project is already up to date; ..."
 \code{\link[=loadProject]{loadProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other projectPersistence:
+\code{\link[=convertProjectToV6]{convertProjectToV6()}},
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},

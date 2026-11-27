@@ -110,7 +110,7 @@ Three things were reshaped rather than copied:
 
 The reason for the demotion is that a spreadsheet is a poor authoritative store for an analysis that people review and share. A row cannot be diffed usefully, a sheet couples unrelated concerns into one binary file that cannot be merged, and an identifier written in a cell has no relationship to any filename, so nothing enforces that a reference and its target agree.
 
-Excel remains a fully supported secondary entrypoint, because handing a workbook to a collaborator is sometimes the only practical option: `importProjectFromExcel()` migrates a legacy project, `exportProjectToExcel()` writes the workbooks back out, and `projectStatus()` reports whether an Excel side-car is still a faithful export.
+Excel remains a fully supported secondary entrypoint, because handing a workbook to a collaborator is sometimes the only practical option: `convertProjectToV6()` brings an esqlabsR 5 project over, `importProjectFromExcel()` reads edited workbooks into the project, `exportProjectToExcel()` writes the workbooks back out, and `projectStatus()` reports whether an Excel side-car is still a faithful export.
 
 One asymmetry is worth stating plainly rather than discovering: the export does not reconstruct the original three-workbook parameter-set split. It writes the unified collection as a single model-parameters workbook, one sheet per set. Exporting a migrated project and re-importing it is stable under the new unified model, but it is not a route back to your old workbooks verbatim. Treat the export as a way to share, not as a way to undo the migration.
 

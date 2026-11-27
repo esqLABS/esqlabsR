@@ -68,6 +68,7 @@ reference:
       - projectStatus
       - initProject
       - exampleProjectPath
+      - convertProjectToV6
       - importProjectFromExcel
       - exportProjectToExcel
       - createScenariosFromPKML
