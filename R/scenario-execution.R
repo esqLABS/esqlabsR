@@ -997,7 +997,10 @@
     if (length(pair) != 2L) {
       cli::cli_abort(messages$wrongOntogenyStructure(parts[[i]]))
     }
-    ospsuite.utils::validateEnumValue(value = pair[[2]], enum = ospsuite::StandardOntogeny)
+    ospsuite.utils::validateEnumValue(
+      value = pair[[2]],
+      enum = ospsuite::StandardOntogeny
+    )
     out[[i]] <- ospsuite::MoleculeOntogeny$new(
       molecule = pair[[1]],
       ontogeny = ospsuite::StandardOntogeny[[pair[[2]]]]

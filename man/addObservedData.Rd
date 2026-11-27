@@ -55,11 +55,6 @@ An id is not the name the data is known by: each imported
 in an Excel sheet, the name inside a PKML file), and that name, not the
 declaration's id, is what a \code{dataCombined} entry references.
 
-Data you compute in R (digitized points, a transformation of a raw file) is
-built in your own code and passed here as a \code{DataSet}, or saved to a PKML
-file that a \code{pkml} source names. A project never runs R code to produce its
-observed data.
-
 A \code{DataSet} you pass lives in the R session until you save. On
 \code{\link[=saveProject]{saveProject()}} it is written to a PKML file named \verb{<DataSet name>.pkml}
 under the project's data folder and its entry becomes a \code{pkml} source, so
