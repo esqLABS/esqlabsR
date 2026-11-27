@@ -549,11 +549,16 @@ convertProjectToV6 <- function(
 # before the folder is touched.
 #
 # @returns A list:
-#   - projectDir : the project folder
-#   - moves      : the esqlabsR 5 files that move into `esqlabsR5/`
-#   - outputs    : the files to write, each `list(path, sheets)` (sheets to
-#                  write) or `list(path, copyOf)` (a moved file to copy back)
-#   - v6Workbook : the property workbook the import is run on
+#   - projectDir     : the project folder
+#   - moves          : the esqlabsR 5 files that move into `esqlabsR5/`
+#   - outputs        : the files to write, each `list(path, sheets)` (sheets to
+#                      write) or `list(path, copyOf)` (a moved file to copy
+#                      back)
+#   - v6Workbook     : the property workbook the import is run on
+#   - envVarRewrites : the folder values written with `${NAME}`, for the
+#                      summary
+#   - droppedSheets  : the sheets not carried over that no warning names, by
+#                      workbook, for the summary
 # @keywords internal
 # @noRd
 .v5PlanConversion <- function(
@@ -591,12 +596,6 @@ convertProjectToV6 <- function(
   workbooks <- lapply(sections, function(section) {
     c(section, list(copy = TRUE))
   })
-  workbooks <- .v5ConvertParameterWorkbooks(
-    workbooks,
-    sections,
-    scenarios,
-    .v5SectionTargets(props, configsFolder)
-  )
   # The sheets that have no v6 place and hold nothing a warning names, by
   # workbook, for the summary.
   droppedSheets <- list()
@@ -608,6 +607,24 @@ convertProjectToV6 <- function(
     workbooks$scenariosFile$copy <- FALSE
     workbooks$scenariosFile$sheets <- converted$sheets
     droppedSheets[[sections$scenariosFile$name]] <- converted$dropped
+  }
+  workbooks <- .v5ConvertParameterWorkbooks(
+    workbooks,
+    sections,
+    scenarios,
+    .v5SectionTargets(props, configsFolder)
+  )
+  if (!is.null(sections$populationsFile)) {
+    converted <- .v5ConvertPopulationsWorkbook(sections$populationsFile$path)
+    workbooks$populationsFile$copy <- FALSE
+    workbooks$populationsFile$sheets <- converted$sheets
+    droppedSheets[[sections$populationsFile$name]] <- converted$dropped
+  }
+  if (!is.null(sections$plotsFile)) {
+    converted <- .v5ConvertPlotsWorkbook(sections$plotsFile$path)
+    workbooks$plotsFile$copy <- FALSE
+    workbooks$plotsFile$sheets <- converted$sheets
+    droppedSheets[[sections$plotsFile$name]] <- converted$dropped
   }
   if (!is.null(sections$parameterIdentificationFile)) {
     converted <- .v5ConvertPIWorkbook(
@@ -623,18 +640,6 @@ convertProjectToV6 <- function(
         sections$parameterIdentificationFile$name
       ]] <- converted$dropped
     }
-  }
-  if (!is.null(sections$plotsFile)) {
-    converted <- .v5ConvertPlotsWorkbook(sections$plotsFile$path)
-    workbooks$plotsFile$copy <- FALSE
-    workbooks$plotsFile$sheets <- converted$sheets
-    droppedSheets[[sections$plotsFile$name]] <- converted$dropped
-  }
-  if (!is.null(sections$populationsFile)) {
-    converted <- .v5ConvertPopulationsWorkbook(sections$populationsFile$path)
-    workbooks$populationsFile$copy <- FALSE
-    workbooks$populationsFile$sheets <- converted$sheets
-    droppedSheets[[sections$populationsFile$name]] <- converted$dropped
   }
 
   outputs <- list()

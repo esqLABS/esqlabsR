@@ -410,3 +410,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 21:24: The esqlabsR 5 import tests run convertProjectToV6() on copies of the fixtures and moved to the converter's test file, with their checks on the project unchanged. (#1426)
 - 2026-11-27 21:33: convertProjectToV6() no longer checks for a file in the way of a workbook it writes, which only the refused Project.xlsx can be, and moves a workbook two properties name once. (#1426)
 - 2026-11-27 21:33: Tests cover a converted project's sync with its workbooks, a workbook carried over unchanged, the workbooks named and dropped, the DefaultSolverSettings sheet, a restore that cannot move a file back, and the esqlabsR 5 boolean and PI configuration readers. (#1426)
+- 2026-11-27 21:36: convertProjectToV6() converts the workbooks in the order the import reads them, scenarios first. (#1426)

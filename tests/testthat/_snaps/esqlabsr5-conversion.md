@@ -195,8 +195,8 @@
       * modelFolder: "MDL/Simulations/" -> "${MDL}/Simulations/"
       * dataFolder: "OBSDATA" -> "${OBSDATA}"
       i Some sheets with no place in the v6 workbooks were not carried over; the esqlabsR 5 workbooks in 'esqlabsR5' keep them:
-      * 'Plots.xlsx': "exportConfiguration", "dataTypes", "plotTypes", and "ObservedDataNames"
       * 'Populations.xlsx': "UserDefinedVariability"
+      * 'Plots.xlsx': "exportConfiguration", "dataTypes", "plotTypes", and "ObservedDataNames"
 
 # an Individual Parameter Sets cell naming another set is reported
 
