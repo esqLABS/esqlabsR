@@ -137,6 +137,16 @@
   )
 }
 
+.esqlabsR5Messages$importFailed <- function() {
+  cliBullets(
+    "x" = "The conversion stopped while importing the v6 workbooks it wrote, \\
+    and the project folder was put back as it was.",
+    "i" = "The error below comes from the v6 workbooks, which the conversion \\
+    wrote from the esqlabsR 5 ones. Fix what it points at in the esqlabsR 5 \\
+    workbooks, then convert again."
+  )
+}
+
 .esqlabsR5Messages$converted <- function(folder) {
   cliBullets(
     "v" = "Converted the esqlabsR 5 project. Its esqlabsR 5 workbooks are now \\
@@ -1129,7 +1139,7 @@ convertProjectToV6 <- function(
 # @returns The path to the `Project.json` the import wrote.
 # @keywords internal
 # @noRd
-.v5ApplyConversion <- function(plan, silent) {
+.v5ApplyConversion <- function(plan, silent, .call = rlang::caller_env()) {
   projectDir <- plan$projectDir
   definitionsDir <- file.path(projectDir, "definitions")
   state <- rlang::env(
@@ -1177,7 +1187,16 @@ convertProjectToV6 <- function(
     }
   }
 
-  jsonPath <- importProjectFromExcel(plan$v6Workbook, silent = silent)
+  jsonPath <- tryCatch(
+    importProjectFromExcel(plan$v6Workbook, silent = silent),
+    error = function(e) {
+      cli::cli_abort(
+        .esqlabsR5Messages$importFailed(),
+        parent = e,
+        call = .call
+      )
+    }
+  )
   done <- TRUE
   jsonPath
 }

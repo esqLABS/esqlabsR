@@ -225,12 +225,10 @@ test_that("convertProjectToV6() puts the folder back when the import fails", {
   )
   before <- .folderState(projectDir)
 
-  expect_error(
-    suppressWarnings(convertProjectToV6(
-      legacyExcelProjectPath(projectDir),
-      silent = TRUE
-    )),
-    "collide after canonicalization"
+  expect_snapshot(
+    convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE),
+    error = TRUE,
+    transform = .redactTmpDir
   )
   expect_identical(.folderState(projectDir), before)
 })

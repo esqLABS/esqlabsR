@@ -59,6 +59,19 @@
       x '<tmp-path>' already holds a v6 project or an earlier conversion: 'Project.xlsx' and 'esqlabsR5'.
       i Load the v6 project with `loadProject()`. To convert the esqlabsR 5 workbooks again, first move these out of the folder.
 
+# convertProjectToV6() puts the folder back when the import fails
+
+    Code
+      convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE)
+    Condition
+      Error in `convertProjectToV6()`:
+      x The conversion stopped while importing the v6 workbooks it wrote, and the project folder was put back as it was.
+      i The error below comes from the v6 workbooks, which the conversion wrote from the esqlabsR 5 ones. Fix what it points at in the esqlabsR 5 workbooks, then convert again.
+      Caused by error in `.canonicalizeId()`:
+      ! Ids collide after canonicalization:
+      x "Adult Scenario" and "Adult,Scenario" -> "adult_scenario"
+      i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
+
 # a file the restore cannot move back is named, and kept in esqlabsR5/
 
     Code
