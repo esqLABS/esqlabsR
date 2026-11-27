@@ -499,11 +499,7 @@ validationSummary <- function(validationResults) {
       }
     }
     if (length(holders) > 0) {
-      cli::cli_warn(c(
-        "Removed parameterSet {.val {id}} is still referenced by {length(holders)} definition{?s}:",
-        "*" = "{holders}",
-        "i" = "These now have a dangling reference. Update or remove them."
-      ))
+      cli::cli_warn(messages$parameterSetRemovedStillReferenced(id, holders))
     }
     return(invisible(NULL))
   }
@@ -522,10 +518,10 @@ validationSummary <- function(validationResults) {
       }
     }
     if (length(holders) > 0) {
-      cli::cli_warn(c(
-        "Removed initialConditions {.val {id}} is still referenced by {length(holders)} scenario{?s}:",
-        "*" = "{holders}",
-        "i" = "These now have a dangling reference. Update or remove them."
+      cli::cli_warn(messages$removedStillReferencedByScenarios(
+        "initialConditions",
+        id,
+        holders
       ))
     }
     return(invisible(NULL))
@@ -544,10 +540,10 @@ validationSummary <- function(validationResults) {
     }
     piHolders <- unique(piHolders)
     if (length(piHolders) > 0) {
-      cli::cli_warn(c(
-        "Removed outputPath {.val {id}} is still referenced by {length(piHolders)} parameter identification task{?s}:",
-        "*" = "{piHolders}",
-        "i" = "These PI tasks now have a dangling reference. Update or remove them."
+      cli::cli_warn(messages$removedStillReferencedByPITasks(
+        "outputPath",
+        id,
+        piHolders
       ))
     }
   }
@@ -567,11 +563,7 @@ validationSummary <- function(validationResults) {
     }
     dcHolders <- unique(dcHolders)
     if (length(dcHolders) > 0) {
-      cli::cli_warn(c(
-        "Removed scenario {.val {id}} is still referenced by {length(dcHolders)} dataCombined definition{?s}:",
-        "*" = "{dcHolders}",
-        "i" = "These now have a dangling reference. Update or remove them."
-      ))
+      cli::cli_warn(messages$scenarioRemovedUsedByDataCombined(id, dcHolders))
     }
     return(invisible(NULL))
   }
@@ -602,10 +594,10 @@ validationSummary <- function(validationResults) {
   }
 
   if (length(refs) > 0) {
-    cli::cli_warn(c(
-      "Removed {definitionType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
-      "*" = "{refs}",
-      "i" = "These scenarios now have a dangling reference. Update or remove them."
+    cli::cli_warn(messages$removedStillReferencedByScenarios(
+      definitionType,
+      id,
+      refs
     ))
   }
   invisible(NULL)

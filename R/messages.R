@@ -2084,6 +2084,54 @@ messages$PITaskNowEmpty <- function(task) {
   )
 }
 
+# Shared by every remove*() whose definition a PI task references by its id
+# (`removeOutputPath()`), so the wording cannot drift. `removeObservedData()`
+# has its own entry, `observedDataRemovedUsedByPITasks`, because a PI task
+# references a DataSet of the source, not the source itself.
+messages$removedStillReferencedByPITasks <- function(kind, id, taskIds) {
+  cliBullets(
+    "Removed {kind} {.val {id}} is still referenced by {length(taskIds)} \\
+    parameter identification task{?s}:",
+    "*" = "{cli::cli_vec(taskIds, list('vec-trunc' = Inf))}",
+    "i" = "Update the output mappings of \\
+    {cli::qty(length(taskIds))}{?this/these} task{?s}."
+  )
+}
+
+# Shared by every remove*() whose definition a scenario can reference
+# (`removeIndividual()`, `removePopulation()`, `removeApplication()`,
+# `removeOutputPath()`, `removeInitialConditions()`).
+messages$removedStillReferencedByScenarios <- function(kind, id, scenarioIds) {
+  cliBullets(
+    "Removed {kind} {.val {id}} is still referenced by \\
+    {length(scenarioIds)} scenario{?s}:",
+    "*" = "{scenarioIds}",
+    "i" = "Update {cli::qty(length(scenarioIds))}{?this/these} scenario{?s}."
+  )
+}
+
+# `holders` are already labeled by kind (`scenario 'a'`, `individual 'b'`),
+# since a parameter set can be referenced by scenarios, individuals and
+# applications alike.
+messages$parameterSetRemovedStillReferenced <- function(id, holders) {
+  cliBullets(
+    "Removed parameterSet {.val {id}} is still referenced by \\
+    {length(holders)} definition{?s}:",
+    "*" = "{holders}",
+    "i" = "Update {cli::qty(length(holders))}{?this/these} definition{?s}."
+  )
+}
+
+messages$scenarioRemovedUsedByDataCombined <- function(id, dataCombinedIds) {
+  cliBullets(
+    "Removed scenario {.val {id}} is still referenced by \\
+    {length(dataCombinedIds)} dataCombined definition{?s}:",
+    "*" = "{dataCombinedIds}",
+    "i" = "Update or remove {cli::qty(length(dataCombinedIds))}{?this/these} \\
+    dataCombined definition{?s}."
+  )
+}
+
 messages$buildingPITask <- function(piTaskName) {
   ospsuite.utils::cliFormat("Building PI task: {.val {piTaskName}}")
 }
@@ -2113,6 +2161,42 @@ messages$observedDataMissingFields <- function(entryIndex, type, fields) {
 messages$observedDataFileNotFound <- function(filePath) {
   ospsuite.utils::cliFormat(
     "Observed-data source file not found: {.path {filePath}}."
+  )
+}
+
+# A DataCombined or a PI output mapping references a DataSet by its name, not
+# the source's id, so both warnings name the DataSets of the removed source
+# that are still in use. The explicit `qty()` before `{?is/are}` is needed
+# because the `{.val {id}}` substitution before it resets the quantity to 1.
+messages$observedDataRemovedUsedByDataCombined <- function(
+  id,
+  dataSetNames,
+  dataCombinedIds
+) {
+  cliBullets(
+    "{cli::qty(length(dataSetNames))}DataSet{?s} \\
+    {.val {cli::cli_vec(dataSetNames, list('vec-trunc' = Inf))}} of removed \\
+    observedData {.val {id}} {cli::qty(length(dataSetNames))}{?is/are} still \\
+    referenced by {length(dataCombinedIds)} dataCombined entr{?y/ies}:",
+    "*" = "{cli::cli_vec(dataCombinedIds, list('vec-trunc' = Inf))}",
+    "i" = "Update or remove \\
+    {cli::qty(length(dataCombinedIds))}{?this/these} dataCombined entr{?y/ies}."
+  )
+}
+
+messages$observedDataRemovedUsedByPITasks <- function(
+  id,
+  dataSetNames,
+  taskIds
+) {
+  cliBullets(
+    "{cli::qty(length(dataSetNames))}DataSet{?s} \\
+    {.val {cli::cli_vec(dataSetNames, list('vec-trunc' = Inf))}} of removed \\
+    observedData {.val {id}} {cli::qty(length(dataSetNames))}{?is/are} still \\
+    referenced by {length(taskIds)} parameter identification task{?s}:",
+    "*" = "{cli::cli_vec(taskIds, list('vec-trunc' = Inf))}",
+    "i" = "Update the output mappings of \\
+    {cli::qty(length(taskIds))}{?this/these} task{?s}."
   )
 }
 

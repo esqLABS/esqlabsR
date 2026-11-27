@@ -65,9 +65,9 @@
       removeObservedData(project, "MyObs")
     Condition
       Warning:
-      Removed observedData "MyObs" is still referenced by 1 dataCombined entry:
+      DataSet "MyObs" of removed observedData "MyObs" is still referenced by 1 dataCombined entry:
       * dc1
-      i These dataCombined entries now have a dangling reference. Update or remove them.
+      i Update or remove this dataCombined entry.
 
 # print.ValidationResults renders a grouped summary with glyphs
 

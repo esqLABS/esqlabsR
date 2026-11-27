@@ -122,7 +122,10 @@ pkml_data <- ospsuite::DataSet$new(name = "Aciclovir extra cohort")
 pkml_data$setValues(xValues = c(0, 1, 2, 4, 8), yValues = c(0, 9, 6, 3, 1))
 pkml_data$xDimension <- ospsuite::ospDimensions$Time
 pkml_data$yDimension <- ospsuite::ospDimensions$`Concentration (molar)`
-ospsuite::saveDataSetToPKML(pkml_data, file.path(data_folder, "extra_cohort.pkml"))
+ospsuite::saveDataSetToPKML(
+  pkml_data,
+  file.path(data_folder, "extra_cohort.pkml")
+)
 
 addObservedData(project, list(type = "pkml", file = "extra_cohort.pkml"))
 getObservedDataNames(project)
@@ -160,7 +163,7 @@ removeObservedData(project, c("extra_cohort.pkml", "Scratch measurement"))
 getObservedDataNames(project)
 ```
 
-If a removed source is still referenced by a DataCombined, the removal proceeds and leaves the reference dangling, which the next `validateProject()` (see `vignette("how-to-validate-a-project")`) reports as a problem, so prune the DataCombined too.
+If a DataCombined or a parameter identification output mapping still uses a DataSet of the removed source, the source is removed anyway and `removeObservedData()` warns you, naming those DataSets and the DataCombined and parameter identification tasks that use them. Update those definitions, or remove the DataCombined; otherwise `createPlots()` or `runPI()` stops because the DataSet is missing.
 
 ## Where to go next
 

@@ -789,6 +789,165 @@ test_that("removeObservedData warns and skips a not-found id in the batch", {
   expect_length(project$definitions$observedData, before - 1L)
 })
 
+# A DataCombined or a PI output mapping names a DataSet, not the source that
+# provides it, and a file-based source's id is its file basename. To find who
+# still uses a removed source, the removal reads the source's DataSet names.
+
+# A small measured plasma profile, named as a DataCombined or PI mapping would
+# reference it.
+plasmaDataSet <- function(name) {
+  dataSet <- ospsuite::DataSet$new(name = name)
+  dataSet$setValues(xValues = c(0.5, 1, 2), yValues = c(8.1, 5.4, 2.3))
+  dataSet
+}
+
+# Write the DataSet `name` to `<name>.pkml` in the data folder and declare it as
+# a pkml source, whose id is that file basename.
+addPkmlSource <- function(project, name) {
+  ospsuite::saveDataSetToPKML(
+    plasmaDataSet(name),
+    file.path(project$paths$dataFolder, paste0(name, ".pkml"))
+  )
+  addObservedData(project, list(type = "pkml", file = paste0(name, ".pkml")))
+  invisible(project)
+}
+
+# Whether a PI output mapping of `project` uses observed data. Without one the
+# reference check returns before reading the removed source, so a test that
+# relies on that read would pass without exercising it.
+usesObservedDataInPI <- function(project) {
+  refs <- .dataSetReferences(
+    project$definitions$parameterIdentification,
+    "outputMappings",
+    "observedDataId"
+  )
+  length(refs) > 0L
+}
+
+test_that("removeObservedData warns about the DataCombined and PI task using a removed Excel source", {
+  # The example project plots and fits the only DataSet of its Excel source.
+  project <- exampleProject()
+  expect_snapshot(removeObservedData(project, "Aciclovir_TimeValuesData.xlsx"))
+  expect_length(project$definitions$observedData, 0L)
+})
+
+test_that("removeObservedData names only the DataSets of a removed source that are still used", {
+  # Listing the workbook's second sheet gives the Excel source a second DataSet,
+  # which nothing uses: the test project's PI task fits only the first.
+  project <- testProject()
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = "Aciclovir_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A", "<Study Id 1>")
+    ),
+    overwrite = TRUE
+  )
+  expect_length(getObservedDataNames(project), 2L)
+  expect_snapshot(removeObservedData(project, "Aciclovir_TimeValuesData.xlsx"))
+})
+
+test_that("removeObservedData warns about a PI task fitting an unsaved programmatic DataSet", {
+  project <- testProject()
+  plasma <- plasmaDataSet("Aciclovir plasma")
+  suppressMessages(addObservedData(project, plasma))
+  addPIOutputMapping(
+    project,
+    task = "aciclovirsimple",
+    outputPath = "aciclovir_pvb",
+    observedData = "Aciclovir plasma",
+    scenarios = "testscenario"
+  )
+  expect_snapshot(removeObservedData(project, "Aciclovir plasma"))
+  expect_false("Aciclovir plasma" %in% getObservedDataNames(project))
+})
+
+test_that("removeObservedData does not warn when nothing uses the removed source", {
+  # The test project's PI task fits another DataSet, so the removal reads the
+  # PKML file and finds its DataSet unused.
+  project <- testProject()
+  expect_true(usesObservedDataInPI(project))
+  addPkmlSource(project, "Aciclovir plasma")
+  expect_no_warning(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData reads no source when nothing uses observed data", {
+  # A new project has no DataCombined and no PI task, so the reference check
+  # stops before reading the removed source.
+  project <- Project$new()
+  suppressMessages(addObservedData(project, plasmaDataSet("Aciclovir plasma")))
+  local_mocked_bindings(
+    .observedDataSourceNames = function(...) {
+      stop("the removed source was read")
+    }
+  )
+  expect_no_warning(removeObservedData(project, "Aciclovir plasma"))
+  expect_length(project$definitions$observedData, 0L)
+})
+
+test_that("removeObservedData removes a source whose file is missing", {
+  # The test project's PI task fits observed data, so the removal tries to read
+  # the file it can no longer find.
+  project <- testProject()
+  expect_true(usesObservedDataInPI(project))
+  addPkmlSource(project, "Aciclovir plasma")
+  expect_true(
+    file.remove(file.path(project$paths$dataFolder, "Aciclovir plasma.pkml"))
+  )
+  expect_no_error(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData reports each removed source of a batch in the order given", {
+  # The first PKML source feeds a DataCombined, the Excel source the test
+  # project's PI task, and the second PKML source has lost its file, so it is
+  # removed without a check.
+  project <- testProject()
+  addPkmlSource(project, "Aciclovir plasma")
+  addDataCombined(
+    project,
+    id = "aciclovir_plasma",
+    observed = list(list(label = "Plasma", dataSet = "Aciclovir plasma"))
+  )
+  addPkmlSource(project, "Aciclovir urine")
+  expect_true(
+    file.remove(file.path(project$paths$dataFolder, "Aciclovir urine.pkml"))
+  )
+  ids <- c(
+    "Aciclovir plasma.pkml",
+    "Aciclovir_TimeValuesData.xlsx",
+    "Aciclovir urine.pkml"
+  )
+  expect_snapshot(removeObservedData(project, ids))
+  expect_length(project$definitions$observedData, 0L)
+})
+
+test_that("the removeObservedData warnings agree in number with the DataSets they name", {
+  # Every fixture source provides a single DataSet, so the plural wording is
+  # checked on the catalog entries directly.
+  expect_snapshot({
+    cli::cli_warn(messages$observedDataRemovedUsedByDataCombined(
+      "cohorts.xlsx",
+      c("Cohort A", "Cohort B"),
+      c("dc_a", "dc_b")
+    ))
+    cli::cli_warn(messages$observedDataRemovedUsedByPITasks(
+      "cohorts.xlsx",
+      c("Cohort A", "Cohort B"),
+      c("fit_a", "fit_b")
+    ))
+  })
+})
+
 # The remove path writes through to disk BEFORE clearing the runtime store, so a
 # Under explicit-save, removeObservedData() only mutates memory; a section that
 # still carries a colliding pair of file entries after the removal serializes

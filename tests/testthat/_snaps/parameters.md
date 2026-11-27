@@ -144,7 +144,7 @@
       Warning:
       Removed parameterSet "global" is still referenced by 4 definitions:
       * scenario 'populationscenario', scenario 'populationscenariofromcsv', scenario 'testscenario', and scenario 'testscenario_steadystate'
-      i These now have a dangling reference. Update or remove them.
+      i Update these definitions.
 
 # removeParameterSet warns when still referenced by an individual, removes anyway
 
@@ -154,7 +154,7 @@
       Warning:
       Removed parameterSet "indiv1_default" is still referenced by 1 definition:
       * individual 'indiv1'
-      i These now have a dangling reference. Update or remove them.
+      i Update this definition.
 
 # print.ParameterSet renders the entry count and a compact table
 
@@ -245,7 +245,7 @@
       Warning:
       Removed initialConditions "refset" is still referenced by 1 scenario:
       * scenario 'testscenario'
-      i These now have a dangling reference. Update or remove them.
+      i Update this scenario.
 
 # print.InitialConditionSet renders the entry count and a compact table
 

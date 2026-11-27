@@ -116,6 +116,73 @@
       ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
       i Remove it first with `removeObservedData()`, then add the configuration entry.
 
+# removeObservedData warns about the DataCombined and PI task using a removed Excel source
+
+    Code
+      removeObservedData(project, "Aciclovir_TimeValuesData.xlsx")
+    Condition
+      Warning:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 dataCombined entry:
+      * aciclovir_individual
+      i Update or remove this dataCombined entry.
+      Warning:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i Update the output mappings of this task.
+
+# removeObservedData names only the DataSets of a removed source that are still used
+
+    Code
+      removeObservedData(project, "Aciclovir_TimeValuesData.xlsx")
+    Condition
+      Warning:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i Update the output mappings of this task.
+
+# removeObservedData warns about a PI task fitting an unsaved programmatic DataSet
+
+    Code
+      removeObservedData(project, "Aciclovir plasma")
+    Condition
+      Warning:
+      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i Update the output mappings of this task.
+
+# removeObservedData reports each removed source of a batch in the order given
+
+    Code
+      removeObservedData(project, ids)
+    Condition
+      Warning:
+      DataSet "Aciclovir plasma" of removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
+      * aciclovir_plasma
+      i Update or remove this dataCombined entry.
+      Warning:
+      DataSet "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" of removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i Update the output mappings of this task.
+
+# the removeObservedData warnings agree in number with the DataSets they name
+
+    Code
+      cli::cli_warn(messages$observedDataRemovedUsedByDataCombined("cohorts.xlsx", c(
+        "Cohort A", "Cohort B"), c("dc_a", "dc_b")))
+    Condition
+      Warning:
+      DataSets "Cohort A" and "Cohort B" of removed observedData "cohorts.xlsx" are still referenced by 2 dataCombined entries:
+      * dc_a and dc_b
+      i Update or remove these dataCombined entries.
+    Code
+      cli::cli_warn(messages$observedDataRemovedUsedByPITasks("cohorts.xlsx", c(
+        "Cohort A", "Cohort B"), c("fit_a", "fit_b")))
+    Condition
+      Warning:
+      DataSets "Cohort A" and "Cohort B" of removed observedData "cohorts.xlsx" are still referenced by 2 parameter identification tasks:
+      * fit_a and fit_b
+      i Update the output mappings of these tasks.
+
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
 
     Code
