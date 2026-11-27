@@ -17,6 +17,20 @@
   stats::setNames(hashes, paths)
 }
 
+# Set one property of a copied project's esqlabsR 5 property sheet.
+.setProperty <- function(projectDir, property, value) {
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  properties <- readExcel(configPath)
+  properties$Value[properties$Property == property] <- value
+  .writeExcel(properties, configPath)
+  invisible(configPath)
+}
+
+# The `filePaths` block of a converted project's `Project.json`.
+.convertedFilePaths <- function(projectDir) {
+  jsonlite::read_json(file.path(projectDir, "Project.json"))$filePaths
+}
+
 # Refusals ----
 
 test_that("convertProjectToV6() refuses a path that is not an esqlabsR 5 workbook", {
@@ -548,6 +562,22 @@ test_that("convertProjectToV6() refuses a workbook file name outside the configu
   expect_identical(.folderState(projectDir), before)
 })
 
+test_that("convertProjectToV6() refuses a project whose workbooks it cannot find", {
+  withr::local_envvar(MYCONF = "Configurations")
+  for (configurationsFolder in c("Missing", "MYCONF", NA)) {
+    projectDir <- localExcelProjectDir()
+    .setProperty(projectDir, "configurationsFolder", configurationsFolder)
+    before <- .folderState(projectDir)
+
+    expect_snapshot(
+      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx")),
+      error = TRUE,
+      transform = .redactTmpDir
+    )
+    expect_identical(.folderState(projectDir), before)
+  }
+})
+
 test_that("convertProjectToV6() refuses the esqlabsR 5 workbooks a conversion kept", {
   projectDir <- localLegacyExcelProject()
   convertExcelProject(projectDir)
@@ -591,20 +621,6 @@ test_that("convertProjectToV6() refuses a folder outside the project folder", {
 })
 
 # Environment variables in folder values (#1411) ----
-
-# Set one property of a copied project's esqlabsR 5 property sheet.
-.setProperty <- function(projectDir, property, value) {
-  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
-  properties <- readExcel(configPath)
-  properties$Value[properties$Property == property] <- value
-  .writeExcel(properties, configPath)
-  invisible(configPath)
-}
-
-# The `filePaths` block of a converted project's `Project.json`.
-.convertedFilePaths <- function(projectDir) {
-  jsonlite::read_json(file.path(projectDir, "Project.json"))$filePaths
-}
 
 test_that("convertProjectToV6() writes a folder on a drive named by a variable as ${NAME}", {
   # The data sits on a shared drive that esqlabsR 5 reached through SHARED.

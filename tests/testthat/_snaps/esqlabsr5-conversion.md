@@ -135,6 +135,34 @@
       x plotsFile "../Plots.xlsx" resolves outside the project folder.
       i It must stay under '<tmp-path>'. A project file cannot reference a path outside the project.
 
+# convertProjectToV6() refuses a project whose workbooks it cannot find
+
+    Code
+      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+    Condition
+      Error in `convertProjectToV6()`:
+      x No esqlabsR 5 workbook was found in the configurations folder 'Missing', so there is nothing to convert.
+      i Point configurationsFolder at the folder of the project that holds the workbooks, then convert again.
+
+---
+
+    Code
+      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+    Condition
+      Error in `convertProjectToV6()`:
+      x No esqlabsR 5 workbook was found in the configurations folder 'MYCONF', so there is nothing to convert.
+      i "MYCONF" is the name of a set environment variable, which esqlabsR 5 replaced by its value. The conversion does not: the configurations folder has to be a folder of the project.
+      i Point configurationsFolder at the folder of the project that holds the workbooks, then convert again.
+
+---
+
+    Code
+      convertProjectToV6(file.path(projectDir, "ProjectConfiguration.xlsx"))
+    Condition
+      Error in `convertProjectToV6()`:
+      x The property sheet names no configurationsFolder, so there is no esqlabsR 5 workbook to convert.
+      i Point configurationsFolder at the folder of the project that holds the workbooks, then convert again.
+
 # convertProjectToV6() refuses the esqlabsR 5 workbooks a conversion kept
 
     Code

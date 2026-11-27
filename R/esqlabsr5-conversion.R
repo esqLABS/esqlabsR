@@ -109,6 +109,34 @@
   )
 }
 
+.esqlabsR5Messages$noWorkbooks <- function(value) {
+  problem <- if (is.null(value)) {
+    "The property sheet names no {.field configurationsFolder}, so there is \\
+    no esqlabsR 5 workbook to convert."
+  } else {
+    "No esqlabsR 5 workbook was found in the configurations folder \\
+    {.file {value}}, so there is nothing to convert."
+  }
+  parts <- strsplit(value %||% "", "/", fixed = TRUE)[[1]]
+  variables <- parts[vapply(
+    parts,
+    function(part) !identical(.v5EnvVarSegments(part), part),
+    logical(1)
+  )]
+  n <- length(variables)
+  cliBullets(
+    "x" = problem,
+    "i" = if (n > 0L) {
+      "{.val {variables}} {cli::qty(n)}{?is the name of a set environment \\
+      variable/are the names of set environment variables}, which esqlabsR 5 \\
+      replaced by {?its/their} value. The conversion does not: the \\
+      configurations folder has to be a folder of the project."
+    },
+    "i" = "Point {.field configurationsFolder} at the folder of the project \\
+    that holds the workbooks, then convert again."
+  )
+}
+
 .esqlabsR5Messages$converted <- function(folder) {
   cliBullets(
     "v" = "Converted the esqlabsR 5 project. Its esqlabsR 5 workbooks are now \\
@@ -569,6 +597,11 @@ convertProjectToV6 <- function(
   props <- .v5PropertyLookup(table)
   targets <- .v5SectionTargets(props, configsFolder, .call)
   sections <- Filter(function(target) file.exists(target$path), targets)
+  if (length(sections) == 0L) {
+    cli::cli_abort(.esqlabsR5Messages$noWorkbooks(
+      props("configurationsFolder")
+    ))
+  }
 
   # Every workbook read is carried over as it is, unless a converter below
   # writes it anew; a converter that leaves a workbook no sheet drops it.
