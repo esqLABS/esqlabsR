@@ -14,30 +14,30 @@ importProjectFromExcel(
 )
 }
 \arguments{
-\item{projectConfigPath}{Path to the \code{Project.xlsx} file.
-Defaults to \code{"Project.xlsx"}.}
+\item{projectConfigPath}{Path to the project's top-level Excel file,
+\code{Project.xlsx} (\code{ProjectConfiguration.xlsx} in projects ccreated with v5 esqlabsR). Defaults to \code{"Project.xlsx"}.}
 
 \item{outputDir}{Directory where the JSON project is created. If \code{NULL}
-(default), it is created in the same directory as the source Excel file.}
+(default), it is created in the same directory as the Excel file.}
 
 \item{overwrite}{Logical. Guards against silently replacing an existing JSON
 project. With \code{overwrite = FALSE} (default), the import aborts when a
 project file or a non-empty \verb{definitions/} tree already exists in
-\code{outputDir}, because re-importing replaces the JSON project with the Excel
-state and deletes any definitions authored only on the JSON side. Pass
-\code{overwrite = TRUE} to replace the existing JSON project with the Excel
-state.}
+\code{outputDir}. Pass \code{overwrite = TRUE}
+to replace the existing JSON project.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
-written, its per-section definition counts, and the folders copied or
-missing). Defaults to \code{FALSE}.}
+written, its per-section definition counts, and the folders and files
+that could not be copied). Defaults to \code{FALSE}.}
 
 \item{copyAssets}{Logical. Whether to copy the input folders the project
 references (models, data, csv populations) into \code{outputDir}, which is what
 makes the imported project runnable where it was written. Defaults to
-\code{TRUE}. Set it to \code{FALSE} when only the definitions are wanted and the
-assets would be wasted work, as when the import feeds a throwaway
-comparison snapshot.}
+\code{TRUE}. From a data folder that is the project folder itself (\code{dataFolder}
+is \code{"."}), only the data workbook and its importer configuration are
+copied, and nothing else in that folder. Set it to \code{FALSE} when only
+the definitions are wanted and the assets would be wasted work, as when
+the import is only used for a comparison.}
 
 \item{projectFileName}{Name of the project file the import writes in
 \code{outputDir}. Defaults to \code{"Project.json"}, the same name \code{\link[=initProject]{initProject()}}
@@ -60,7 +60,7 @@ Invisibly returns the path to the created project file.
 Reads all Excel configuration files in an esqlabsR project and
 converts them to the JSON project format: a \code{Project.json} project file plus
 one file per definition in the \verb{definitions/} folder. The result is a
-ready-to-use project — \code{loadProject("<outputDir>/Project.json")} can open it
+ready-to-use project: \code{loadProject("<outputDir>/Project.json")} can open it
 directly. This is the migration path from Excel-based projects to the
 JSON-primary workflow.
 
@@ -85,8 +85,6 @@ Other projectPersistence:
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}}
+\code{\link[=saveProject]{saveProject()}}
 }
 \concept{projectPersistence}
