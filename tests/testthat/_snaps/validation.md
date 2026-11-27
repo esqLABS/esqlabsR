@@ -62,10 +62,10 @@
 # removeObservedData warns when a dataCombined still references it
 
     Code
-      removeObservedData(project, "myobs")
+      removeObservedData(project, "pilot")
     Condition
       Warning:
-      Removed observedData "myobs" is still referenced by 1 dataCombined entry:
+      Removed observedData "pilot" is still referenced by 1 dataCombined entry:
       * dc1
       i These dataCombined entries now have a dangling reference. Update or remove them.
 

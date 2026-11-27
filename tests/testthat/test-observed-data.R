@@ -1213,6 +1213,162 @@ test_that("removeObservedData finds a source by the DataSet name its id was take
   expect_length(state$.programmaticDataSets, 0L)
 })
 
+# Removing a source referenced by a dataCombined ----
+
+# A dataCombined refers to a data set by its name, so the removal learns the
+# names of the removed source's data sets: from the DataSet held in the session,
+# or by reading the source's file.
+
+# Add a DataSet named "MyObs" under the id "pilot", and a dataCombined "dc1"
+# that refers to the data set `dataSet`.
+.addPilotWithReference <- function(project, dataSet = "MyObs") {
+  ds <- ospsuite::DataSet$new(name = "MyObs")
+  ds$setValues(xValues = c(0, 1, 2), yValues = c(10, 20, 30))
+  suppressMessages(addObservedData(project, ds, id = "pilot"))
+  addDataCombined(
+    project,
+    id = "dc1",
+    observed = list(list(label = "Pilot", dataSet = dataSet))
+  )
+  ds
+}
+
+test_that("removing a saved DataSet source warns about a dataCombined that names it", {
+  project <- testProject()
+  .addPilotWithReference(project)
+  suppressMessages(saveProject(project))
+  reloaded <- suppressWarnings(loadProject(project$info$projectFilePath))
+
+  expect_snapshot(removeObservedData(reloaded, "pilot"))
+})
+
+test_that("a dataCombined naming the source id instead of a data set gives no warning", {
+  project <- testProject()
+  .addPilotWithReference(project, dataSet = "pilot")
+
+  expect_no_warning(removeObservedData(project, "pilot"))
+  expect_identical(
+    names(project$definitions$observedData),
+    "aciclovir_timevaluesdata"
+  )
+})
+
+test_that("only the source holding the named data set warns on removal", {
+  project <- testProject()
+  # A PKML file source filed as `cohort_b` whose data set has another name.
+  lab <- ospsuite::DataSet$new(name = "Cohort B lab")
+  lab$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  ospsuite::saveDataSetToPKML(
+    lab,
+    file.path(project$paths$dataFolder, "cohort_b.pkml")
+  )
+  addObservedData(project, list(type = "pkml", file = "cohort_b.pkml"))
+  session <- ospsuite::DataSet$new(name = "Cohort B")
+  session$setValues(xValues = c(0, 1), yValues = c(3, 4))
+  suppressMessages(addObservedData(project, session, id = "lab"))
+  addDataCombined(
+    project,
+    id = "cohort_b_plot",
+    observed = list(list(label = "Cohort B", dataSet = "Cohort B"))
+  )
+
+  expect_no_warning(removeObservedData(project, "cohort_b"))
+  expect_snapshot(removeObservedData(project, "lab"))
+})
+
+test_that("removing an Excel source warns once about every dataCombined naming its data sets", {
+  project <- testProject()
+  for (dc in c("laskin_iv", "laskin_iv_log")) {
+    addDataCombined(
+      project,
+      id = dc,
+      observed = list(list(label = "Laskin", dataSet = testObservedDataId))
+    )
+  }
+  addDataCombined(
+    project,
+    id = "pilot_only",
+    observed = list(list(label = "Pilot", dataSet = "MyObs"))
+  )
+
+  expect_snapshot(removeObservedData(project, "aciclovir_timevaluesdata"))
+})
+
+test_that("a source that cannot be read is removed without a reference warning", {
+  project <- testProject()
+  addObservedData(project, list(type = "pkml", file = "cohort_b.pkml"))
+  addDataCombined(
+    project,
+    id = "cohort_b_plot",
+    observed = list(list(label = "Cohort B", dataSet = "Cohort B"))
+  )
+
+  expect_no_warning(expect_no_error(removeObservedData(project, "cohort_b")))
+  expect_identical(
+    names(project$definitions$observedData),
+    "aciclovir_timevaluesdata"
+  )
+})
+
+test_that("a removal reads no source when no dataCombined names a data set", {
+  project <- testProject()
+  addObservedData(project, list(type = "pkml", file = "cohort_b.pkml"))
+  reads <- 0L
+  local_mocked_bindings(
+    .loadObservedPkml = function(entry, dataFolder) {
+      reads <<- reads + 1L
+      list()
+    }
+  )
+
+  expect_no_warning(removeObservedData(project, "cohort_b"))
+  expect_identical(reads, 0L)
+})
+
+test_that("a DataSet renamed after the add is matched by its current name", {
+  project <- testProject()
+  ds <- .addPilotWithReference(project, dataSet = "Renamed")
+  ds$name <- "Renamed"
+
+  expect_snapshot(removeObservedData(project, "pilot"))
+})
+
+test_that("removing two referenced sources in one call warns once per source", {
+  project <- testProject()
+  .addPilotWithReference(project)
+  main <- ospsuite::DataSet$new(name = "Main study")
+  main$setValues(xValues = c(0, 1), yValues = c(5, 6))
+  suppressMessages(addObservedData(project, main, id = "main"))
+  addDataCombined(
+    project,
+    id = "dc2",
+    observed = list(list(label = "Main", dataSet = "Main study"))
+  )
+
+  expect_snapshot(removeObservedData(project, c("pilot", "main")))
+})
+
+test_that("a programmatic source without its DataSet gives no reference warning", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(id = "scratch_measurement", type = "programmatic"),
+    file.path(dir, "scratch_measurement.json"),
+    auto_unbox = TRUE
+  )
+  project <- loadProject(project$info$projectFilePath)
+  addDataCombined(
+    project,
+    id = "scratch_plot",
+    observed = list(
+      list(label = "Scratch", dataSet = "Scratch measurement"),
+      list(label = "Scratch id", dataSet = "scratch_measurement")
+    )
+  )
+
+  expect_no_warning(removeObservedData(project, "scratch_measurement"))
+})
+
 # Under explicit-save, removeObservedData() only mutates memory; a section that
 # still carries a colliding pair of file entries after the removal serializes
 # cleanly in memory but aborts at saveProject(). Seed the backing section

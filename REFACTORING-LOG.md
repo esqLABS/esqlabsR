@@ -438,3 +438,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:10: Saving checks an observed-data id like every other definition id, and the step that renamed a definition file whose id changed only in case is gone. (#1368)
 - 2026-11-27 22:11: The observed-data articles and NEWS describe the id argument of addObservedData() and the one id rule shared with the other definitions. (#1368)
 - 2026-11-27 22:11: The help pages of addObservedData(), removeObservedData(), loadObservedData() and Project are regenerated. (#1368)
+- 2026-11-27 23:23: removeObservedData() warns about a dataCombined only when it names a data set the removed source provides, read from the DataSet held in the session or from the source file, and reads no file when no dataCombined names a data set. (#1368)

@@ -299,6 +299,60 @@
       Canonicalized 1 id to a safe form:
       * "Scratch measurement" -> "scratch_measurement"
 
+# removing a saved DataSet source warns about a dataCombined that names it
+
+    Code
+      removeObservedData(reloaded, "pilot")
+    Condition
+      Warning:
+      Removed observedData "pilot" is still referenced by 1 dataCombined entry:
+      * dc1
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+
+# only the source holding the named data set warns on removal
+
+    Code
+      removeObservedData(project, "lab")
+    Condition
+      Warning:
+      Removed observedData "lab" is still referenced by 1 dataCombined entry:
+      * cohort_b_plot
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+
+# removing an Excel source warns once about every dataCombined naming its data sets
+
+    Code
+      removeObservedData(project, "aciclovir_timevaluesdata")
+    Condition
+      Warning:
+      Removed observedData "aciclovir_timevaluesdata" is still referenced by 2 dataCombined entries:
+      * laskin_iv and laskin_iv_log
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+
+# a DataSet renamed after the add is matched by its current name
+
+    Code
+      removeObservedData(project, "pilot")
+    Condition
+      Warning:
+      Removed observedData "pilot" is still referenced by 1 dataCombined entry:
+      * dc1
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+
+# removing two referenced sources in one call warns once per source
+
+    Code
+      removeObservedData(project, c("pilot", "main"))
+    Condition
+      Warning:
+      Removed observedData "pilot" is still referenced by 1 dataCombined entry:
+      * dc1
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+      Warning:
+      Removed observedData "main" is still referenced by 1 dataCombined entry:
+      * dc2
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
 
     Code

@@ -641,6 +641,15 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
 #' list, not an id, so it adds a single source per call. Add several sources
 #' with several calls.
 #'
+#' @details
+#' A `dataCombined` entry refers to a data set by its name, not by the id of its
+#' source. When some `dataCombined` entry refers to a data set,
+#' `removeObservedData()` reads the removed source to learn the names of its
+#' data sets, and warns for each `dataCombined` that still refers to one of
+#' them. A source that cannot be read (a missing file, for example) is removed
+#' without this warning; [validateProject()] reports the reference that no
+#' longer resolves.
+#'
 #' @param project A `Project` object.
 #' @param id Character vector of ids. Like every other definition id, each is
 #'   lowercased and made a safe file name before it is looked up, with a
@@ -657,7 +666,7 @@ removeObservedData <- function(project, id) {
 # Implementation behind `project$removeObservedData()` / `removeObservedData()`.
 # Every id is validated before anything changes, and the whole batch is applied
 # in a single in-memory update, as every other vectorized remove* does. Nothing
-# touches disk; persist with saveProject().
+# is written to disk; persist with saveProject().
 #
 # @keywords internal
 # @noRd
@@ -676,14 +685,22 @@ removeObservedData <- function(project, id) {
   if (length(removedIds) == 0L) {
     return(invisible(self))
   }
-  # Warn once per removed id that is still referenced. The DataSet name is read
-  # from the session's store before the removal takes the DataSet out.
-  for (removedId in removedIds) {
-    .warnIfObservedDataReferenced(
-      self,
-      removedId,
-      private$.programmaticDataSets[[removedId]]$name
-    )
+  # Warn once per removed id that is still referenced. A `dataCombined` names a
+  # data set, not a source, so each removed source's data-set names are learned
+  # before the removal takes its DataSet out of the session, and a file source
+  # is read only when some `dataCombined` refers to a data set at all.
+  if (length(.dataCombinedDataSetReferences(self)) > 0L) {
+    for (removedId in removedIds) {
+      .warnIfObservedDataReferenced(
+        self,
+        removedId,
+        .observedDataSourceDataSetNames(
+          observedData[[removedId]],
+          private$.programmaticDataSets[[removedId]],
+          self$paths$dataFolder
+        )
+      )
+    }
   }
   # A removed source takes its DataSet out of the session (the store is keyed by
   # source id). That includes a source a failed save has already rewritten as
@@ -706,44 +723,71 @@ removeObservedData <- function(project, id) {
 # call to surface, matching the .warnIfReferenced() convention used by
 # the other remove*() mutators.
 #
-# A `dataSet` reference names a data set, not a source, so it counts when it is
-# the name of the source's DataSet held in this session (`dataSetName`), or
-# when it canonicalizes to the source's id, as the name of a DataSet saved under
-# the id taken from that name does. A data set inside a file source is known
-# only by reading the file, which a removal does not do.
+# A `dataSet` reference names a data set, not a source, so a `dataCombined` is
+# a holder when it names one of the source's data sets (`dataSetNames`), matched
+# exactly. `NULL` (the names could not be learned) warns about nothing.
 #
 # @keywords internal
 # @noRd
-.warnIfObservedDataReferenced <- function(project, id, dataSetName = NULL) {
+.warnIfObservedDataReferenced <- function(project, id, dataSetNames) {
+  references <- .dataCombinedDataSetReferences(project)
+  holders <- names(references)[vapply(
+    references,
+    \(refs) any(refs %in% dataSetNames),
+    logical(1)
+  )]
+  if (length(holders) > 0) {
+    cli::cli_warn(messages$observedDataStillReferenced(id, holders))
+  }
+  invisible(NULL)
+}
+
+# The `dataSet` references of every `dataCombined` that has any, named by the
+# `dataCombined` id.
+#
+# @keywords internal
+# @noRd
+.dataCombinedDataSetReferences <- function(project) {
   dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined) %||%
     list()
-  holders <- character()
-  for (dcName in names(dataCombined)) {
-    observed <- dataCombined[[dcName]]$observed %||% list()
+  references <- lapply(dataCombined, function(dc) {
     refs <- vapply(
-      observed,
+      dc$observed %||% list(),
       function(e) as.character(e$dataSet %||% NA_character_),
       character(1)
     )
-    refs <- refs[!is.na(refs)]
-    canonicalRefs <- vapply(
-      refs,
-      .canonicalizeOneId,
-      character(1),
-      USE.NAMES = FALSE
-    )
-    if (any(refs %in% dataSetName) || id %in% canonicalRefs) {
-      holders <- c(holders, dcName)
-    }
+    refs[!is.na(refs)]
+  })
+  references[lengths(references) > 0L]
+}
+
+# The names of the data sets an observed-data source provides, or `NULL` when
+# they cannot be learned. A DataSet held in the session under the source's id
+# gives its current name, whatever the entry's type: a source a failed save has
+# already rewritten as `pkml` still holds it. Otherwise a file source is read,
+# and one that cannot be read (a missing file, for example) gives `NULL`, as in
+# `.observedDataNamesForCrossReference()`. A `programmatic` entry without its
+# DataSet has no names to give.
+#
+# @keywords internal
+# @noRd
+.observedDataSourceDataSetNames <- function(entry, dataSet, dataFolder) {
+  if (!is.null(dataSet)) {
+    return(dataSet$name)
   }
-  if (length(holders) > 0) {
-    cli::cli_warn(c(
-      "Removed observedData {.val {id}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
-      "*" = "{holders}",
-      "i" = "These dataCombined entries now have a dangling reference. Update or remove them."
-    ))
+  load <- switch(
+    entry$type %||% "",
+    "pkml" = .loadObservedPkml,
+    "excel" = .loadObservedExcel,
+    NULL
+  )
+  if (is.null(load)) {
+    return(NULL)
   }
-  invisible(NULL)
+  tryCatch(
+    suppressMessages(suppressWarnings(names(load(entry, dataFolder)))),
+    error = function(cnd) NULL
+  )
 }
 
 # Internal helpers ----

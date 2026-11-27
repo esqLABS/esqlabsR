@@ -2275,6 +2275,14 @@ messages$observedDataNameCollision <- function(duplicates) {
   )
 }
 
+messages$observedDataStillReferenced <- function(id, holders) {
+  cliBullets(
+    "Removed observedData {.val {id}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
+    "*" = "{holders}",
+    "i" = "These dataCombined entries now have a dangling reference. Update or remove them."
+  )
+}
+
 # Observed-data messages surfaced by the project validator (`validateProject()`)
 # rather than by the load/add path. These are stored verbatim as the `message`
 # of a `validationResult` entry (a plain string, not a `cli`-tagged vector), so
