@@ -316,7 +316,12 @@ extendPopulationByUserDefinedParams <- function(
   ospsuite.utils::validateIsNumeric(c(meanValues, sdValues))
   distributions <- distributions %||%
     rep(Distributions$Normal, length(parameterPaths))
-  ospsuite.utils::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  ospsuite.utils::validateIsSameLength(
+    parameterPaths,
+    meanValues,
+    sdValues,
+    distributions
+  )
 
   # Iterate through all parameters and sample a parameter values vector
   for (i in seq_along(parameterPaths)) {
