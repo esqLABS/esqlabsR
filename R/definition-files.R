@@ -889,6 +889,7 @@
   if (is.null(records)) {
     return(list())
   }
+  .abortOnProgrammaticObservedData(records)
   # Drop the transient `.definitionFile` load tag the tree loader attaches; it is
   # used only for error messages, and must not leak into the in-memory record
   # (which would make a tree-loaded section differ from an inline-loaded one).
@@ -900,6 +901,35 @@
     .asObservedDataSource(rec)
   })
   unname(records)
+}
+
+# A `programmatic` source holds a DataSet that exists only in the R session that
+# added it, and `saveProject()` writes that DataSet to a PKML file and declares
+# it as a `pkml` source. A project file that declares one therefore has no data
+# for it, whether it was written by hand or by an older version: refuse the load
+# and name every such declaration at once.
+#
+# @keywords internal
+# @noRd
+.abortOnProgrammaticObservedData <- function(records) {
+  isProgrammatic <- vapply(
+    records,
+    function(rec) identical(rec[["type"]], "programmatic"),
+    logical(1)
+  )
+  if (!any(isProgrammatic)) {
+    return(invisible(NULL))
+  }
+  programmatic <- records[isProgrammatic]
+  ids <- vapply(programmatic, .observedDataEntryIdOrNA, character(1))
+  ids[is.na(ids)] <- "(no name)"
+  files <- unlist(lapply(programmatic, attr, ".definitionFile"))
+  # A property of the file, not of the call that opened it (see
+  # `.loadProjectTree()`), so the error names no function.
+  cli::cli_abort(
+    messages$observedDataProgrammaticInProjectFile(ids, files),
+    call = NULL
+  )
 }
 
 # The load-side counterpart of `.keyedTreeRecordId()` for observedData, whose id

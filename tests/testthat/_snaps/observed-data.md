@@ -7,6 +7,27 @@
       x Invalid type "invalid_type" in `observedData` entry.
       i Must be one of: "excel", "pkml", or "programmatic".
 
+# loadProject refuses a project file declaring programmatic sources
+
+    Code
+      loadProject(tmp)
+    Condition
+      Error:
+      x Observed-data sources "x" and "y" are declared as `programmatic` in the project file, but there is no <DataSet> for them.
+      i A `programmatic` source is a <DataSet> added with `addObservedData()` in the current R session, never one read from a file. `saveProject()` writes it to a PKML file in the data folder and declares it as a `pkml` source.
+      i Declare the data as a `pkml` or `excel` source, or remove these declarations.
+
+# loadProject names the definition file declaring a programmatic source
+
+    Code
+      loadProject(path)
+    Condition
+      Error:
+      x Observed-data source "Handwritten" is declared as `programmatic` in the project file, but there is no <DataSet> for it.
+      i A `programmatic` source is a <DataSet> added with `addObservedData()` in the current R session, never one read from a file. `saveProject()` writes it to a PKML file in the data folder and declares it as a `pkml` source.
+      i Declare the data as a `pkml` or `excel` source, or remove the declaration.
+      i Check '<project>/definitions/observed-data/Handwritten.json'.
+
 # loadObservedData errors when excel entry is missing required fields
 
     Code

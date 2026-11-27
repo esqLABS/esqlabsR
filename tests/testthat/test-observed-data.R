@@ -68,7 +68,9 @@ test_that("loadObservedData errors when an entry has invalid type", {
   expect_snapshot(error = TRUE, loadObservedData(project))
 })
 
-test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory DataSet)", {
+# A programmatic source's DataSet lives only in the R session that added it, so
+# a project file that declares one has no data for it and does not load.
+test_that("loadProject refuses a project file declaring programmatic sources", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(
@@ -76,22 +78,29 @@ test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "programmatic", name = "x"))
+      observedData = list(
+        list(type = "programmatic", name = "x"),
+        list(type = "programmatic", name = "y")
+      )
     ),
     tmp,
     auto_unbox = TRUE,
     null = "null"
   )
-  project <- loadProject(tmp)
-  # A reloaded project sees the sentinel entry but has no in-memory DataSet to
-  # back it (DataSets do not survive a JSON round-trip). loadObservedData warns
-  # that the source resolved to nothing and returns an empty result;
-  # addObservedData is the supported path for re-attaching the runtime DataSet.
-  expect_warning(
-    result <- loadObservedData(project),
-    "resolved to no data"
-  )
-  expect_length(result, 0L)
+  expect_snapshot(loadProject(tmp), error = TRUE)
+})
+
+test_that("loadProject names the definition file declaring a programmatic source", {
+  project <- exampleProject()
+  dataSet <- ospsuite::DataSet$new(name = "Handwritten")
+  dataSet$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  addObservedData(project, dataSet)
+  dir <- withr::local_tempdir("Handwritten_")
+  # Writing the tree directly keeps the `programmatic` declaration on disk, as a
+  # hand-written file would; `saveProject()` would write it as a `pkml` source.
+  path <- .writeProjectTree(project, dir)
+
+  expect_snapshot(loadProject(path), error = TRUE, transform = .redactTmpPath)
 })
 
 test_that("loadObservedData errors when excel entry is missing required fields", {
