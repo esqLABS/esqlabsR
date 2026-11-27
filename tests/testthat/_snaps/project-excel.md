@@ -69,6 +69,46 @@
       Caused by error in `utils::unzip()`:
       ! zip file '<tmp-path>/Project.xlsx' cannot be opened
 
+# importProjectFromExcel refuses the esqlabsR 5 snapshot JSON and writes nothing
+
+    Code
+      importProjectFromExcel(snapshot)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+
+---
+
+    Code
+      importProjectFromExcel(file.path(projectDir, "ProjectConfiguration.json"))
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+
+# importProjectFromExcel refuses any other file that is not an Excel file and writes nothing
+
+    Code
+      importProjectFromExcel(project$info$projectFilePath)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+
+---
+
+    Code
+      importProjectFromExcel(broken)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+
+---
+
+    Code
+      importProjectFromExcel(table)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+
 # exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE
 
     Code
@@ -139,6 +179,14 @@
       ! `projectFileName` must be a single filename without path separators.
       x The name "../Project.json" contains a path separator or is "." / "..", so it could write outside `outputDir`.
       i Pass a single filename segment, for example "Project.json" (the default) or "MyStudy"; a .json extension is appended when the name does not already end in one.
+
+# importProjectFromExcel keeps an observed-data file already in outputDir and says so
+
+    Code
+      writeLines(importAssetLines(importProjectFromExcel(file.path(projectDir,
+        "ProjectConfiguration.xlsx"), outputDir = outputDir)))
+    Output
+      Warning: 1 observed-data file was not copied: 'TestProject_TimeValuesData.xlsx'. The new project already holds a file of that name and reads it instead (pass `overwrite = TRUE` to replace it).
 
 # importProjectFromExcel warns naming each renamed duplicate parameter set
 
