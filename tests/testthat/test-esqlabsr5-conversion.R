@@ -41,6 +41,16 @@ test_that("convertProjectToV6() refuses a path that is not an esqlabsR 5 workboo
     transform = .redactTmpDir
   )
 
+  # A file named like a workbook that is none.
+  writeLines("not a workbook", file.path(projectDir, "Broken.xlsx"))
+  # Not a snapshot: the chained `readxl` error spells the path differently on
+  # each platform.
+  expect_error(
+    convertProjectToV6(file.path(projectDir, "Broken.xlsx")),
+    "cannot be read as an Excel workbook"
+  )
+  file.remove(file.path(projectDir, "Broken.xlsx"))
+
   # A data workbook has sheets but no property table.
   expect_snapshot(
     convertProjectToV6(
@@ -212,6 +222,68 @@ test_that("convertProjectToV6() puts the folder back when the import fails", {
   expect_identical(.folderState(projectDir), before)
 })
 
+test_that("the restore keeps what a definitions folder held before the conversion", {
+  projectDir <- localLegacyExcelProject()
+  dir.create(file.path(projectDir, "definitions"))
+  writeLines("notes", file.path(projectDir, "definitions", "README.md"))
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$Scenarios$Scenario_name[1:2] <- c(
+        "Adult Scenario",
+        "Adult,Scenario"
+      )
+      sheets
+    }
+  )
+  before <- .folderState(projectDir)
+
+  expect_error(
+    suppressWarnings(convertProjectToV6(
+      legacyExcelProjectPath(projectDir),
+      silent = TRUE
+    )),
+    "collide after canonicalization"
+  )
+  expect_identical(.folderState(projectDir), before)
+})
+
+test_that("a file the restore cannot move back is named, and kept in esqlabsR5/", {
+  projectDir <- localLegacyExcelProject()
+  local_mocked_bindings(
+    file_move = function(path, new_path) {
+      if (grepl("esqlabsR5", path, fixed = TRUE)) {
+        stop("The file is locked.")
+      }
+      file.rename(path, new_path)
+      invisible(new_path)
+    },
+    .package = "fs"
+  )
+  local_mocked_bindings(importProjectFromExcel = function(...) {
+    stop("The import failed.")
+  })
+
+  warnings <- character()
+  expect_error(
+    withCallingHandlers(
+      convertProjectToV6(legacyExcelProjectPath(projectDir), silent = TRUE),
+      warning = function(w) {
+        warnings <<- c(warnings, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    ),
+    "The import failed."
+  )
+  expect_snapshot(cat(warnings, sep = "\n"))
+  expect_true(file.exists(file.path(
+    projectDir,
+    "esqlabsR5",
+    "ProjectConfiguration.xlsx"
+  )))
+  expect_false(file.exists(file.path(projectDir, "Project.xlsx")))
+})
+
 test_that("convertProjectToV6() puts the folder back when a workbook cannot be written", {
   projectDir <- localLegacyExcelProject()
   before <- .folderState(projectDir)
@@ -329,7 +401,85 @@ test_that("convertProjectToV6() writes the v6 property sheet", {
 
   expect_snapshot(print(.convertedProperties(projectDir)))
   expect_true(dir.exists(converted$project$paths$simulationsFolder))
+  # The workbook is in the v6 layout already, so it is carried over unchanged.
   expect_length(converted$project$definitions$initialConditions, 1L)
+  expect_identical(
+    unname(tools::md5sum(file.path(
+      projectDir,
+      "Configurations",
+      "InitialConditions.xlsx"
+    ))),
+    unname(tools::md5sum(file.path(
+      projectDir,
+      "esqlabsR5",
+      "Configurations",
+      "InitialConditions.xlsx"
+    )))
+  )
+})
+
+test_that("convertProjectToV6() carries a DefaultSolverSettings sheet over", {
+  projectDir <- localLegacyExcelProject()
+  configPath <- legacyExcelProjectPath(projectDir)
+  .writeExcel(
+    list(
+      Sheet1 = readExcel(configPath),
+      DefaultSolverSettings = data.frame(
+        Setting = "relTol",
+        Value = "1e-6",
+        Description = NA_character_
+      )
+    ),
+    configPath
+  )
+
+  converted <- convertExcelProject(projectDir)
+
+  expect_identical(
+    converted$project$defaultSolverSettings,
+    list(relTol = 1e-6)
+  )
+})
+
+test_that("a converted project is in sync with the v6 workbooks", {
+  converted <- convertExcelProject(localExcelProjectDir())
+
+  status <- suppressMessages(projectStatus(converted$project))
+
+  expect_true(status$excel_in_sync)
+})
+
+test_that("convertProjectToV6() names the workbooks it writes, and only those", {
+  projectDir <- localLegacyExcelProject()
+  configDir <- file.path(projectDir, "Configurations")
+  # No model-parameters workbook, and an individuals workbook holding only
+  # parameter sheets: the sets go to a new model-parameters workbook, and no
+  # individuals workbook is left to write.
+  file.remove(file.path(configDir, "ModelParameters.xlsx"))
+  editWorkbookSheets(
+    file.path(configDir, "Individuals.xlsx"),
+    function(sheets) sheets[c("Adult", "Child")]
+  )
+  configPath <- legacyExcelProjectPath(projectDir)
+  properties <- readExcel(configPath)
+  .writeExcel(
+    properties[properties$Property != "modelParamsFile", ],
+    configPath
+  )
+
+  suppressWarnings(convertProjectToV6(configPath, silent = TRUE))
+
+  written <- .convertedProperties(projectDir)
+  expect_identical(
+    written$Value[written$Property == "modelParamsFile"],
+    "ModelParameters.xlsx"
+  )
+  expect_false("individualsFile" %in% written$Property)
+  expect_false(file.exists(file.path(configDir, "Individuals.xlsx")))
+  expect_identical(
+    readxl::excel_sheets(file.path(configDir, "ModelParameters.xlsx")),
+    c("Adult", "Child", "IV_250mg")
+  )
 })
 
 test_that("convertProjectToV6() refuses a workbook file name outside the configurations folder", {
@@ -2249,4 +2399,47 @@ test_that("a Label cell wins over the Scenario_name kept as the label", {
 
   expect_identical(scenarios[["adultscenario"]]$label, "Adult, 2.5 mg/kg IV")
   expect_null(scenarios[["childscenario"]]$label)
+})
+
+test_that(".v5ToLogical reads the boolean spellings of esqlabsR 5", {
+  expect_identical(
+    vapply(
+      list(TRUE, 1, 0, "Yes", "n", "  ", NA, NULL),
+      function(x) .v5ToLogical(x, "SteadyState"),
+      logical(1)
+    ),
+    c(TRUE, TRUE, FALSE, TRUE, FALSE, NA, NA, NA)
+  )
+  expect_error(.v5ToLogical(2, "SteadyState"), "SteadyState")
+})
+
+test_that(".v5ParsePIConfig nests the objective function and run options", {
+  configDf <- data.frame(
+    PITaskName = "t1",
+    Algorithm = "BOBYQA",
+    AutoEstimateCI = "Yes",
+    ObjectiveFunctionType = "lsq",
+    ResidualWeightingMethod = "std",
+    LinScaleCV = 0.2,
+    numberOfCores = 2,
+    checkForNegativeValues = 0,
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(
+    .v5ParsePIConfig(configDf, NULL, NULL, "t1"),
+    list(
+      algorithm = "BOBYQA",
+      autoEstimateCI = TRUE,
+      objectiveFunction = list(
+        type = "lsq",
+        residualWeightingMethod = "std",
+        linScaleCV = 0.2
+      ),
+      simulationRunOptions = list(
+        numberOfCores = 2,
+        checkForNegativeValues = FALSE
+      )
+    )
+  )
 })

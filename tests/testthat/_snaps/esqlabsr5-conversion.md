@@ -59,6 +59,14 @@
       x '<tmp-path>' already holds a v6 project or an earlier conversion: 'Project.xlsx' and 'esqlabsR5'.
       i Load the v6 project with `loadProject()`. To convert the esqlabsR 5 workbooks again, first move these out of the folder.
 
+# a file the restore cannot move back is named, and kept in esqlabsR5/
+
+    Code
+      cat(warnings, sep = "\n")
+    Output
+      ! The project folder could not be put back completely. These files are not where they were before: 'ProjectConfiguration.xlsx', 'Configurations/Scenarios.xlsx', 'Configurations/ModelParameters.xlsx', 'Configurations/Individuals.xlsx', 'Configurations/Populations.xlsx', 'Configurations/Applications.xlsx', 'Configurations/Plots.xlsx', and 'Configurations/ParameterIdentification.xlsx'.
+      i Find them in the 'esqlabsR5' folder and move them back by hand.
+
 # convertProjectToV6() writes the v6 workbooks
 
     Code
