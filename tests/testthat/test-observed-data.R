@@ -877,6 +877,20 @@ test_that("removeObservedData does not warn when nothing uses the removed source
   )
 })
 
+test_that("removeObservedData reads no source when nothing uses observed data", {
+  # A new project has no DataCombined and no PI task, so the reference check
+  # stops before reading the removed source.
+  project <- Project$new()
+  suppressMessages(addObservedData(project, plasmaDataSet("Aciclovir plasma")))
+  local_mocked_bindings(
+    .observedDataSourceNames = function(...) {
+      stop("the removed source was read")
+    }
+  )
+  expect_no_warning(removeObservedData(project, "Aciclovir plasma"))
+  expect_length(project$definitions$observedData, 0L)
+})
+
 test_that("removeObservedData removes a source whose file is missing", {
   # The test project's PI task fits observed data, so the removal tries to read
   # the file it can no longer find.

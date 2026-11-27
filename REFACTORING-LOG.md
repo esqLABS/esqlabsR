@@ -411,3 +411,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 16:36: The warning about folders an import could not copy reads in the singular when there is one folder.
 - 2026-11-26 11:51: Merged v6, which removed the script source, and dropped the removeObservedData() note that a script source was not checked, with its message and tests. (#1364)
 - 2026-11-26 15:33: The DataSet-name lookup of removeObservedData() drops its explicit NULL fallback, which only repeated what switch() returns when no type matches. (#1364)
+- 2026-11-27 19:41: A test covers removeObservedData() on a project where no DataCombined or PI task uses observed data, which removes the source without reading it. (#1364)
