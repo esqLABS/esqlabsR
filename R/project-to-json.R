@@ -98,10 +98,9 @@
       schemaVersion = "2.0",
       esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
     ),
-    # A project with no name (one imported from a workbook that carries none,
-    # one upgraded from a 5.x `snapshotProjectConfiguration()` JSON) omits the
-    # key rather than declaring the metadata and setting it to null, which reads
-    # as a field someone emptied.
+    # A project with no name (one imported from a workbook that carries none)
+    # omits the key rather than declaring the metadata and setting it to null,
+    # which reads as a field someone emptied.
     if (!is.null(project$info$name)) list(name = project$info$name),
     if (!is.null(project$info$description)) {
       list(description = project$info$description)

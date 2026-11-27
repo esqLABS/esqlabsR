@@ -117,6 +117,26 @@ test_that("loadProject() errors on an unsupported schemaVersion", {
   )
 })
 
+# `loadProject()` is the name a user upgrading from esqlabsR 5 reaches for
+# first, so the absent `schemaVersion` of the JSON file
+# `snapshotProjectConfiguration()` saved must not be reported to them as an
+# unsupported version: the file is an esqlabsR 5 project, and the message says
+# how to get its Excel files back and import them (#1417).
+test_that("loadProject() on the esqlabsR 5 snapshot JSON says how to restore and import it", {
+  dir <- withr::local_tempdir()
+  snapshot <- file.path(dir, "ProjectConfiguration.json")
+  file.copy(
+    test_path("data", "TestProjectExcel", "ProjectConfiguration.json"),
+    snapshot
+  )
+
+  expect_snapshot(
+    loadProject(snapshot),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+})
+
 test_that("loadProject() warns on a dangling cross-reference", {
   path <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(

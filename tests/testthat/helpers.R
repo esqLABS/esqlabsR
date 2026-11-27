@@ -243,11 +243,9 @@ localExcelProjectDir <- function(envir = parent.frame()) {
 #' A writable copy of `TestProjectExcel` whose data folder is the project folder.
 #'
 #' The data workbook and its importer configuration sit beside
-#' `ProjectConfiguration.xlsx` instead of in `Data/`, and both the workbook and
-#' the 5.x configuration JSON say `dataFolder = "."`, so the same folder serves
-#' a workbook import and a 5.x JSON import. `dataFile` renames the data
-#' workbook, in the folder and in both configurations. Returns the project
-#' directory.
+#' `ProjectConfiguration.xlsx` instead of in `Data/`, and the workbook says
+#' `dataFolder = "."`. `dataFile` renames the data workbook, in the folder and
+#' in the workbook. Returns the project directory.
 localExcelProjectWithRootData <- function(
   dataFile = "TestProject_TimeValuesData.xlsx",
   envir = parent.frame()
@@ -271,24 +269,6 @@ localExcelProjectWithRootData <- function(
     config$Value[config$Property == property] <- values[[property]]
   }
   .writeExcel(config, configPath)
-
-  jsonPath <- file.path(projectDir, "ProjectConfiguration.json")
-  snapshot <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  rows <- snapshot$projectConfiguration$rows
-  for (i in seq_along(rows)) {
-    property <- rows[[i]][["Property"]]
-    if (property %in% names(values)) {
-      rows[[i]][["Value"]] <- values[[property]]
-    }
-  }
-  snapshot$projectConfiguration$rows <- rows
-  jsonlite::write_json(
-    snapshot,
-    jsonPath,
-    auto_unbox = TRUE,
-    null = "null",
-    digits = NA
-  )
   projectDir
 }
 

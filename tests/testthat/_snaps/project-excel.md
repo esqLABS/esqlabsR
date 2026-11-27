@@ -69,6 +69,33 @@
       Caused by error in `utils::unzip()`:
       ! zip file '<tmp-path>/Project.xlsx' cannot be opened
 
+# importProjectFromExcel refuses the esqlabsR 5 snapshot JSON and writes nothing
+
+    Code
+      importProjectFromExcel(snapshot)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5. `importProjectFromExcel()` reads the Excel files of a project, not this file.
+      i In esqlabsR 5 (5.5.0 or later), restore the project's Excel files from it with `restoreProjectConfiguration()`.
+      i Then, in this version, import the restored 'ProjectConfiguration.xlsx' with `importProjectFromExcel()`.
+
+# importProjectFromExcel refuses any other JSON file and writes nothing
+
+    Code
+      importProjectFromExcel(settings, outputDir = outputDir)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+
+---
+
+    Code
+      importProjectFromExcel(project$info$projectFilePath, outputDir = outputDir)
+    Condition
+      Error in `importProjectFromExcel()`:
+      x '<tmp-path>' is not an Excel file. `importProjectFromExcel()` reads the 'Project.xlsx' or 'ProjectConfiguration.xlsx' workbook of a project.
+      i It is already a project in the current format. Open it with `loadProject()`.
+
 # exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE
 
     Code

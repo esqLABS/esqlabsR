@@ -1,3 +1,13 @@
+# loadProject() on the esqlabsR 5 snapshot JSON says how to restore and import it
+
+    Code
+      loadProject(snapshot)
+    Condition
+      Error:
+      x '<tmp-path>' is the JSON file that `snapshotProjectConfiguration()` saved in esqlabsR 5, not a project of the current format.
+      i In esqlabsR 5 (5.5.0 or later), restore the project's Excel files from it with `restoreProjectConfiguration()`.
+      i Then, in this version, import the restored 'ProjectConfiguration.xlsx' with `importProjectFromExcel()`.
+
 # a clean saveProject() is a no-op with the up-to-date message
 
     Code

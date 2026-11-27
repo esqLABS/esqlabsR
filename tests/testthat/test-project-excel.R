@@ -986,6 +986,54 @@ test_that("importProjectFromExcel names itself when the workbook cannot be read"
   )
 })
 
+# The JSON file `snapshotProjectConfiguration()` saved in esqlabsR 5 is not
+# imported (#1417). The refusal says how to get the project's Excel files back,
+# and it comes before anything is written: with the default `outputDir`, the
+# folder holding the file is where the import would have written.
+test_that("importProjectFromExcel refuses the esqlabsR 5 snapshot JSON and writes nothing", {
+  dir <- withr::local_tempdir()
+  snapshot <- file.path(dir, "ProjectConfiguration.json")
+  file.copy(
+    test_path("data", "TestProjectExcel", "ProjectConfiguration.json"),
+    snapshot
+  )
+
+  expect_snapshot(
+    importProjectFromExcel(snapshot),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(
+    list.files(dir, all.files = TRUE, no.. = TRUE),
+    basename(snapshot)
+  )
+})
+
+# Any other `.json` file is told what the import reads, and a project file of
+# the current format is pointed at `loadProject()`, the call that opens it.
+test_that("importProjectFromExcel refuses any other JSON file and writes nothing", {
+  dir <- withr::local_tempdir()
+  settings <- file.path(dir, "settings.json")
+  jsonlite::write_json(list(solver = "CVODE", tolerance = 1e-6), settings)
+  outputDir <- withr::local_tempdir()
+
+  expect_snapshot(
+    importProjectFromExcel(settings, outputDir = outputDir),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  project <- testProject()
+  expect_snapshot(
+    importProjectFromExcel(project$info$projectFilePath, outputDir = outputDir),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+  expect_identical(
+    list.files(outputDir, all.files = TRUE, no.. = TRUE),
+    character()
+  )
+})
+
 # Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
 # Configurations workbooks wholesale, defaulting outputDir to the project's own
 # directory, so a bare call would silently overwrite hand-maintained workbooks.
@@ -2647,7 +2695,7 @@ test_that("importProjectFromExcel copies the observed-data files when the data f
   ))))
 
   # The two data files and nothing else from the project folder: no workbook,
-  # no 5.x configuration JSON.
+  # and not the `ProjectConfiguration.json` the fixture also holds.
   expect_setequal(
     list.files(outputDir),
     c(
@@ -3427,8 +3475,7 @@ test_that("a data folder that is the project folder copies only its named files 
       copied = character(),
       notCopied = character(),
       copiedFiles = "Values.xlsx",
-      notCopiedFiles = character(),
-      added = character()
+      notCopiedFiles = character()
     )
   )
   expect_identical(list.files(out), "Values.xlsx")
@@ -3461,8 +3508,7 @@ test_that("a data file inside a copied folder is not reported as kept", {
       copied = "Models",
       notCopied = character(),
       copiedFiles = character(),
-      notCopiedFiles = character(),
-      added = character()
+      notCopiedFiles = character()
     )
   )
   expect_true(file.exists(file.path(out, "Models", "Values.xlsx")))
