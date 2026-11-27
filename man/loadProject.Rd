@@ -45,11 +45,8 @@ assignment is an in-memory edit like any other, saved by \code{\link[=saveProjec
 
 Write your changes to the project files with \code{\link[=saveProject]{saveProject()}}. Discard
 unsaved changes and go back to what is saved on disk by loading the
-project again with \code{project <- loadProject(project$info$projectFilePath)}. Save the current state of the whole project to a
-single file you can archive or share with \code{\link[=snapshotProject]{snapshotProject()}}, and
-recreate a project folder from such a file (or roll an existing one
-back) with \code{\link[=restoreProject]{restoreProject()}}. Check for unsaved changes and outdated
-Excel files with \code{\link[=projectStatus]{projectStatus()}}.
+project again with \code{project <- loadProject(project$info$projectFilePath)}. Check for unsaved
+changes and outdated Excel files with \code{\link[=projectStatus]{projectStatus()}}.
 }
 
 \examples{
@@ -66,8 +63,7 @@ saveProject(project)
 }
 }
 \seealso{
-\code{\link[=saveProject]{saveProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
+\code{\link[=saveProject]{saveProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
@@ -76,8 +72,6 @@ Other projectPersistence:
 \code{\link[=initProject]{initProject()}},
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}}
+\code{\link[=saveProject]{saveProject()}}
 }
 \concept{projectPersistence}

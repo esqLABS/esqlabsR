@@ -20,8 +20,7 @@
 #' @returns Object of type `Project`
 #' @export
 #' @family projectPersistence
-#' @seealso [saveProject()], [snapshotProject()],
-#'   [restoreProject()], [projectStatus()].
+#' @seealso [saveProject()], [projectStatus()].
 #'
 #' @section Editing a loaded project:
 #'   Changes you make to a loaded project — with `addScenario()`,
@@ -41,11 +40,8 @@
 #'
 #'   Write your changes to the project files with [saveProject()]. Discard
 #'   unsaved changes and go back to what is saved on disk by loading the
-#'   project again with `project <- loadProject(project$info$projectFilePath)`. Save the current state of the whole project to a
-#'   single file you can archive or share with [snapshotProject()], and
-#'   recreate a project folder from such a file (or roll an existing one
-#'   back) with [restoreProject()]. Check for unsaved changes and outdated
-#'   Excel files with [projectStatus()].
+#'   project again with `project <- loadProject(project$info$projectFilePath)`. Check for unsaved
+#'   changes and outdated Excel files with [projectStatus()].
 #'
 #' @examples
 #' \dontrun{
@@ -133,14 +129,14 @@ loadProject <- function(path = ".") {
     }
   )
   if (!identical(jsonData$schemaVersion, "2.0")) {
-    # A previous-version monolithic snapshot has no `schemaVersion`, so it
-    # fails this check for a reason the version number cannot express: it is
-    # not a malformed project of the current format, it is an older project
-    # that `restoreProject()` upgrades. Name that call rather than reporting
-    # a missing schema version. Every entrypoint that opens a project file
-    # (`loadProject()`, `Project$new()`, the deprecated
-    # `ProjectConfiguration()`) reads it through here, so
-    # the one guard covers all of them.
+    # The JSON file `snapshotProjectConfiguration()` saved in esqlabsR 5 has no
+    # `schemaVersion`, so it fails this check for a reason the version number
+    # cannot express: it is not a malformed project of the current format, it
+    # is an esqlabsR 5 project whose Excel files have to be restored and
+    # imported. Say how rather than reporting a missing schema version. Every
+    # entrypoint that opens a project file (`loadProject()`, `Project$new()`,
+    # the deprecated `ProjectConfiguration()`) reads it through here, so the
+    # one guard covers all of them.
     if (.isLegacySnapshot(jsonData)) {
       cli::cli_abort(messages$legacySnapshotNotLoadable(jsonPath))
     }
@@ -212,8 +208,8 @@ loadProject <- function(path = ".") {
     excelData[[n]] <- list(value = excel[[n]], description = "")
   }
 
-  # Every authored section is a definition tree under `definitions/<kind>/`; a
-  # single-file snapshot with no tree falls back to the inline section in
+  # Every authored section is a definition tree under `definitions/<kind>/`; an
+  # inline project file with no tree falls back to the inline section in
   # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
   # the kind's spec parses the raw records into the in-memory shape. Output
   # paths load before parameter identification, whose output mappings resolve
@@ -258,7 +254,7 @@ loadProject <- function(path = ".") {
     # keyed kind: `dataCombined` (`definitions/data-combined/`), `plots`
     # (`definitions/plots/`, the plot list), and `plotGrids`
     # (`definitions/plot-grids/`). Each loads from its own tree (or its own
-    # top-level inline snapshot section as the fallback).
+    # top-level inline section as the fallback).
     dataCombined = loadSection("dataCombined"),
     plots = loadSection("plots"),
     plotGrids = loadSection("plotGrids"),
@@ -293,17 +289,14 @@ loadProject <- function(path = ".") {
 #'   [projectStatus()] to check whether project files on disk, the Excel files,
 #'   and your R session are in sync.
 #'
-#' @param project A `Project` loaded from disk with [loadProject()] (or
-#'   restored with [restoreProject()]). A project created directly with
-#'   `Project$new()` has no folder on disk to save to; use [snapshotProject()]
-#'   to write it to a single file, or create a project folder first with
-#'   [initProject()].
+#' @param project A `Project` loaded from disk with [loadProject()]. A
+#'   project created directly with `Project$new()` has no folder on disk to
+#'   save to; create a project folder first with [initProject()].
 #'
 #' @returns Invisibly, the `project`.
 #' @export
 #' @family projectPersistence
-#' @seealso [loadProject()], [snapshotProject()],
-#'   [restoreProject()], [projectStatus()].
+#' @seealso [loadProject()], [projectStatus()].
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
@@ -487,6 +480,12 @@ isProjectInitialized <- function(destination = ".") {
     return(fs::path_abs(containers[[1]]))
   }
   if (length(containers) == 0L) {
+    # A folder holding the JSON file `snapshotProjectConfiguration()` saved in
+    # esqlabsR 5 gets the advice for that file rather than the generic one.
+    snapshot <- .legacySnapshotPaths(path)
+    if (length(snapshot) > 0L) {
+      cli::cli_abort(messages$legacySnapshotNotLoadable(snapshot[[1]]))
+    }
     cli::cli_abort(messages$noProjectContainerInFolder(path))
   }
   cli::cli_abort(messages$multipleProjectContainersInFolder(
@@ -531,6 +530,69 @@ isProjectInitialized <- function(destination = ".") {
   )
 
   jsonFiles[isContainer]
+}
+
+# The top-level keys of the JSON file that `snapshotProjectConfiguration()`
+# saved in esqlabsR 5: the property/path sheet plus one key per configuration
+# workbook. Every esqlabsR 5 release that saved the file wrote this same fixed
+# set (a newer one adds sections such as `ParameterIdentification`; an older
+# one omits them), so recognizing the file on these keys is stable across
+# versions.
+.legacySnapshotSectionKeys <- c(
+  "projectConfiguration",
+  "modelParameterSets",
+  "Individuals",
+  "Populations",
+  "Scenarios",
+  "Applications",
+  "Plots",
+  "ParameterIdentification"
+)
+
+# TRUE when `jsonData` is the JSON file that `snapshotProjectConfiguration()`
+# saved in esqlabsR 5 (the project's Excel workbooks dumped sheet by sheet as
+# `{column_names, rows}` objects, keyed by workbook name) rather than a current
+# `Project.json`. The discriminator is the absent `schemaVersion` (every
+# current project file carries `"2.0"`) together with the signature
+# `projectConfiguration` sheet and at least one workbook section, so neither a
+# current project file nor an unrelated JSON object is mistaken for one.
+# `loadProject()` uses it to tell the user how to turn such a file into a
+# project of the current format.
+#
+# @keywords internal
+# @noRd
+.isLegacySnapshot <- function(jsonData) {
+  is.list(jsonData) &&
+    is.null(jsonData$schemaVersion) &&
+    !is.null(jsonData[["projectConfiguration"]]) &&
+    length(intersect(names(jsonData), .legacySnapshotSectionKeys)) >= 2L
+}
+
+# The paths of the `.json` files directly inside `destination` that
+# `.isLegacySnapshot()` recognizes as the JSON file
+# `snapshotProjectConfiguration()` saved in esqlabsR 5. A file that does not
+# parse is not one.
+#
+# @keywords internal
+# @noRd
+.legacySnapshotPaths <- function(destination) {
+  jsonFiles <- as.character(fs::dir_ls(
+    destination,
+    glob = "*.json",
+    type = "file",
+    fail = FALSE
+  ))
+  isSnapshot <- vapply(
+    jsonFiles,
+    function(path) {
+      .isLegacySnapshot(tryCatch(
+        jsonlite::fromJSON(path, simplifyVector = FALSE),
+        error = function(e) NULL
+      ))
+    },
+    logical(1)
+  )
+  jsonFiles[isSnapshot]
 }
 
 # One top-level field of a project container, or `NULL` when the file does not
@@ -710,7 +772,7 @@ initProject <- function(
   }
 
   # The template ships a fixed `esqlabsRVersion`, and every other writer
-  # (`saveProject()`, `snapshotProject()`, the Excel bridge) stamps the running
+  # (`saveProject()`, the Excel bridge) stamps the running
   # package version, so the copied value is restamped here: the field says which
   # version wrote the project, and a scaffold that claimed one version and then
   # reported another after the first save read as a downgrade. `name` is applied

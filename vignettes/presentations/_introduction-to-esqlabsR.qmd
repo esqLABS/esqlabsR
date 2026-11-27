@@ -272,32 +272,6 @@ project
 I The project
 :::
 
-## Share a project as one file {auto-animate=true}
-
-<br>
-
-A **snapshot** packs a project into a single portable `.esqlabsR` file.
-
-<br>
-
-```{r, eval = FALSE}
-# Freeze the project into one shareable file
-snapshotProject(project, name = "aciclovir_study") # writes aciclovir_study.esqlabsR
-
-# Re-materialize it as a full project directory
-restoreProject("aciclovir_study.esqlabsR", dir = "restored_project")
-```
-
-<br>
-
-- Plain text, JSON-based (Git-friendly)
-- One file to send a colleague
-- Reproducible project setup
-
-::: footer
-I The project
-:::
-
 # II. Authoring scenarios
 
 ## Scenarios
