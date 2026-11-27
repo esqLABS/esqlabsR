@@ -422,3 +422,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-27 22:47: convertProjectToV6() records each move and folder before making it, and its restore skips a move that did not happen. (#1426)
 - 2026-11-27 22:48: When the import step of convertProjectToV6() fails, the error says the conversion stopped in the import, that the folder was put back, and to fix the esqlabsR 5 workbooks, with the import's error below it. (#1426)
 - 2026-11-27 22:49: convertProjectToV6() moves the esqlabsR 5 snapshot JSON beside the property workbook (ProjectConfiguration.json) into esqlabsR5/ as well. (#1426)
+- 2026-11-27 22:50: convertProjectToV6() refuses a projectConfigPath or silent that is not a single value, or is NA. (#1426)

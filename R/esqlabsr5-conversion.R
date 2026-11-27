@@ -15,6 +15,10 @@
 # catalog so that the conversion stays in one file.
 .esqlabsR5Messages <- list()
 
+.esqlabsR5Messages$argumentIsNA <- function(argument) {
+  cliBullets("x" = "{.arg {argument}} must not be {.code NA}.")
+}
+
 .esqlabsR5Messages$notExcelFile <- function(path) {
   cliBullets(
     "x" = "{.file {path}} is not an Excel file. {.fn convertProjectToV6} \\
@@ -461,7 +465,14 @@ convertProjectToV6 <- function(
   silent = FALSE
 ) {
   ospsuite.utils::validateIsString(projectConfigPath)
+  ospsuite.utils::validateIsOfLength(projectConfigPath, 1L)
   ospsuite.utils::validateIsLogical(silent)
+  ospsuite.utils::validateIsOfLength(silent, 1L)
+  for (argument in c("projectConfigPath", "silent")) {
+    if (is.na(get(argument))) {
+      cli::cli_abort(.esqlabsR5Messages$argumentIsNA(argument))
+    }
+  }
   properties <- .v5CheckConvertible(projectConfigPath)
   plan <- .v5PlanConversion(projectConfigPath, properties)
   jsonPath <- .v5ApplyConversion(plan, silent)

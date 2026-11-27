@@ -33,6 +33,18 @@
 
 # Refusals ----
 
+test_that("convertProjectToV6() takes one path and one TRUE or FALSE", {
+  expect_snapshot(
+    {
+      convertProjectToV6(c("A.xlsx", "B.xlsx"))
+      convertProjectToV6(NA_character_)
+      convertProjectToV6("A.xlsx", silent = c(TRUE, FALSE))
+      convertProjectToV6("A.xlsx", silent = NA)
+    },
+    error = TRUE
+  )
+})
+
 test_that("convertProjectToV6() refuses a path that is not an esqlabsR 5 workbook", {
   projectDir <- localExcelProjectDir()
   before <- .folderState(projectDir)
