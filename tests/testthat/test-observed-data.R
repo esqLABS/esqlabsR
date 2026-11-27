@@ -87,10 +87,7 @@ test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory
   # back it (DataSets do not survive a JSON round-trip). loadObservedData warns
   # that the source resolved to nothing and returns an empty result;
   # addObservedData is the supported path for re-attaching the runtime DataSet.
-  expect_warning(
-    result <- loadObservedData(project),
-    "resolved to no data"
-  )
+  expect_snapshot(result <- loadObservedData(project))
   expect_length(result, 0L)
 })
 
@@ -253,6 +250,15 @@ test_that("loadObservedData returns a session DataSet under its current name", {
     c(testObservedDataId, "Plasma cohort A, corrected")
   )
   expect_identical(loaded[["Plasma cohort A, corrected"]], plasma)
+})
+
+test_that("addObservedData rejects an entry that is neither a DataSet nor a list with a type", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, {
+    addObservedData(project, 42)
+    addObservedData(project, list(file = "a.pkml"))
+  })
+  expect_length(project$definitions$observedData, 1L)
 })
 
 test_that("addObservedData rejects a script entry", {

@@ -34,8 +34,8 @@ source. When some \code{dataCombined} entry refers to a data set,
 \code{removeObservedData()} reads the removed source to learn the names of its
 data sets, and warns for each \code{dataCombined} that still refers to one of
 them. A source that cannot be read (a missing file, for example) is removed
-without this warning; \code{\link[=validateProject]{validateProject()}} reports the reference that no
-longer resolves.
+without this warning; \code{\link[=createDataCombined]{createDataCombined()}} reports the reference that no
+longer resolves when it builds that \code{DataCombined}.
 }
 \seealso{
 Other observedData:

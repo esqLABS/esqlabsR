@@ -641,8 +641,8 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
 #' `removeObservedData()` reads the removed source to learn the names of its
 #' data sets, and warns for each `dataCombined` that still refers to one of
 #' them. A source that cannot be read (a missing file, for example) is removed
-#' without this warning; [validateProject()] reports the reference that no
-#' longer resolves.
+#' without this warning; [createDataCombined()] reports the reference that no
+#' longer resolves when it builds that `DataCombined`.
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of ids. Like every other definition id, each is
@@ -683,16 +683,17 @@ removeObservedData <- function(project, id) {
   # data set, not a source, so each removed source's data-set names are learned
   # before the removal takes its DataSet out of the session, and a file source
   # is read only when some `dataCombined` refers to a data set at all.
-  if (length(.dataCombinedDataSetReferences(self)) > 0L) {
+  references <- .dataCombinedDataSetReferences(self)
+  if (length(references) > 0L) {
     for (removedId in removedIds) {
       .warnIfObservedDataReferenced(
-        self,
         removedId,
         .observedDataSourceDataSetNames(
           observedData[[removedId]],
           private$.programmaticDataSets[[removedId]],
           self$paths$dataFolder
-        )
+        ),
+        references
       )
     }
   }
@@ -711,18 +712,18 @@ removeObservedData <- function(project, id) {
 
 # Warn when a removed observed-data source is still referenced as a
 # `dataSet` by any `dataCombined` observed entry. Removal proceeds
-# anyway, leaving the dangling reference for the next validateProject()
-# call to surface, matching the .warnIfReferenced() convention used by
-# the other remove*() mutators.
+# anyway, leaving the dangling reference for createDataCombined() to
+# report when it builds that DataCombined, matching the .warnIfReferenced()
+# convention used by the other remove*() mutators.
 #
 # A `dataSet` reference names a data set, not a source, so a `dataCombined` is
 # a holder when it names one of the source's data sets (`dataSetNames`), matched
 # exactly. `NULL` (the names could not be learned) warns about nothing.
+# `references` is `.dataCombinedDataSetReferences()` of the project.
 #
 # @keywords internal
 # @noRd
-.warnIfObservedDataReferenced <- function(project, id, dataSetNames) {
-  references <- .dataCombinedDataSetReferences(project)
+.warnIfObservedDataReferenced <- function(id, dataSetNames, references) {
   holders <- names(references)[vapply(
     references,
     \(refs) any(refs %in% dataSetNames),

@@ -7,6 +7,17 @@
       x Invalid type "invalid_type" in `observedData` entry.
       i Must be one of: "excel", "pkml", or "programmatic".
 
+# loadObservedData warns on orphan programmatic sentinels (no in-memory DataSet)
+
+    Code
+      result <- loadObservedData(project)
+    Condition
+      Warning:
+      ! 1 programmatic observed-data source resolved to no data: "x".
+      i A programmatic source holds its <DataSet> in the session that added it until `saveProject()` writes the <DataSet> to a PKML file.
+      i Re-add it with `addObservedData()` in this session, or declare it as a `pkml` source to persist across a reload.
+      This warning is displayed once per session.
+
 # loadObservedData errors when excel entry is missing required fields
 
     Code
@@ -14,6 +25,19 @@
     Condition
       Error in `loadObservedData()`:
       ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
+
+# addObservedData rejects an entry that is neither a DataSet nor a list with a type
+
+    Code
+      addObservedData(project, 42)
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry must be a <DataSet> or a configuration list
+    Code
+      addObservedData(project, list(file = "a.pkml"))
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry must include a type field
 
 # addObservedData rejects a script entry
 
