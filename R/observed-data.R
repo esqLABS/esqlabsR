@@ -259,7 +259,9 @@ loadObservedData <- function(project) {
       allDataSets <- .mergeObservedDataSets(allDataSets, dataSets)
     }
   }
-  # Merge runtime programmatic store, then cache names.
+  # The cache keeps only the names read from files: a session DataSet can be
+  # renamed at any time, so its name is always read from the DataSet itself.
+  fileDataSetNames <- names(allDataSets)
   allDataSets <- .mergeObservedDataSets(
     allDataSets,
     .programmaticDataSetsByName(private$.programmaticDataSets)
@@ -286,7 +288,7 @@ loadObservedData <- function(project) {
       )
     )
   }
-  private$.observedDataNamesCache <- names(allDataSets)
+  private$.observedDataNamesCache <- fileDataSetNames %||% character(0)
   allDataSets
 }
 
@@ -378,12 +380,21 @@ getObservedDataNames <- function(project) {
 # @noRd
 .getObservedDataNames_impl <- function(self, private, .call) {
   rlang::local_error_call(.call)
-  if (!is.null(private$.observedDataNamesCache)) {
-    return(private$.observedDataNamesCache)
+  if (is.null(private$.observedDataNamesCache)) {
+    # Reentrant call: pass the attribution call on rather than re-resolving it.
+    .loadObservedData_impl(self, private, .call = .call)
   }
-  # Reentrant call: pass the attribution call on rather than re-resolving it.
-  .loadObservedData_impl(self, private, .call = .call)
-  private$.observedDataNamesCache %||% character(0)
+  # The cache holds the names read from files; the names of the session's
+  # DataSets are read from the DataSets, in the order a load returns them.
+  c(
+    private$.observedDataNamesCache %||% character(0),
+    vapply(
+      private$.programmaticDataSets,
+      \(ds) ds$name,
+      character(1),
+      USE.NAMES = FALSE
+    )
+  )
 }
 
 # Public CRUD: observedData ----
@@ -512,19 +523,19 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
       cli::cli_abort(messages$observedDataNotReplaceableByDataSet(id))
     }
     name <- entry$name
-    store <- private$.programmaticDataSets
-    # The DataSet this one replaces, when it is held in the session, takes its
-    # name with it.
-    replacedName <- if (replacing) store[[id]]$name
-    # Check only the names known without reading a source: the names cache, when
-    # a lookup has filled it, and the session's DataSets. Reading the sources
-    # would import every file and stop on any unreadable one. A clash with a
-    # name inside a source not read yet aborts the next load instead
-    # (`.mergeObservedDataSets()`).
+    # Check only the names known without reading a source: the names cache of
+    # the file sources, when a lookup has filled it, and the session's
+    # DataSets. Reading the sources would import every file and stop on any
+    # unreadable one. A clash with a name inside a source not read yet aborts
+    # the next load instead (`.mergeObservedDataSets()`). The DataSet this one
+    # replaces is left out by its id, so its name is free for its replacement
+    # but stays taken when another DataSet has it too.
     namesCache <- private$.observedDataNamesCache
-    knownNames <- setdiff(
-      union(namesCache, vapply(store, \(ds) ds$name, character(1))),
-      replacedName
+    otherDataSets <- private$.programmaticDataSets
+    otherDataSets[[id]] <- NULL
+    knownNames <- c(
+      namesCache,
+      vapply(otherDataSets, \(ds) ds$name, character(1), USE.NAMES = FALSE)
     )
     if (name %in% knownNames) {
       cli::cli_abort(messages$observedDataSetNameExists(name))
@@ -553,15 +564,9 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
     private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[id]] <- entry
     # The observedData setter resets the names cache, so restore it after the
-    # write when it was filled, with the replaced DataSet's name swapped for
-    # this one's. An unfilled cache stays unfilled: the next lookup reads every
-    # source.
-    if (!is.null(namesCache)) {
-      private$.observedDataNamesCache <- union(
-        setdiff(namesCache, replacedName),
-        name
-      )
-    }
+    # write: adding a DataSet changes no file source. An unfilled cache stays
+    # unfilled: the next lookup reads every source.
+    private$.observedDataNamesCache <- namesCache
     cli::cli_inform(messages$observedDataProgrammaticAdded(
       name,
       id,

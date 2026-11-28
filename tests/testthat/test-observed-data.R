@@ -1761,6 +1761,60 @@ test_that("a DataSet overwrite replaces the session DataSet and its name", {
   )
 })
 
+test_that("the data-set names follow a session DataSet renamed after the add", {
+  project <- testProject()
+  plasma <- ospsuite::DataSet$new(name = "Plasma cohort A")
+  plasma$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  suppressMessages(addObservedData(project, plasma, id = "plasma"))
+  getObservedDataNames(project)
+  plasma$name <- "Plasma cohort A, corrected"
+
+  expect_identical(
+    getObservedDataNames(project),
+    c(testObservedDataId, "Plasma cohort A, corrected")
+  )
+  # The name the DataSet gave up is free again, and its new name is taken.
+  rerun <- ospsuite::DataSet$new(name = "Plasma cohort A")
+  rerun$setValues(xValues = c(0, 1), yValues = c(3, 4))
+  expect_no_error(suppressMessages(
+    addObservedData(project, rerun, id = "plasma_rerun")
+  ))
+  expect_error(
+    addObservedData(
+      project,
+      ospsuite::DataSet$new(name = "Plasma cohort A, corrected"),
+      id = "plasma_corrected"
+    ),
+    "already provides a data set named"
+  )
+})
+
+test_that("a DataSet overwrite is refused when another session DataSet has its name", {
+  project <- testProject()
+  state <- .projectSeam(project)
+  cohortA <- ospsuite::DataSet$new(name = "Cohort A")
+  cohortA$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  cohortB <- ospsuite::DataSet$new(name = "Cohort B")
+  cohortB$setValues(xValues = c(0, 1), yValues = c(3, 4))
+  suppressMessages({
+    addObservedData(project, cohortA, id = "cohort_a")
+    addObservedData(project, cohortB, id = "cohort_b")
+  })
+  getObservedDataNames(project)
+  cohortB$name <- "Cohort A"
+  rerun <- ospsuite::DataSet$new(name = "Cohort A")
+  rerun$setValues(xValues = c(0, 1), yValues = c(5, 6))
+
+  expect_error(
+    addObservedData(project, rerun, id = "cohort_a", overwrite = TRUE),
+    "already provides a data set named"
+  )
+  expect_identical(
+    state$.programmaticDataSets,
+    list(cohort_a = cohortA, cohort_b = cohortB)
+  )
+})
+
 test_that("a DataSet overwrite is refused when another source reads its PKML file", {
   project <- testProject()
   state <- .projectSeam(project)
