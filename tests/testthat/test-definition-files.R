@@ -391,9 +391,25 @@ test_that("a scenario file whose id disagrees with its filename aborts", {
   )
 })
 
-# observedData is keyed like every other section, except its id may be derived
-# rather than stored. Both forms must still agree with the filename, or the next
-# save files the declaration elsewhere and reconciles the loaded file away.
+# observedData is keyed like every other section: the stored id must agree with
+# the filename, or the next save files the declaration elsewhere and reconciles
+# the loaded file away.
+test_that("an observedData file without an id aborts", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(type = "pkml", file = "cohort_b.pkml"),
+    file.path(dir, "cohort_b.json"),
+    auto_unbox = TRUE
+  )
+
+  expect_snapshot(
+    loadProject(project$info$projectFilePath),
+    error = TRUE,
+    transform = .redactTmpPath
+  )
+})
+
 test_that("an observedData file whose id disagrees with its filename aborts", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
@@ -568,20 +584,30 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
   expect_snapshot(spec$parse(list(rec), NULL), error = TRUE)
 })
 
-# observed-data id escape guard ----
+# Two declarations filed under one id would share one definition file.
+test_that("observedData declarations that share an id cannot be saved", {
+  entries <- .observedDataSectionById(list(
+    list(id = "laskin_1982", type = "pkml", file = "Laskin 1982.pkml"),
+    list(id = "laskin_1982", type = "pkml", file = "sub/laskin 1982.pkml")
+  ))
 
-# The observed-data id becomes a filename, and a programmatic `name` reaches it
-# verbatim. A name carrying a path separator (or `..`) must be rejected so it
-# cannot escape the observed-data definition directory.
-test_that("a programmatic observedData name that escapes its directory aborts", {
-  entries <- list(
-    list(type = "programmatic", name = "../escape")
-  )
+  expect_snapshot(.serializeObservedDataSet(entries), error = TRUE)
+})
 
-  expect_snapshot(
-    .serializeObservedDataSet(entries),
-    error = TRUE
-  )
+# observed-data id guard ----
+
+# The observed-data id becomes a filename, so it is checked like every other
+# definition id: it must already be canonical, which also keeps a path
+# separator or `..` from escaping the observed-data definition directory.
+test_that("an observedData id that is not canonical cannot be saved", {
+  expect_snapshot(error = TRUE, {
+    .serializeObservedDataSet(list(
+      Laskin = list(id = "Laskin", type = "pkml", file = "laskin.pkml")
+    ))
+    .serializeObservedDataSet(list(
+      "../escape" = list(id = "../escape", type = "programmatic")
+    ))
+  })
 })
 
 # Stale-file policy: the full-tree reconciler owns the `<kind>/` directory ----

@@ -736,9 +736,9 @@ importProjectFromExcel <- function(
   # Observed data. The project records a single `dataFile` (an experimental-data
   # workbook) and a `dataImporterConfigurationFile` under `dataFolder`, not a
   # per-section workbook, so it is parsed outside the `sections` loop. The
-  # importer reifies it as one `excel` observed-data definition keyed by the
-  # data-file basename, listing the workbook's sheets; the loader resolves the
-  # `file` / `importerConfiguration` basenames against `dataFolder`.
+  # importer reifies it as one `excel` observed-data definition keyed by the id
+  # taken from the data file name, listing the workbook's sheets; the loader
+  # resolves the `file` / `importerConfiguration` paths against `dataFolder`.
   jsonData <- .parseExcelObservedData(jsonData, prop, pcDir, projectDir)
 
   # A 5.x `PIOutputMappings` sheet names the sheet of the data workbook each
@@ -1139,7 +1139,12 @@ exportProjectToExcel <- function(
   if (length(unrepresented) > 0L) {
     .warnFormatted(
       messages$exportUndeclaredObservedData(
-        vapply(unrepresented, .observedDataEntryIdOrNA, character(1L))
+        vapply(
+          unrepresented,
+          \(e) e$id,
+          character(1L),
+          USE.NAMES = FALSE
+        )
       ),
       "esqlabsR_exportUndeclaredObservedData"
     )
@@ -1734,9 +1739,9 @@ projectStatus <- function(project, silent = FALSE) {
   # same deterministic helper, so the migrated tree's inner cross-references
   # still resolve. A plot's `dataCombined` rows also reference a scenario by id;
   # canonicalize that so it resolves against the (canonicalized) scenario
-  # definitions. The `dataSet` / `observedData` references point at observed
-  # data, whose ids are file basenames / DataSet names matched verbatim and
-  # never canonicalized, so they are deliberately left untouched.
+  # definitions. The `dataSet` / `observedData` references name data sets inside
+  # the observed-data sources, not source ids; a data-set name is matched
+  # verbatim and never canonicalized, so they are deliberately left untouched.
   if (!is.null(jsonData$dataCombined)) {
     checkRecordIds(jsonData$dataCombined, "id")
     canonEntryScenario <- function(entry) {
@@ -2909,8 +2914,8 @@ projectStatus <- function(project, silent = FALSE) {
 #'
 #' The project configuration records a single `dataFile` under `dataFolder`
 #' (optionally with a `dataImporterConfigurationFile`). This builds one `excel`
-#' observed-data entry from it, keyed by the data-file basename and listing the
-#' workbook's sheets, so a plot or PI mapping that references observed data has
+#' observed-data entry from it, keyed by the id taken from the data file name
+#' and listing the workbook's sheets, so a plot or PI mapping that references observed data has
 #' something to resolve against. `file` and `importerConfiguration` are stored as
 #' basenames; the loader resolves them under `dataFolder`. A no-op when no
 #' `dataFile` is configured, or its workbook is absent, or `dataFolder` /
@@ -2978,20 +2983,13 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   importerConfig <- prop("dataImporterConfigurationFile")
-  # The declaration states its own `id`, the canonicalized basename of the data
-  # file with its extension dropped, rather than leaving one to be derived: a
-  # derived id is the basename verbatim, which makes the definition file
-  # `<name>.xlsx.json` and keeps whatever spaces, commas and casing the data
-  # file's name carried, so the declaration is not addressable by a
-  # `removeObservedData()` id the authoring API could ever produce.
+  # The id is taken from the data file the way `addObservedData()` takes it.
   #
   # `file` / `importerConfiguration` are stored as given (relative to
   # `dataFolder`), not truncated to a basename: the loader resolves them under
   # `dataFolder` (`.resolveDataPath()`), so a file in a subfolder would be lost
   # if only its basename were kept.
-  id <- .canonicalizeOneId(
-    tools::file_path_sans_ext(basename(dataFile))
-  )
+  id <- .observedDataIdFromFile(dataFile)
   entry <- list(
     id = id,
     type = "excel",

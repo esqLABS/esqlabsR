@@ -99,24 +99,34 @@
       x id is "differentname" but the file is "populationscenario".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
 
+# an observedData file without an id aborts
+
+    Code
+      loadProject(project$info$projectFilePath)
+    Condition
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
+      i Check '<project>/definitions/observed-data/cohort_b.json'.
+
 # an observedData file whose id disagrees with its filename aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
-      Error in `.assertObservedDataTreeRecordId()`:
-      ! An observedData definition file has an id that disagrees with its filename.
-      x The declaration's id is "elsewhere" but the file is "mismatch".json.
-      i The filename stem is the declaration's id; rename the file, or the id it declares (or the file it derives one from), so they match. Check '<project>/definitions/observed-data/mismatch.json'.
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has a stored id that disagrees with its filename.
+      x id is "elsewhere" but the file is "mismatch".json.
+      i The filename stem is the definition's id; rename the file or the id so they match. Check '<project>/definitions/observed-data/mismatch.json'.
 
 # an observedData file whose id is not a string aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
-      Error in `.assertObservedDataTreeRecordId()`:
-      ! An observedData definition file has an unusable id.
-      x id must be a single non-empty string (it names the declaration and its file).
+      Error in `.keyedTreeRecordId()`:
+      ! A definition file for kind observedData has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
       i Check '<project>/definitions/observed-data/obs.pkml.json'.
 
 # a non-scalar scalar field fails load naming the scenario and field
@@ -139,15 +149,30 @@
       x id is "myset" but the file is "otherset".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
 
-# a programmatic observedData name that escapes its directory aborts
+# observedData declarations that share an id cannot be saved
 
     Code
       .serializeObservedDataSet(entries)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! observedData id "../escape" is not a single safe filename segment.
-      x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
-      i Give the declaration an id that is a single safe filename segment, or rename what it derives one from: a file basename, or a programmatic name.
+      x Two observed-data sources would be saved to the same definition file 'laskin_1982.json'.
+      i Each source is saved to a file named after its id. Give the sources distinct ids, or remove one with `removeObservedData()`.
+
+# an observedData id that is not canonical cannot be saved
+
+    Code
+      .serializeObservedDataSet(list(Laskin = list(id = "Laskin", type = "pkml",
+        file = "laskin.pkml")))
+    Condition
+      Error in `.validateDefinitionTreeKey()`:
+      ! observedData id "Laskin" is not a canonical definition-file id.
+      i Use the add/set API, which canonicalizes it to "laskin", or store the definition under the key "laskin".
+    Code
+      .serializeObservedDataSet(list(`../escape` = list(id = "../escape", type = "programmatic")))
+    Condition
+      Error in `.validateDefinitionTreeKey()`:
+      ! observedData id "../escape" is not a canonical definition-file id.
+      i Use the add/set API, which canonicalizes it to "_escape", or store the definition under the key "_escape".
 
 # a full-tree write aborts when a stale file cannot be removed
 

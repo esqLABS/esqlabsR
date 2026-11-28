@@ -4,7 +4,7 @@
 \alias{addObservedData}
 \title{Add observed data to a Project}
 \usage{
-addObservedData(project, entry, overwrite = FALSE)
+addObservedData(project, entry, id = NULL, overwrite = FALSE)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -12,11 +12,15 @@ addObservedData(project, entry, overwrite = FALSE)
 \item{entry}{An \code{\link[ospsuite:DataSet]{ospsuite::DataSet}}, or a list with a \code{type} and that
 type's fields (see the table above).}
 
-\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id or \code{DataSet}
-name that already exists aborts. When \code{TRUE}, the existing source is
-replaced, but only by one of the same kind (a \code{DataSet} by a \code{DataSet}, a
-list by a list). To replace one kind with the other, remove the existing
-source with \code{\link[=removeObservedData]{removeObservedData()}} first.}
+\item{id}{Character scalar, the id of the new source. \code{NULL} (default) uses
+the \code{id} field of a list \code{entry}, or else takes the id from the source (see
+Description).}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
+exists aborts. When \code{TRUE}, the source with that id is replaced, but only
+by one of the same kind (a \code{DataSet} by a \code{DataSet}, a list by a list). To
+replace one kind with the other, remove the existing source with
+\code{\link[=removeObservedData]{removeObservedData()}} first.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -33,24 +37,38 @@ built in the session, or a list naming the file the data is read from:\tabular{l
 Paths are relative to the project's data folder: \code{"observed.xlsx"}, not
 \code{"Data/observed.xlsx"}.
 
-\code{id} names the source: it is the name of its definition file and what
-\code{\link[=removeObservedData]{removeObservedData()}} takes. It is lowercased and made a safe file name,
-with a message when that changes it. Left out, the \code{file} basename is used
-as it is. A \code{dataCombined} entry refers to the name of a data set inside the
-source, not to this id.
+Every source has an id: it names the source's definition file and is what
+\code{\link[=removeObservedData]{removeObservedData()}} takes. The id is the \code{id} argument, else the \code{id}
+field of a list \code{entry}, else it is taken from the source: the \code{file} name
+without its extension, or the name of the \code{DataSet}. Like every other
+definition id, it is lowercased and made a safe file name, so
+\code{"Laskin 1982.xlsx"} gives the id \code{laskin_1982}. An id you give warns when
+that changes it. The source stores its id, so
+\code{project$definitions$observedData[[id]]} reads it. An \code{excel} or \code{pkml}
+source read that way, changed and passed back with \code{overwrite = TRUE}
+replaces itself. To replace a \code{DataSet} added in the session, pass the new
+\code{DataSet} itself with the same \code{id} and \code{overwrite = TRUE}. A \code{dataCombined}
+entry refers to the name of a data set inside the source, not to this id.
 }
 \details{
-A \code{DataSet} is stored as a \code{type = "programmatic"} entry whose id is its
-name, and its data stays in the R session until \code{\link[=saveProject]{saveProject()}} writes it to
-\verb{<name>.pkml} in the data folder. Saving therefore needs a data folder. From
-then on it is a \code{pkml} source with the id \verb{<name>.pkml}.
+A \code{DataSet} is stored as a \code{type = "programmatic"} source, and its data
+stays in the R session until \code{\link[=saveProject]{saveProject()}} writes it to \verb{<id>.pkml} in the
+data folder. Saving therefore needs a data folder. From then on it is a
+\code{pkml} source with the same id, and the \code{DataSet} keeps its own name inside
+that file.
 
-Adding a \code{DataSet} reads no source. Its name is refused at once when the
-project already knows it, for example from a \code{DataSet} of that name added or
-saved earlier. A clash with a data set inside an Excel or PKML source that
-has not been loaded yet stops the next \code{\link[=loadObservedData]{loadObservedData()}} with an error
-naming the duplicate. Then remove the \code{DataSet} with \code{\link[=removeObservedData]{removeObservedData()}},
-rename it, and add it again.
+Two files with the same name, such as \code{data.xlsx} and \code{data.pkml}, give the
+same id, so the second is refused. Give it another \code{id}.
+
+Adding a \code{DataSet} reads no source. Its name is refused at once when
+another source of the project already has it, for example a \code{DataSet}
+added or saved earlier, also with \code{overwrite = TRUE}. The name of the
+\code{DataSet} that \code{overwrite = TRUE} replaces is free for its replacement. A
+clash with a data set inside an Excel or PKML source that has not been
+loaded yet stops the next \code{\link[=loadObservedData]{loadObservedData()}} with an error naming the
+duplicate. Then remove the
+\code{DataSet}'s source with \code{\link[=removeObservedData]{removeObservedData()}}, rename the \code{DataSet}, and
+add it again.
 }
 \seealso{
 Other observedData:

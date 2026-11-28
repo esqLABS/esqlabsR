@@ -68,29 +68,16 @@ format.DefinitionList <- function(x, ...) {
 }
 
 # The ids a section shows when it prints. The scenarios section adds each
-# scenario's label (`.scenarioListIds()`). Every other section but one is a named
-# list keyed by id, so its ids are its names. `observedData` is the exception: its
-# JSON shape is an array, not a map, so it is stored as an unnamed list of
-# declarations and `names()` is `NULL`. Its ids are derived from each
-# declaration exactly as `removeObservedData()` derives the one it matches on
-# (a declared `id`, else the file basename, else the programmatic name), so the
-# names the section prints are the names an authoring function accepts. A
-# declaration that carries nothing to derive an id from shows as `(no id)`;
-# `validateProject()` is what reports it as under-specified.
+# scenario's label (`.scenarioListIds()`). Every other section is a named list
+# keyed by id, so its ids are its names.
 #
 # @keywords internal
 # @noRd
 .definitionListIds <- function(x) {
-  kind <- attr(x, "definitionKind")
-  if (identical(kind, "scenarios")) {
+  if (identical(attr(x, "definitionKind"), "scenarios")) {
     return(.scenarioListIds(x))
   }
-  if (!identical(kind, "observedData")) {
-    return(names(x))
-  }
-  ids <- .observedDataSectionIds(.unwrapDefinitionList(x))
-  ids[is.na(ids)] <- "(no id)"
-  ids
+  names(x)
 }
 
 # The ids the scenarios section prints: each id, followed by the scenario's label

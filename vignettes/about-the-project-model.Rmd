@@ -71,8 +71,6 @@ The alternative is to keep the id exactly as typed and escape it only when writi
 
 Canonicalizing on entry avoids both. Because the same transformation is applied to references, a reference typed the way the definition was typed still resolves to it, so you do not have to remember the sanitized form. It is also why every example id in these articles is lowercase (`aciclovir_iv`, `adult_male`, `european_adults`): that is simply what ids look like after canonicalization.
 
-Observed-data sources are the one deliberate exception, and `vignette("about-the-plotting-model")` explains why.
-
 ## Why references are checked at two different moments
 
 The package checks a reference at two different times depending on how it arrived, and the difference is deliberate.

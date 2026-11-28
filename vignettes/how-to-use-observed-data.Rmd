@@ -35,31 +35,30 @@ initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 ```
 
-The example already ships with one observed-data source, an Excel source. You can see it as a definition on the project:
+The example already ships with one observed-data source, an Excel source. You can see it as a definition on the project, read by its id:
 
 ```{r}
-project$definitions$observedData[[1]]
+project$definitions$observedData[["aciclovir_timevaluesdata"]]
 ```
 
 ## Choose the name a source is known by
 
 Two strings attach to every source, and they are not interchangeable. The **source id** is what `removeObservedData()` matches and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
 
-The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id only to remove a source.
+The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read or remove a source.
 
-Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
+Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Without an `id`, the id is taken from the source: the file name without its extension, or the `DataSet` name. Like every other id it is lowercased and made a safe file name, so `Laskin 1982 IV.pkml` gives the id `laskin_1982_iv`. Pass `id` when you want to choose the name yourself. Since the id also names the definition file, the next `saveProject()` writes the source below to `definitions/observed-data/laskin_iv.json`:
 
 ```{r, eval = FALSE}
 addObservedData(
   project,
-  list(
-    id = "laskin_iv",
-    type = "pkml",
-    file = "laskin_1982_iv.pkml"
-  )
+  list(type = "pkml", file = "Laskin 1982 IV.pkml"),
+  id = "laskin_iv"
 )
 removeObservedData(project, "laskin_iv")
 ```
+
+Two files with the same name, such as `laskin.xlsx` and `laskin.pkml`, give the same id, so the second one needs an `id` of its own.
 
 ```{r}
 getObservedDataNames(project)
@@ -128,7 +127,7 @@ addObservedData(project, list(type = "pkml", file = "extra_cohort.pkml"))
 getObservedDataNames(project)
 ```
 
-The source definition is written to `definitions/observed-data/extra_cohort.pkml.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
+The source id is the file name without its extension, `extra_cohort`, so the next `saveProject()` writes the source definition to `definitions/observed-data/extra_cohort.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
 
 ## Source type 3: Programmatic
 
@@ -141,9 +140,9 @@ scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
 addObservedData(project, scratch)
 ```
 
-Until you save, that `DataSet` lives on the in-memory project and the entry on disk is a `{type: "programmatic", name}` sentinel. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source. From then on it is an ordinary file-backed source: it survives a reload, and its remove id becomes the PKML file basename rather than the DataSet name.
+The source id is taken from the DataSet name, `scratch_measurement`; pass `id` to choose another. Until you save, that `DataSet` lives only in your R session and its entry is `{id: "scratch_measurement", type: "programmatic"}`. On `saveProject()` the package writes the `DataSet` to a PKML file named after the id (`scratch_measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source reading that file. The `DataSet` keeps its own name inside the file, so a DataCombined still refers to `Scratch measurement`. From then on it is an ordinary file-backed source that survives a reload, and it keeps its id: you remove it by `scratch_measurement` before and after saving.
 
-Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
+Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you, naming the source id, so it never vanishes silently.
 
 ## Data you compute in R
 
@@ -156,7 +155,7 @@ Because resolving observed data only reads files, you can open a project someone
 `removeObservedData()` takes the source id and accepts a vector to remove several at once:
 
 ```{r}
-removeObservedData(project, c("extra_cohort.pkml", "Scratch measurement"))
+removeObservedData(project, c("extra_cohort", "scratch_measurement"))
 getObservedDataNames(project)
 ```
 

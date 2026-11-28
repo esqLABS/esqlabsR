@@ -201,10 +201,10 @@ Project <- R6::R6Class(
     #'   `applications`, `observedData`, `dataCombined`, `plots`, `plotGrids`,
     #'   `parameterIdentification`. Read a section with
     #'   `project$definitions$scenarios` (returned as a printable, read-only
-    #'   named list keyed by id). `observedData` is the one section that is not
-    #'   keyed by id: it is a plain list of sources read by position
-    #'   (`project$definitions$observedData[[1]]`), and printing it shows the id
-    #'   each source is known by, which is the id [removeObservedData()] takes.
+    #'   named list keyed by id). An observed-data source is read by its id
+    #'   like any other definition
+    #'   (`project$definitions$observedData[["aciclovir_timevaluesdata"]]`),
+    #'   the id [removeObservedData()] takes.
     #'   The group is read-only from the handle: every assignment form aborts.
     #'   The only sanctioned way to change a section is
     #'   an authoring function ([addScenario()] / [setScenario()] /
@@ -514,8 +514,10 @@ Project <- R6::R6Class(
     },
 
     #' @description Add observed data. See [addObservedData()].
-    addObservedData = function(entry, overwrite = FALSE) {
-      private$.impl(.addObservedData_impl, entry, overwrite)
+    #' @param id Character scalar, the id of the new source, or `NULL` to take
+    #'   it from the entry or the source. See [addObservedData()].
+    addObservedData = function(entry, id = NULL, overwrite = FALSE) {
+      private$.impl(.addObservedData_impl, entry, id, overwrite)
     },
 
     #' @description Remove observed data. See [removeObservedData()].
@@ -1241,6 +1243,10 @@ Project <- R6::R6Class(
       # that `setOutputPath()` could later leave behind.
       if (identical(kind, "scenarios")) {
         value <- .storeScenarioOutputPathIds(value)
+      }
+      # Observed-data declarations are stored with their id and named by it.
+      if (identical(kind, "observedData")) {
+        value <- .observedDataSectionById(value)
       }
       private[[field]] <- value
       # Writing observed data invalidates the cached observed-data names, as the

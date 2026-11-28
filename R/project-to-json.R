@@ -451,11 +451,12 @@
   result
 }
 
-# JSON array of observed-data source entries. Strips the
-# `ObservedDataSource` class wrapper from each entry (carried only for the
-# print method) so it never reaches JSON.
+# JSON array of observed-data source entries. The section is named by id in
+# memory, but an inline project file keeps the array shape, each entry carrying
+# its own `id`. Strips the `ObservedDataSource` class wrapper from each entry
+# (carried only for the print method) so it never reaches JSON.
 .observedDataToJson <- function(project) {
-  lapply(project$definitions$observedData, unclass)
+  unname(lapply(project$definitions$observedData, unclass))
 }
 
 # The three plots-section serializers (`.dataCombinedSectionToJson`,

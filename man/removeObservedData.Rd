@@ -9,37 +9,33 @@ removeObservedData(project, id)
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{id}{Character vector of ids. An observed-data id is the declaration's
-\code{id} field, or, when it declares none, comes from the data source itself
-(the name of a \code{DataSet} added with \code{\link[=addObservedData]{addObservedData()}} and not saved yet,
-or a file basename for a file-based source). Each is matched as the
-declaration stores it and, failing that, as \code{\link[=addObservedData]{addObservedData()}} would have
-canonicalized it, so a derived id is found by the source's own spelling
-and a declared one by either the form you authored or the canonical form
-you were given back. A \code{DataSet} saved with \code{\link[=saveProject]{saveProject()}} is matched by
-its \verb{<name>.pkml} basename (see the note above).}
+\item{id}{Character vector of ids. Like every other definition id, each is
+lowercased and made a safe file name before it is looked up, with a
+warning when that changes it, so \code{"Scratch measurement"} finds the source
+\code{scratch_measurement}.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Removes by the source's id: its \code{id} field when the declaration carries one,
-else the DataSet name (for a \code{type = "programmatic"} entry that has not been
-saved yet) or the \code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"}
-entries). Vectorizes over a vector of ids, removing each in one
-in-memory update; persist with \code{\link[=saveProject]{saveProject()}}. Warns and skips any id with
-no matching entry.
+Removes by the source's id, the \code{id} field of each entry in
+\code{project$definitions$observedData} (also the names of that list). Accepts a
+vector of ids and removes them all at once; \code{\link[=saveProject]{saveProject()}} then deletes
+their definition files. Warns and skips any id with no matching entry.
 }
 \details{
-Note that a \code{DataSet} added with \code{\link[=addObservedData]{addObservedData()}} changes its id once
-saved: \code{\link[=saveProject]{saveProject()}} writes the \code{DataSet} to \verb{<name>.pkml} and rewrites the
-entry as a \code{pkml} source, so after a save you remove it by that file basename
-(\code{"<name>.pkml"}), not by the original \code{DataSet} name.
-
 Unlike the other authoring functions, \code{addObservedData()} is not
 vectorized over ids: its second argument is a \code{DataSet} or a configuration
 list, not an id, so it adds a single source per call. Add several sources
 with several calls.
+
+A \code{dataCombined} entry refers to a data set by its name, not by the id of its
+source. When some \code{dataCombined} entry refers to a data set,
+\code{removeObservedData()} reads the removed source to learn the names of its
+data sets, and warns for each \code{dataCombined} that still refers to one of
+them. A source that cannot be read (a missing file, for example) is removed
+without this warning; \code{\link[=createDataCombined]{createDataCombined()}} reports the reference that no
+longer resolves when it builds that \code{DataCombined}.
 }
 \seealso{
 Other observedData:

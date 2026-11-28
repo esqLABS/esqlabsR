@@ -4136,9 +4136,10 @@ test_that("the imported observed-data declaration carries a canonicalized id", {
     list.files(file.path(imported$outputDir, "definitions", "observed-data")),
     "testproject_timevaluesdata.json"
   )
-  # And the id is the handle `removeObservedData()` matches on.
+  # And the section is keyed by that id, the handle `removeObservedData()`
+  # matches on.
   expect_identical(
-    .observedDataSectionIds(imported$project$definitions$observedData),
+    names(imported$project$definitions$observedData),
     "testproject_timevaluesdata"
   )
 })

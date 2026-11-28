@@ -869,8 +869,8 @@ messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
 }
 
 messages$exportUndeclaredObservedData <- function(ids) {
-  # Unglued: an observed-data id is a user-chosen name (typically a data-file
-  # basename), so it is free text.
+  # Unglued: an observed-data id is canonical, but canonicalization keeps `{`
+  # and `}`, so it is free text.
   envir <- new.env(parent = parent.frame())
   assign("ids", ids, envir = envir)
   assign("n", length(ids), envir = envir)
@@ -2116,11 +2116,30 @@ messages$observedDataFileNotFound <- function(filePath) {
   )
 }
 
-messages$observedDataProgrammaticUnresolved <- function(names) {
+messages$observedDataProgrammaticUnresolved <- function(ids) {
   cliBullets(
-    "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
-    "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
+    "!" = "{length(ids)} programmatic observed-data source{?s} resolved to no data: {.val {ids}}.",
+    "i" = "A programmatic source holds its {.cls DataSet} in the session that added it until {.fn saveProject} writes the {.cls DataSet} to a PKML file.",
+    "i" = "Re-add {cli::qty(ids)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code pkml} source to persist across a reload."
+  )
+}
+
+messages$observedDataEntryNotDataSetOrList <- function() {
+  ospsuite.utils::cliFormat(
+    "observedData entry must be a {.cls DataSet} or a configuration list"
+  )
+}
+
+messages$observedDataEntryMissingType <- function() {
+  ospsuite.utils::cliFormat(
+    "observedData entry must include a {.field type} field"
+  )
+}
+
+messages$observedDataNotReplaceableByEntry <- function(id) {
+  cliBullets(
+    "observedData entry with id {.val {id}} stands for a {.cls DataSet} added in this session, so it cannot be overwritten with a configuration entry.",
+    "i" = "Remove it first with {.fn removeObservedData}, then add the configuration entry."
   )
 }
 
@@ -2130,38 +2149,76 @@ messages$observedDataDataFolderNotDeclared <- function(file) {
   )
 }
 
-messages$observedDataProgrammaticAdded <- function(name, hasDataFolder = TRUE) {
+messages$observedDataProgrammaticAdded <- function(
+  name,
+  id,
+  hasDataFolder = TRUE
+) {
   saveNote <- if (hasDataFolder) {
-    "On {.fn saveProject} it is written to {.path {paste0(name, '.pkml')}} under the data folder, so it survives a reload."
+    "On {.fn saveProject} it is written to {.path {paste0(id, '.pkml')}} under the data folder, so it survives a reload."
   } else {
     "Declare a {.field dataFolder} in {.code filePaths} before saving: {.fn saveProject} writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared."
   }
   cliBullets(
-    "i" = "Added the {.cls DataSet} {.val {name}} as an observed-data source. It lives in this session until you save.",
+    "i" = "Added the {.cls DataSet} {.val {name}} as observed-data source {.val {id}}. It lives in this session until you save.",
     "i" = saveNote
   )
 }
 
-messages$observedDataPersistNoDataFolder <- function(name) {
+messages$observedDataPersistNoDataFolder <- function(id) {
   cliBullets(
-    "x" = "Cannot save the {.cls DataSet} {.val {name}} added in this session: {.field dataFolder} is not declared in {.code filePaths}.",
+    "x" = "Cannot save the {.cls DataSet} of observed-data source {.val {id}} added in this session: {.field dataFolder} is not declared in {.code filePaths}.",
     "i" = "A {.cls DataSet} added with {.fn addObservedData} is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
   )
 }
 
-messages$observedDataPersistIdCollision <- function(ids) {
+messages$observedDataSetNameExists <- function(name) {
   cliBullets(
-    "x" = "Saving a {.cls DataSet} added in this session would give it the same id as another source: {.val {ids}}.",
-    "i" = "A {.cls DataSet} is saved under the id {.file <name>.pkml}. Another source already has that id, either declared or taken from its file name.",
-    "i" = "Before saving, remove the {.cls DataSet} with {.fn removeObservedData} by its name, rename it, and add it again with {.fn addObservedData}."
+    "x" = "Another observed-data source already provides a data set named {.val {name}}.",
+    "i" = "Each data set needs a unique name. Rename the {.cls DataSet}, or remove the other source with {.fn removeObservedData}."
+  )
+}
+
+messages$observedDataNotReplaceableByDataSet <- function(id) {
+  cliBullets(
+    "x" = "The observed-data source {.val {id}} reads its data from a file, so a {.cls DataSet} cannot replace it.",
+    "i" = "Remove it first with {.fn removeObservedData}, or add the {.cls DataSet} under another {.arg id}."
+  )
+}
+
+messages$observedDataNoIdSource <- function() {
+  cliBullets(
+    "x" = "Cannot take an id from this observed-data source.",
+    "i" = "Give it an {.arg id}, or a {.field file} or {.cls DataSet} name to take the id from."
+  )
+}
+
+messages$observedDataDefinitionFileCollision <- function(id) {
+  cliBullets(
+    "x" = "Two observed-data sources would be saved to the same definition file {.file {id}.json}.",
+    "i" = "Each source is saved to a file named after its id. Give the sources distinct {.field id}s, or remove one with {.fn removeObservedData}."
+  )
+}
+
+messages$observedDataDuplicateIds <- function(ids) {
+  cliBullets(
+    "x" = "More than one observed-data source in the project file has the {cli::qty(ids)}id{?s} {.val {ids}}.",
+    "i" = "Each source needs its own {.field id}. Change the {.field id} of all but one of them."
   )
 }
 
 messages$observedDataPersistFileCollision <- function(files) {
   cliBullets(
     "x" = "Saving a {.cls DataSet} added in this session would overwrite the data file of another source: {.file {files}}.",
-    "i" = "The {.cls DataSet} would be written to {.file <name>.pkml} in the data folder, a file another source already reads or another {.cls DataSet} is written to. File names that differ only in case are the same file on Windows and macOS.",
-    "i" = "Before saving, remove the {.cls DataSet} with {.fn removeObservedData} by its name, rename it, and add it again with {.fn addObservedData}."
+    "i" = "The {.cls DataSet} would be written to {.file <id>.pkml} in the data folder, a file another source already reads.",
+    "i" = "Remove the {.cls DataSet}'s source with {.fn removeObservedData} and add it again under another {.arg id}."
+  )
+}
+
+messages$observedDataAddFileCollision <- function(file) {
+  cliBullets(
+    "x" = "The {.cls DataSet} would be saved to {.file {file}}, the data file of another source.",
+    "i" = "Pass another {.arg id}."
   )
 }
 
@@ -2235,6 +2292,14 @@ messages$observedDataNameCollision <- function(duplicates) {
   cliBullets(
     "x" = "Duplicate observed-data set name{?s} across sources: {.val {duplicates}}.",
     "i" = "Each loaded {.cls DataSet} must have a unique name; rename the source or the data set."
+  )
+}
+
+messages$observedDataStillReferenced <- function(id, holders) {
+  cliBullets(
+    "Removed observedData {.val {id}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
+    "*" = "{holders}",
+    "i" = "These dataCombined entries now have a dangling reference. Update or remove them."
   )
 }
 
