@@ -420,10 +420,11 @@ getObservedDataNames <- function(project) {
 #' definition id, it is lowercased and made a safe file name, so
 #' `"Laskin 1982.xlsx"` gives the id `laskin_1982`. An id you give warns when
 #' that changes it. The source stores its id, so
-#' `project$definitions$observedData[[id]]` reads it, and a source read that
-#' way, changed and passed back with `overwrite = TRUE` replaces itself. A
-#' `dataCombined` entry refers to the name of a data set inside the source,
-#' not to this id.
+#' `project$definitions$observedData[[id]]` reads it. An `excel` or `pkml`
+#' source read that way, changed and passed back with `overwrite = TRUE`
+#' replaces itself. To replace a `DataSet` added in the session, pass the new
+#' `DataSet` itself with the same `id` and `overwrite = TRUE`. A `dataCombined`
+#' entry refers to the name of a data set inside the source, not to this id.
 #'
 #' @details
 #' A `DataSet` is stored as a `type = "programmatic"` source, and its data
@@ -435,11 +436,13 @@ getObservedDataNames <- function(project) {
 #' Two files with the same name, such as `data.xlsx` and `data.pkml`, give the
 #' same id, so the second is refused. Give it another `id`.
 #'
-#' Adding a `DataSet` reads no source. Its name is refused at once when the
-#' project already knows it, for example from a `DataSet` added or saved
-#' earlier, also with `overwrite = TRUE`. A clash with a data set inside an
-#' Excel or PKML source that has not been loaded yet stops the next
-#' [loadObservedData()] with an error naming the duplicate. Then remove the
+#' Adding a `DataSet` reads no source. Its name is refused at once when
+#' another source of the project already has it, for example a `DataSet`
+#' added or saved earlier, also with `overwrite = TRUE`. The name of the
+#' `DataSet` that `overwrite = TRUE` replaces is free for its replacement. A
+#' clash with a data set inside an Excel or PKML source that has not been
+#' loaded yet stops the next [loadObservedData()] with an error naming the
+#' duplicate. Then remove the
 #' `DataSet`'s source with [removeObservedData()], rename the `DataSet`, and
 #' add it again.
 #'

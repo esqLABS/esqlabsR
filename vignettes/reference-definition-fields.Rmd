@@ -236,7 +236,7 @@ Required fields by `type`:
 | `file` | per type | string | Critical error for `excel`, `pkml`. Relative to the project's data folder. |
 | `importerConfiguration` | `excel` only | string | Critical error for an `excel` source. |
 | `sheets` | `excel` only | character vector | Critical error for an `excel` source. An empty but present `sheets` counts as missing. |
-| `id` | **yes** in the definition file | string | A definition file without it stops the load. Optional only as an argument to `addObservedData()`, which otherwise takes it from the source: the file name without its extension for a file-based source, the `DataSet` name for a programmatic one. Stored as the definition's `id` either way. |
+| `id` | **yes** in the definition file | string | A definition file without it stops the load. Optional only when you add a source with `addObservedData()`, which takes the first of: its `id` argument, the `id` field of the entry, the file name without its extension for a file-based source, or the `DataSet` name for a programmatic one. Stored as the definition's `id` either way. |
 
 A file that does not exist on disk is a warning rather than an error, so a project whose data lives elsewhere still loads. A path that escapes the data folder is a critical error, matching the abort the loader raises.
 

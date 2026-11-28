@@ -47,7 +47,7 @@ Two strings attach to every source, and they are not interchangeable. The **sour
 
 The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read or remove a source.
 
-Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Without an `id`, the id is taken from the source: the file name without its extension, or the `DataSet` name. Like every other id it is lowercased and made a safe file name, so `Laskin 1982 IV.pkml` gives the id `laskin_1982_iv`. Pass `id` when you want to choose the name yourself. Since the id also names the definition file, the source below is stored as `definitions/observed-data/laskin_iv.json`:
+Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Without an `id`, the id is taken from the source: the file name without its extension, or the `DataSet` name. Like every other id it is lowercased and made a safe file name, so `Laskin 1982 IV.pkml` gives the id `laskin_1982_iv`. Pass `id` when you want to choose the name yourself. Since the id also names the definition file, the next `saveProject()` writes the source below to `definitions/observed-data/laskin_iv.json`:
 
 ```{r, eval = FALSE}
 addObservedData(
@@ -127,7 +127,7 @@ addObservedData(project, list(type = "pkml", file = "extra_cohort.pkml"))
 getObservedDataNames(project)
 ```
 
-The source id is the file name without its extension, `extra_cohort`, so the source definition is written to `definitions/observed-data/extra_cohort.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
+The source id is the file name without its extension, `extra_cohort`, so the next `saveProject()` writes the source definition to `definitions/observed-data/extra_cohort.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
 
 ## Source type 3: Programmatic
 

@@ -44,10 +44,11 @@ without its extension, or the name of the \code{DataSet}. Like every other
 definition id, it is lowercased and made a safe file name, so
 \code{"Laskin 1982.xlsx"} gives the id \code{laskin_1982}. An id you give warns when
 that changes it. The source stores its id, so
-\code{project$definitions$observedData[[id]]} reads it, and a source read that
-way, changed and passed back with \code{overwrite = TRUE} replaces itself. A
-\code{dataCombined} entry refers to the name of a data set inside the source,
-not to this id.
+\code{project$definitions$observedData[[id]]} reads it. An \code{excel} or \code{pkml}
+source read that way, changed and passed back with \code{overwrite = TRUE}
+replaces itself. To replace a \code{DataSet} added in the session, pass the new
+\code{DataSet} itself with the same \code{id} and \code{overwrite = TRUE}. A \code{dataCombined}
+entry refers to the name of a data set inside the source, not to this id.
 }
 \details{
 A \code{DataSet} is stored as a \code{type = "programmatic"} source, and its data
@@ -59,11 +60,13 @@ that file.
 Two files with the same name, such as \code{data.xlsx} and \code{data.pkml}, give the
 same id, so the second is refused. Give it another \code{id}.
 
-Adding a \code{DataSet} reads no source. Its name is refused at once when the
-project already knows it, for example from a \code{DataSet} added or saved
-earlier, also with \code{overwrite = TRUE}. A clash with a data set inside an
-Excel or PKML source that has not been loaded yet stops the next
-\code{\link[=loadObservedData]{loadObservedData()}} with an error naming the duplicate. Then remove the
+Adding a \code{DataSet} reads no source. Its name is refused at once when
+another source of the project already has it, for example a \code{DataSet}
+added or saved earlier, also with \code{overwrite = TRUE}. The name of the
+\code{DataSet} that \code{overwrite = TRUE} replaces is free for its replacement. A
+clash with a data set inside an Excel or PKML source that has not been
+loaded yet stops the next \code{\link[=loadObservedData]{loadObservedData()}} with an error naming the
+duplicate. Then remove the
 \code{DataSet}'s source with \code{\link[=removeObservedData]{removeObservedData()}}, rename the \code{DataSet}, and
 add it again.
 }
