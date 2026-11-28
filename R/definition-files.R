@@ -890,6 +890,14 @@
     attr(rec, ".definitionFile") <- NULL
     rec
   })
+  # Tree files cannot share an id, since each id is its file's name, but the
+  # records of an inline project file can. The section would then hold one key
+  # twice, and every lookup would find only the first of them.
+  ids <- vapply(records, \(rec) rec[["id"]], character(1))
+  repeatedIds <- unique(ids[duplicated(ids)])
+  if (length(repeatedIds) > 0L) {
+    cli::cli_abort(messages$observedDataDuplicateIds(repeatedIds))
+  }
   .observedDataSectionById(records)
 }
 

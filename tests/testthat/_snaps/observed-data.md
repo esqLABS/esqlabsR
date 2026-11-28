@@ -421,6 +421,15 @@
       ! A definition file for kind observedData has no usable id.
       x id must be a single non-empty string (it names the definition and its file).
 
+# two observed-data records with one id in a project file abort the load
+
+    Code
+      loadProject(tmp)
+    Condition
+      Error in `.parseObservedDataTree()`:
+      x More than one observed-data source in the project file has the id "laskin_iv".
+      i Each source needs its own id. Change the id of all but one of them.
+
 # a DataSet replaces a programmatic source with no data only with overwrite
 
     Code

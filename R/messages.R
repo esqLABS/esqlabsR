@@ -2200,6 +2200,13 @@ messages$observedDataDefinitionFileCollision <- function(id) {
   )
 }
 
+messages$observedDataDuplicateIds <- function(ids) {
+  cliBullets(
+    "x" = "More than one observed-data source in the project file has the {cli::qty(ids)}id{?s} {.val {ids}}.",
+    "i" = "Each source needs its own {.field id}. Change the {.field id} of all but one of them."
+  )
+}
+
 messages$observedDataPersistFileCollision <- function(files) {
   cliBullets(
     "x" = "Saving a {.cls DataSet} added in this session would overwrite the data file of another source: {.file {files}}.",

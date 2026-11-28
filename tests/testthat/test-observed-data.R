@@ -1540,6 +1540,29 @@ test_that("an observed-data record without an id in a project file aborts the lo
   }
 })
 
+test_that("two observed-data records with one id in a project file abort the load", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "."),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(
+        list(id = "laskin_iv", type = "pkml", file = "laskin_iv.pkml"),
+        list(id = "laskin_iv", type = "pkml", file = "laskin_iv_rerun.pkml"),
+        list(id = "laskin_po", type = "pkml", file = "laskin_po.pkml")
+      )
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+
+  expect_error(loadProject(tmp), "laskin_iv")
+  expect_snapshot(loadProject(tmp), error = TRUE)
+})
+
 test_that("an inline project file stores observed data as an array of records with ids", {
   project <- testProject()
   suppressMessages(addObservedData(
