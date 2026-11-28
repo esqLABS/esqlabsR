@@ -87,8 +87,15 @@ test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory
   # back it (DataSets do not survive a JSON round-trip). loadObservedData warns
   # that the source resolved to nothing and returns an empty result;
   # addObservedData is the supported path for re-attaching the runtime DataSet.
-  expect_snapshot(result <- loadObservedData(project))
+  # The warning fires once per session, so it is caught once here and its text
+  # is recorded below; the checks before the snapshot also run on CRAN, where
+  # snapshots are skipped.
+  warning <- expect_warning(
+    result <- loadObservedData(project),
+    "resolved to no data"
+  )
   expect_length(result, 0L)
+  expect_snapshot(writeLines(conditionMessage(warning)))
 })
 
 test_that("loadObservedData errors when excel entry is missing required fields", {

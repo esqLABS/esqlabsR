@@ -451,3 +451,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-28 01:11: Loading a project file whose observed-data records share an id stops with a message naming the id, instead of keeping both records under one key. (#1368)
 - 2026-11-28 01:11: addObservedData() refuses to overwrite with a configuration entry a source whose DataSet is still held in the session, also after a failed save rewrote it as a pkml source, so the DataSet is never left behind. (#1368)
 - 2026-11-28 01:11: The observed-data names a lookup returns follow a session DataSet renamed after it was added, and replacing a DataSet leaves only its own name free, so the name of another session DataSet stays taken. (#1368)
+- 2026-11-28 01:11: The test of the unresolved-source warning checks the warning and the empty result outside the snapshot, so both checks also run where snapshots are skipped. (#1368)

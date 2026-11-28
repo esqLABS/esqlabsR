@@ -10,9 +10,8 @@
 # loadObservedData warns on orphan programmatic sentinels (no in-memory DataSet)
 
     Code
-      result <- loadObservedData(project)
-    Condition
-      Warning:
+      writeLines(conditionMessage(warning))
+    Output
       ! 1 programmatic observed-data source resolved to no data: "x".
       i A programmatic source holds its <DataSet> in the session that added it until `saveProject()` writes the <DataSet> to a PKML file.
       i Re-add it with `addObservedData()` in this session, or declare it as a `pkml` source to persist across a reload.
