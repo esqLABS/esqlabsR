@@ -2138,7 +2138,7 @@ messages$observedDataEntryMissingType <- function() {
 
 messages$observedDataNotReplaceableByEntry <- function(id) {
   cliBullets(
-    "observedData entry with id {.val {id}} is a programmatic source holding a {.cls DataSet} in this session, so it cannot be overwritten with a configuration entry.",
+    "observedData entry with id {.val {id}} stands for a {.cls DataSet} added in this session, so it cannot be overwritten with a configuration entry.",
     "i" = "Remove it first with {.fn removeObservedData}, then add the configuration entry."
   )
 }

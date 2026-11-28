@@ -1193,6 +1193,40 @@ test_that("a config entry cannot overwrite a live programmatic source", {
   expect_true("prog_src" %in% getObservedDataNames(project))
 })
 
+test_that("a config entry cannot overwrite a source a failed save left holding its DataSet", {
+  # The save wrote the PKML and rewrote the entry as a `pkml` source, then
+  # aborted, so the DataSet is still held under the source id.
+  project <- testProject()
+  state <- .projectSeam(project)
+  trial <- ospsuite::DataSet$new(name = "Trial A")
+  trial$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  suppressMessages(addObservedData(project, trial, id = "trial"))
+  .persistProgrammaticObservedData(project, state)
+
+  expect_error(
+    addObservedData(
+      project,
+      list(type = "pkml", file = "trial_rerun.pkml"),
+      id = "trial",
+      overwrite = TRUE
+    ),
+    "cannot be overwritten with a configuration entry"
+  )
+  expect_identical(
+    project$definitions$observedData[["trial"]]$file,
+    "trial.pkml"
+  )
+  expect_identical(state$.programmaticDataSets, list(trial = trial))
+
+  # A file source holding no DataSet is still replaced by another file source.
+  addObservedData(project, list(type = "pkml", file = "cohort_b.pkml"))
+  expect_no_error(addObservedData(
+    project,
+    list(type = "pkml", file = "sub/cohort_b.pkml"),
+    overwrite = TRUE
+  ))
+})
+
 # Neither PKML file exists: the clash is found without reading.
 test_that("a DataSet clashes with the id of another source", {
   project <- testProject()

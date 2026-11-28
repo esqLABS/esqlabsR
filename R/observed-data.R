@@ -570,11 +570,16 @@ addObservedData <- function(project, entry, id = NULL, overwrite = FALSE) {
     return(invisible(self))
   }
 
-  if (replacing && identical(sources[[idx]]$type, "programmatic")) {
+  if (
+    replacing &&
+      (identical(sources[[idx]]$type, "programmatic") ||
+        id %in% names(private$.programmaticDataSets))
+  ) {
     # Replacing a programmatic sentinel in place would strand its `DataSet` in
     # the runtime store: nothing would write it at save and nothing would warn
-    # that it vanished. Refuse, as the mirror case (a `DataSet` replacing a
-    # file source) does.
+    # that it vanished. The same holds for a source a failed save has already
+    # rewritten as `pkml` while its DataSet is still held. Refuse, as the mirror
+    # case (a `DataSet` replacing a file source) does.
     cli::cli_abort(messages$observedDataNotReplaceableByEntry(id))
   }
   # The data-set names inside a config source are known only by reading it, so

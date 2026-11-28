@@ -297,7 +297,7 @@
       overwrite = TRUE)
     Condition
       Error in `addObservedData()`:
-      ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
+      ! observedData entry with id "prog_src" stands for a <DataSet> added in this session, so it cannot be overwritten with a configuration entry.
       i Remove it first with `removeObservedData()`, then add the configuration entry.
 
 # a DataSet clashes with the id of another source
